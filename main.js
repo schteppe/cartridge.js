@@ -1,7 +1,10 @@
 // Init
 cartridge('container');
 
-// Resize (fit) the canvas when window changes
+// Go fullscreen on click
+click(fullscreen);
+
+// Resize (fit) the canvas when the container changes size
 document.body.onresize = document.body.mozfullscreenchange = function(){
 	fit();
 };

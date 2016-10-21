@@ -28,6 +28,7 @@ var paletteHex = palette.map(colors.int2hex);
 var mapPixelData;
 var mapImageData;
 var mapCanvasContext;
+var clickListener;
 
 /**
  * Initialize the player.
@@ -51,19 +52,19 @@ exports.cartridge = function(containerId){
 	loadImages(initialize);
 };
 
-exports.cls = function cls(){
+exports.cls = function(){
 	ctx.clearRect(0,0,screensize,screensize);
 };
 
-exports.time = function time(){
+exports.time = function(){
 	return _time / 1000;
 };
 
-exports.color = function color(col){
+exports.color = function(col){
 	defaultColor = col;
 };
 
-exports.rectfill = function rectfill(x0, y0, x1, y1, col){
+exports.rectfill = function(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	ctx.fillStyle = paletteHex[col];
 	ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
@@ -155,6 +156,13 @@ exports.fit = function fit(){
 	utils.scaleToFit(canvas, container);
 };
 
+/**
+ * Add/remove a click listener.
+ */
+exports.click = function(callback){
+	clickListener = callback || null;
+};
+
 exports.mget = function mget(x, y){
 	return mapPixelData[4 * x + 4 * screensize * y];
 };
@@ -192,6 +200,20 @@ function loadImages(callback){
 	spriteSheet.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABQCAMAAAByFOZhAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABdUExURQAAAA/qWP+pExDrWP+oE/kGRplmAMyZMzNmM/gFRf//O/+oEhDqWPX45X0iU3wiU/gFRqpUN/X55giGUR4nVgmGUgICBPgGRvX55X0iVKpUOKlUN///Og/qVwmGUQmetpIAAAABdFJOUwBA5thmAAAAwUlEQVRYw+3PWXLDQAgEUBjACrNojZ099z+mkeXEqZTiygH6lQa+ulATCUsWITJzH51IU04p0cNVd0V7hDkzi5jbEHFXTSVrST/Ch/Xth09zra2xxeXezbUlLTG6NXc7vH+ZW/uQ+VR9tifzZ9fHpK8xvlOH7e1frsvyubD44EPvL6aap7d3LV+hu5drdM4sPI7ROIqXSOfofbt5p3M4Hrfd99uephjdL39kaxRftxH5uvXy/eu3AQAAAAAAAADg4gzcoQjX+MlqSgAAAABJRU5ErkJggg==";
 }
 
+function updateMouseCoords(evt){
+	var rect = canvas.getBoundingClientRect(); // cache this?
+	var size = Math.min(rect.width, rect.height);
+	var subx = 0;
+	var suby = 0;
+	if(rect.width > rect.height){
+		subx = (rect.width - size) * 0.5;
+	} else {
+		suby = (rect.height - size) * 0.5;
+	}
+	_mousex = Math.floor((evt.clientX - rect.left - subx) / size * screensize);
+	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * screensize);
+}
+
 function initialize(){
 
 	// Init font
@@ -215,13 +237,17 @@ function initialize(){
 	// Init canvas & animation
 	ctx = canvas.getContext('2d');
 	canvas.onclick = function(){
-		fullscreen();
+		if(clickListener){
+			clickListener();
+		}
 	};
 	canvas.onmousedown = function(evt){
 		_mousebtns[evt.which] = true;
+		updateMouseCoords(evt);
 	};
 	canvas.onmouseup = function(evt){
 		_mousebtns[evt.which] = false;
+		updateMouseCoords(evt);
 	};
 	document.body.addEventListener('keydown', function(e){
 		buttonStates[e.keyCode] = 1;
@@ -230,17 +256,7 @@ function initialize(){
 		buttonStates[e.keyCode] = 0;
 	});
 	document.body.onmousemove = function(evt){
-		var rect = canvas.getBoundingClientRect(); // cache this?
-		var size = Math.min(rect.width, rect.height);
-		var subx = 0;
-		var suby = 0;
-		if(rect.width > rect.height){
-			subx = (rect.width - size) * 0.5;
-		} else {
-			suby = (rect.height - size) * 0.5;
-		}
-		_mousex = Math.floor((evt.clientX - rect.left - subx) / size * screensize);
-		_mousey = Math.floor((evt.clientY - rect.top - suby) / size * screensize);
+		updateMouseCoords(evt);
 	};
 
 	utils.disableImageSmoothing(ctx);
