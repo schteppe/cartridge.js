@@ -68,7 +68,7 @@ exports.color = function(col){
 	defaultColor = col;
 };
 
-exports.rectfill = function(x0, y0, x1, y1, col){
+exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	ctx.fillStyle = paletteHex[col];
 	ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
@@ -136,12 +136,26 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	);
 };
 
+// Get sprite flags
 exports.fget = function(n){
 	return spriteFlags[n];
 };
 
+// Set sprite flags
 exports.fset = function(n, flags){
 	spriteFlags[n] = flags;
+};
+
+// Get pixel color
+exports.pget = function(x, y){
+	var data = ctx.getImageData(x, y, x+1, y+1).data;
+	// TODO: convert to int and then check position in the current palette
+	return 0;
+};
+
+// Set pixel color
+exports.pset = function(x, y, col){
+	rectfill(x,y,x+1,y+1,col);
 };
 
 exports.btn = function btn(i, player){
