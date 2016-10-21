@@ -45,8 +45,8 @@ function _draw(){
 	prevTime = time();
 	spr(0, x + 20, y + 20);
 	if(mousebtn(1)){
-		spr(1, mousex(), mousey());
+		spr(1, mousex(), mousey(), 1, 1, false, flr(time()) % 2 === 0);
 	} else {
-		spr(2, mousex(), mousey());
+		spr(2, mousex(), mousey(), 1, 1, false, flr(time()) % 2 === 0);
 	}
 }

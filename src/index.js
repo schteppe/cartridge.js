@@ -8,6 +8,10 @@ var cellsize = 8; // pixels
 var screensize = 128; // pixels
 var container;
 var spriteSheet;
+var maxSprites = 128;
+var spriteFlags = new Uint8Array(maxSprites);
+var mapSizeX = 128;
+var mapSizeY = 32;
 var mapImage;
 var fontImage;
 var ctx;
@@ -42,9 +46,9 @@ exports.cartridge = function(containerId){
 	var style = document.createElement('style');
 	style.innerHTML = [
 		".cartridgeCanvas {",
-		"  image-rendering: -moz-crisp-edges;",
-		"  image-rendering: -webkit-crisp-edges;",
-		"  image-rendering: pixelated;",
+		"image-rendering: -moz-crisp-edges;",
+		"image-rendering: -webkit-crisp-edges;",
+		"image-rendering: pixelated;",
 		"}"
 	].join('\n');
 	document.getElementsByTagName('head')[0].appendChild(style);
@@ -121,7 +125,23 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
 	flip_y = flip_y !== undefined ? flip_y : false;
-	ctx.drawImage(spriteSheet, n * cellsize, 0, cellsize * w, cellsize * h, x, y, cellsize*w, cellsize*h);
+	var sizex = flip_x ? -cellsize * w : cellsize * w;
+	var sizey = flip_y ? -cellsize * h : cellsize * h;
+	ctx.drawImage(
+		spriteSheet,
+		n * cellsize, 0,
+		sizex, sizey,
+		x, y,
+		sizex, sizey
+	);
+};
+
+exports.fget = function(n){
+	return spriteFlags[n];
+};
+
+exports.fset = function(n, flags){
+	spriteFlags[n] = flags;
 };
 
 exports.btn = function btn(i, player){
@@ -183,7 +203,7 @@ function updateMapCanvas(x,y){
 	);
 }
 
-// === async loads: Not needed if we encode the images in arrays and draw them using ImageData ===
+// Load images. Should use internal PNG data format
 function loadImages(callback){
 	spriteSheet = new Image();
 	mapImage = new Image();
@@ -221,20 +241,21 @@ function initialize(){
 
 	// Init map
 	mapCanvas = document.createElement('canvas');
-	mapCanvas.width = mapCanvas.height = screensize;
+	mapCanvas.width = mapSizeX;
+	mapCanvas.height = mapSizeY;
 	mapCanvasContext = mapCanvas.getContext('2d');
 	var mapImageAsCanvas = document.createElement('canvas');
-	mapImageAsCanvas.width = mapImage.width;
-	mapImageAsCanvas.height = mapImage.height;
+	mapImageAsCanvas.width = mapSizeX;
+	mapImageAsCanvas.height = mapSizeY;
 	mapImageAsCanvas.getContext('2d').drawImage(mapImage, 0, 0, mapImage.width, mapImage.height);
 	mapPixelData = mapImageAsCanvas.getContext('2d').getImageData(0, 0, mapImage.width, mapImage.height).data;
-	for(var i=0; i<screensize; i++){
-		for(var j=0; j<screensize; j++){
+	for(var i=0; i<mapSizeX; i++){
+		for(var j=0; j<mapSizeY; j++){
 			updateMapCanvas(i, j);
 		}
 	}
 
-	// Init canvas & animation
+	// Init canvas
 	ctx = canvas.getContext('2d');
 	canvas.onclick = function(){
 		if(clickListener){
@@ -262,7 +283,9 @@ function initialize(){
 	utils.disableImageSmoothing(ctx);
 
 	fit();
+	_init();
 
+	// Start render loop
 	var currentTime = 0;
 	var t0 = 0;
 	var t1 = 0;
@@ -270,9 +293,6 @@ function initialize(){
 	var dt1 = Math.floor(1 / 60 * 1000);
 	var accumulator0 = 0;
 	var accumulator1 = 0;
-
-	_init();
-
 	function render(newTime){
 		if (currentTime) {
 			var frameTime = newTime - currentTime;
