@@ -4,21 +4,22 @@ var font = require('./font');
 var math = require('./math');
 var colors = require('./colors');
 
+// Constants
 var cellsize = 8; // pixels
 var screensize = 128; // pixels
+var mapSizeX = 128;
+var mapSizeY = 32;
+var maxSprites = 128;
+
+var mapData = new Uint8Array(mapSizeX * mapSizeY);
 var container;
 var spriteSheetImage;
 var spriteSheetCanvas;
 var spriteSheetContext;
-var maxSprites = 128;
 var spriteFlags = new Uint8Array(maxSprites);
-var mapSizeX = 128;
-var mapSizeY = 32;
-var mapImage;
 var fontImage;
 var ctx;
 var canvas;
-var mapCanvas;
 var _time = 0;
 var camX = 0;
 var camY = 0;
@@ -31,9 +32,9 @@ var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
 var palette = colors.defaultPalette();
 var paletteHex = palette.map(colors.int2hex);
-var mapPixelData;
-var mapImageData;
-var mapCanvasContext;
+var mapImage;
+var mapCacheCanvas;
+var mapCacheContext;
 var clickListener;
 
 /**
@@ -122,7 +123,7 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 		var _sheight = cel_h * cellsize;
 		var _width = cel_w * cellsize; // Width on target canvas
 		var _height = cel_h * cellsize;
-		ctx.drawImage(mapCanvas,_sx,_sy,_swidth,_sheight,_x,_y, _width, _height);
+		ctx.drawImage(mapCacheCanvas,_sx,_sy,_swidth,_sheight,_x,_y, _width, _height);
 	} else {
 		// Draw only matching sprites
 		for(var i=0; i<cel_w; i++){
@@ -227,23 +228,23 @@ exports.click = function(callback){
 };
 
 /**
- * Set map data.
+ * Get map data.
  */
 exports.mget = function mget(x, y){
-	return mapPixelData[4 * x + 4 * screensize * y];
+	return mapData[y * mapSizeX + x];
 };
 
 /**
- * Get map data.
+ * Set map data.
  */
 exports.mset = function mset(x, y, i){
-	mapPixelData[4 * x + 4 * screensize * y] = i;
-	updateMapCanvas(x,y);
+	mapData[y * mapSizeX + x] = i;
+	updateMapCacheCanvas(x,y);
 };
 
-function updateMapCanvas(x,y){
+function updateMapCacheCanvas(x,y){
 	var spriteNumber = mget(x, y);
-	mapCanvasContext.drawImage(
+	mapCacheContext.drawImage(
 		spriteSheetCanvas,
 		cellsize * spriteNumber, 0,
 		cellsize, cellsize,
@@ -296,18 +297,18 @@ function initialize(){
 	spriteSheetContext.drawImage(spriteSheetImage, 0, 0, spriteSheetImage.width, spriteSheetImage.height);
 
 	// Init map
-	mapCanvas = document.createElement('canvas');
-	mapCanvas.width = mapSizeX;
-	mapCanvas.height = mapSizeY;
-	mapCanvasContext = mapCanvas.getContext('2d');
+	mapCacheCanvas = document.createElement('canvas');
+	mapCacheCanvas.width = mapSizeX;
+	mapCacheCanvas.height = mapSizeY;
+	mapCacheContext = mapCacheCanvas.getContext('2d');
 	var mapImageAsCanvas = document.createElement('canvas');
 	mapImageAsCanvas.width = mapSizeX;
 	mapImageAsCanvas.height = mapSizeY;
 	mapImageAsCanvas.getContext('2d').drawImage(mapImage, 0, 0, mapImage.width, mapImage.height);
-	mapPixelData = mapImageAsCanvas.getContext('2d').getImageData(0, 0, mapImage.width, mapImage.height).data;
+	var mapPixelData = mapImageAsCanvas.getContext('2d').getImageData(0, 0, mapImage.width, mapImage.height).data;
 	for(var i=0; i<mapSizeX; i++){
 		for(var j=0; j<mapSizeY; j++){
-			updateMapCanvas(i, j);
+			mset(i,j,mapPixelData[4 * (j * mapSizeX + i)]);
 		}
 	}
 
