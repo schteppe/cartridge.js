@@ -7,7 +7,9 @@ var colors = require('./colors');
 var cellsize = 8; // pixels
 var screensize = 128; // pixels
 var container;
-var spriteSheet;
+var spriteSheetImage;
+var spriteSheetCanvas;
+var spriteSheetContext;
 var maxSprites = 128;
 var spriteFlags = new Uint8Array(maxSprites);
 var mapSizeX = 128;
@@ -108,16 +110,31 @@ exports.mousebtn = function mousebtn(i){
  * layer If specified, only draw sprites that have flags set for every bit in this value (a bitfield). The default is 0 (draw all sprites).
  */
 exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
-	layer = layer !== undefined ? layer : 0;
-	var _sx = cel_x * cellsize; // Clip start
-	var _sy = cel_y * cellsize;
-	var _x = sx; // Draw position
-	var _y = sy;
-	var _swidth = cel_w * cellsize; // Clip end
-	var _sheight = cel_h * cellsize;
-	var _width = cel_w * cellsize; // Width on target canvas
-	var _height = cel_h * cellsize;
-	ctx.drawImage(mapCanvas,_sx,_sy,_swidth,_sheight,_x,_y, _width, _height);
+	layer = layer === undefined ? 0 : layer;
+
+	if(layer === 0){
+		// Draw all sprites
+		var _sx = cel_x * cellsize; // Clip start
+		var _sy = cel_y * cellsize;
+		var _x = sx; // Draw position
+		var _y = sy;
+		var _swidth = cel_w * cellsize; // Clip end
+		var _sheight = cel_h * cellsize;
+		var _width = cel_w * cellsize; // Width on target canvas
+		var _height = cel_h * cellsize;
+		ctx.drawImage(mapCanvas,_sx,_sy,_swidth,_sheight,_x,_y, _width, _height);
+	} else {
+		// Draw only matching sprites
+		for(var i=0; i<cel_w; i++){
+			for(var j=0; j<cel_h; j++){
+				var spriteNumber = mget(i, j);
+				var flags = fget(spriteNumber);
+				if((layer & flags) === layer){
+					spr(spriteNumber, x + i * cellsize, y + j * cellsize);
+				}
+			}
+		}
+	}
 };
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
@@ -128,7 +145,7 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	var sizex = flip_x ? -cellsize * w : cellsize * w;
 	var sizey = flip_y ? -cellsize * h : cellsize * h;
 	ctx.drawImage(
-		spriteSheet,
+		spriteSheetCanvas,
 		n * cellsize, 0,
 		sizex, sizey,
 		x, y,
@@ -149,13 +166,25 @@ exports.fset = function(n, flags){
 // Get pixel color
 exports.pget = function(x, y){
 	var data = ctx.getImageData(x, y, x+1, y+1).data;
-	// TODO: convert to int and then check position in the current palette
-	return 0;
+	var col = utils.rgbToDec(data[0], data[1], data[2]);
+	return palette.indexOf(col);
 };
 
 // Set pixel color
 exports.pset = function(x, y, col){
 	rectfill(x,y,x+1,y+1,col);
+};
+
+// Get spritesheet pixel color
+exports.sget = function(x, y){
+	var data = ctx.getImageData(x, y, x+1, y+1).data;
+	var col = utils.rgbToDec(data[0], data[1], data[2]);
+	return palette.indexOf(col);
+};
+
+// Set spritesheet pixel color
+exports.sset = function(x, y, col){
+	rectfill(x,y,x,y,col);
 };
 
 exports.btn = function btn(i, player){
@@ -197,10 +226,16 @@ exports.click = function(callback){
 	clickListener = callback || null;
 };
 
+/**
+ * Set map data.
+ */
 exports.mget = function mget(x, y){
 	return mapPixelData[4 * x + 4 * screensize * y];
 };
 
+/**
+ * Get map data.
+ */
 exports.mset = function mset(x, y, i){
 	mapPixelData[4 * x + 4 * screensize * y] = i;
 	updateMapCanvas(x,y);
@@ -209,7 +244,7 @@ exports.mset = function mset(x, y, i){
 function updateMapCanvas(x,y){
 	var spriteNumber = mget(x, y);
 	mapCanvasContext.drawImage(
-		spriteSheet,
+		spriteSheetCanvas,
 		cellsize * spriteNumber, 0,
 		cellsize, cellsize,
 		cellsize * x, cellsize * y,
@@ -219,10 +254,10 @@ function updateMapCanvas(x,y){
 
 // Load images. Should use internal PNG data format
 function loadImages(callback){
-	spriteSheet = new Image();
+	spriteSheetImage = new Image();
 	mapImage = new Image();
 	fontImage = new Image();
-	spriteSheet.onload = function(){
+	spriteSheetImage.onload = function(){
 		mapImage.onload = function(){
 			fontImage.onload = function(){
 				callback();
@@ -231,7 +266,7 @@ function loadImages(callback){
 		};
 		mapImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACAAgMAAAC+UIlYAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAQAAAMAABq0FY8AAAABdFJOUwBA5thmAAAAJ0lEQVRYw+3KMQ0AMAgAMESCR4JKHPDtWdq7MdNxqsrXAQAAAPjaAiHkBPfg4mmYAAAAAElFTkSuQmCC";
 	};
-	spriteSheet.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABQCAMAAAByFOZhAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABdUExURQAAAA/qWP+pExDrWP+oE/kGRplmAMyZMzNmM/gFRf//O/+oEhDqWPX45X0iU3wiU/gFRqpUN/X55giGUR4nVgmGUgICBPgGRvX55X0iVKpUOKlUN///Og/qVwmGUQmetpIAAAABdFJOUwBA5thmAAAAwUlEQVRYw+3PWXLDQAgEUBjACrNojZ099z+mkeXEqZTiygH6lQa+ulATCUsWITJzH51IU04p0cNVd0V7hDkzi5jbEHFXTSVrST/Ch/Xth09zra2xxeXezbUlLTG6NXc7vH+ZW/uQ+VR9tifzZ9fHpK8xvlOH7e1frsvyubD44EPvL6aap7d3LV+hu5drdM4sPI7ROIqXSOfofbt5p3M4Hrfd99uephjdL39kaxRftxH5uvXy/eu3AQAAAAAAAADg4gzcoQjX+MlqSgAAAABJRU5ErkJggg==";
+	spriteSheetImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABQCAMAAAByFOZhAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABdUExURQAAAA/qWP+pExDrWP+oE/kGRplmAMyZMzNmM/gFRf//O/+oEhDqWPX45X0iU3wiU/gFRqpUN/X55giGUR4nVgmGUgICBPgGRvX55X0iVKpUOKlUN///Og/qVwmGUQmetpIAAAABdFJOUwBA5thmAAAAwUlEQVRYw+3PWXLDQAgEUBjACrNojZ099z+mkeXEqZTiygH6lQa+ulATCUsWITJzH51IU04p0cNVd0V7hDkzi5jbEHFXTSVrST/Ch/Xth09zra2xxeXezbUlLTG6NXc7vH+ZW/uQ+VR9tifzZ9fHpK8xvlOH7e1frsvyubD44EPvL6aap7d3LV+hu5drdM4sPI7ROIqXSOfofbt5p3M4Hrfd99uephjdL39kaxRftxH5uvXy/eu3AQAAAAAAAADg4gzcoQjX+MlqSgAAAABJRU5ErkJggg==";
 }
 
 function updateMouseCoords(evt){
@@ -252,6 +287,13 @@ function initialize(){
 
 	// Init font
 	font.init(fontImage, palette);
+
+	// Init spritesheet canvas
+	spriteSheetCanvas = document.createElement('canvas');
+	spriteSheetCanvas.width = spriteSheetImage.width;
+	spriteSheetCanvas.height = spriteSheetImage.height;
+	spriteSheetContext = spriteSheetCanvas.getContext('2d');
+	spriteSheetContext.drawImage(spriteSheetImage, 0, 0, spriteSheetImage.width, spriteSheetImage.height);
 
 	// Init map
 	mapCanvas = document.createElement('canvas');

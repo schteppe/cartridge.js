@@ -19,6 +19,23 @@ exports.hexToRgb = function hexToRgb(hex) {
 	];
 };
 
+exports.rgbToDec = function(r, g, b){
+	var c = r * (256*256) + g * 256 + b;
+	return c;
+};
+
+exports.decToR = function(c){
+	return Math.floor(c / (256*256));
+};
+
+exports.decToG = function(c){
+	return Math.floor(c / 256) % 256;
+};
+
+exports.decToB = function(c){
+	return c % 256;
+};
+
 function isSafari(){
 	return navigator.userAgent.indexOf('Safari') !== -1 && navigator.userAgent.indexOf('Chrome') === -1;
 };
