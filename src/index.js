@@ -95,7 +95,7 @@ exports.cartridge = function(containerId){
 			accumulator0 += frameTime;
 			while ( accumulator0 >= dt0 ){
 				_time = t0;
-				if(loaded){
+				if(loaded && typeof(_update) !== 'undefined'){
 					_update();
 				}
 				t0 += dt0;
@@ -104,7 +104,7 @@ exports.cartridge = function(containerId){
 			accumulator1 += frameTime;
 			while ( accumulator1 >= dt1 ){
 				_time = t1;
-				if(loaded){
+				if(loaded && typeof(_update60) !== 'undefined'){
 					_update60();
 				}
 				t1 += dt1;
@@ -112,7 +112,7 @@ exports.cartridge = function(containerId){
 			}
 		}
 		_time = newTime;
-		if(loaded){
+		if(loaded && typeof(_draw) !== 'undefined'){
 			_draw();
 		}
 		currentTime = newTime;
@@ -151,8 +151,29 @@ exports.color = function(col){
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
-	ctx.fillStyle = paletteHex[col];
-	ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+	var w = x1 - x0;
+	var h = y1 - y0;
+	if(col === transparentColor){
+		ctx.clearRect(x0, y0, w, h);
+	} else {
+		ctx.fillStyle = paletteHex[col];
+		ctx.fillRect(x0, y0, w, h);
+	}
+};
+
+exports.rect = function rect(x0, y0, x1, y1, col){
+	col = col !== undefined ? col : defaultColor;
+	var w = x1 - x0;
+	var h = y1 - y0;
+	if(col === transparentColor){
+		//ctx.clearRect(x0, y0, w, h);
+	} else {
+		ctx.fillStyle = paletteHex[col];
+		ctx.fillRect(x0, y0, w, 1);
+		ctx.fillRect(x0, y0, 1, h);
+		ctx.fillRect(x1, y0, 1, h+1);
+		ctx.fillRect(x0, y1, w+1, 1);
+	}
 };
 
 exports.camera = function camera(x, y){
