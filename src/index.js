@@ -39,6 +39,7 @@ var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
 var palette = colors.defaultPalette();
 var paletteHex = palette.map(colors.int2hex);
+var transparentColor = 0;
 var mapCacheCanvas;
 var mapCacheContext;
 var loaded = false; // Loaded state
@@ -264,8 +265,12 @@ exports.sget = function(x, y){
 // Set spritesheet pixel color
 exports.sset = function(x, y, col){
 	col = col !== undefined ? col : defaultColor;
-	spriteSheetContext.fillStyle = paletteHex[col % palette.length];
-	spriteSheetContext.fillRect(x, y, 1, 1);
+	if(col === transparentColor){
+		spriteSheetContext.clearRect(x, y, 1, 1);
+	} else {
+		spriteSheetContext.fillStyle = paletteHex[col % palette.length];
+		spriteSheetContext.fillRect(x, y, 1, 1);
+	}
 };
 
 exports.btn = function btn(i, player){
@@ -305,6 +310,46 @@ exports.mget = function mget(x, y){
 exports.mset = function mset(x, y, i){
 	mapData[y * mapSizeX + x] = i;
 	updateMapCacheCanvas(x,y);
+};
+
+exports.save = function(key){
+	var data = {
+		version: 1,
+		map: [],
+		sprites: [],
+		flags: []
+	};
+	for(var i=0; i<spriteFlags.length; i++){
+		data.flags[i] = fget(i);
+	}
+	for(var i=0; i<spriteSheetSizeX; i++){
+		for(var j=0; j<spriteSheetSizeY; j++){
+			data.sprites[j*spriteSheetSizeX+i] = sget(i,j);
+		}
+	}
+	for(var i=0; i<mapSizeX; i++){
+		for(var j=0; j<mapSizeY; j++){
+			data.map[j*mapSizeX+i] = mget(i,j);
+		}
+	}
+	localStorage.setItem(key, JSON.stringify(data));
+};
+
+exports.load = function(key){
+	var data = JSON.parse(localStorage.getItem(key));
+	for(var i=0; i<spriteFlags.length; i++){
+		fset(i, data.flags[i]);
+	}
+	for(var i=0; i<spriteSheetSizeX; i++){
+		for(var j=0; j<spriteSheetSizeY; j++){
+			sset(i,j,data.sprites[j*spriteSheetSizeX+i]);
+		}
+	}
+	for(var i=0; i<mapSizeX; i++){
+		for(var j=0; j<mapSizeY; j++){
+			mset(i,j,data.map[j*mapSizeX+i]);
+		}
+	}
 };
 
 function updateMapCacheCanvas(x,y){
