@@ -37,9 +37,6 @@ var mapCacheCanvas;
 var mapCacheContext;
 var clickListener;
 
-/**
- * Initialize the player.
- */
 exports.cartridge = function(containerId){
 	container = document.getElementById(containerId);
 	container.innerHTML = '<canvas class="cartridgeCanvas" id="cartridgeCanvas" width="' + screensize + '" height="' + screensize + '" moz-opaque></canvas>';
@@ -77,9 +74,6 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 };
 
-/**
- * Set camera position
- */
 exports.camera = function camera(x, y){
 	if(camX === x && camY === y) return;
 
@@ -100,16 +94,6 @@ exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
 };
 
-/**
- * Draw map, layers from flags, sprite 0 is empty
- * celx The column location of the map cell in the upper left corner of the region to draw, where 0 is the leftmost column.
- * cely The row location of the map cell in the upper left corner of the region to draw, where 0 is the topmost row.
- * sx The x coordinate of the screen to place the upper left corner.
- * sy The y coordinate of the screen to place the upper left corner.
- * celw The number of map cells wide in the region to draw.
- * celh The number of map cells tall in the region to draw.
- * layer If specified, only draw sprites that have flags set for every bit in this value (a bitfield). The default is 0 (draw all sprites).
- */
 exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	layer = layer === undefined ? 0 : layer;
 
@@ -143,15 +127,22 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
 	flip_y = flip_y !== undefined ? flip_y : false;
-	var sizex = flip_x ? -cellsize * w : cellsize * w;
-	var sizey = flip_y ? -cellsize * h : cellsize * h;
+	var sizex = cellsize * w;
+	var sizey = cellsize * h;
+	ctx.save();
+	ctx.translate(
+		x + (flip_x ? sizex : 0),
+		y + (flip_y ? sizey : 0)
+	);
+	ctx.scale(flip_x ? -1 : 1, flip_y ? -1 : 1);
 	ctx.drawImage(
 		spriteSheetCanvas,
 		n * cellsize, 0,
 		sizex, sizey,
-		x, y,
+		0, 0,
 		sizex, sizey
 	);
+	ctx.restore();
 };
 
 // Get sprite flags
@@ -199,9 +190,6 @@ exports.btn = function btn(i, player){
 	return !!buttonStates[keyCode];
 };
 
-/**
- * Enter full screen
- */
 exports.fullscreen = function fullscreen(){
 	utils.fullscreen(container);
 };
@@ -213,30 +201,18 @@ exports.print = function(text, x, y, col){
 	font.draw(ctx, text, x, y, col);
 };
 
-/**
- * Fit the canvas to the container element.
- */
 exports.fit = function fit(){
 	utils.scaleToFit(canvas, container);
 };
 
-/**
- * Add/remove a click listener.
- */
 exports.click = function(callback){
 	clickListener = callback || null;
 };
 
-/**
- * Get map data.
- */
 exports.mget = function mget(x, y){
 	return mapData[y * mapSizeX + x];
 };
 
-/**
- * Set map data.
- */
 exports.mset = function mset(x, y, i){
 	mapData[y * mapSizeX + x] = i;
 	updateMapCacheCanvas(x,y);
