@@ -9,19 +9,24 @@ var cellsize = 8; // pixels
 var screensize = 128; // pixels
 var mapSizeX = 128;
 var mapSizeY = 32;
-var maxSprites = 256;
-var spriteSheetSizeX = 128;
-var spriteSheetSizeY = 128;
+var maxSprites = 256; // 16x16 sprites
+var spriteSheetSizeX = 128; // 16x8 pixels
+var spriteSheetSizeY = 128; // 16x8 pixels
+
+// DOM elements
+var container;
+var canvas;
+
+// Listeners/callbacks
+var canvasListeners;
+var bodyListeners;
+var clickListener;
 
 var mapData = new Uint8Array(mapSizeX * mapSizeY);
-var container;
-var spriteSheetImage;
 var spriteSheetCanvas;
 var spriteSheetContext;
 var spriteFlags = new Uint8Array(maxSprites);
-var fontImage;
 var ctx;
-var canvas;
 var _time = 0;
 var camX = 0;
 var camY = 0;
@@ -36,10 +41,7 @@ var palette = colors.defaultPalette();
 var paletteHex = palette.map(colors.int2hex);
 var mapCacheCanvas;
 var mapCacheContext;
-var clickListener;
-var canvasListeners;
-var bodyListeners;
-var loaded = false;
+var loaded = false; // Loaded state
 
 exports.cartridge = function(containerId){
 	container = document.getElementById(containerId);
@@ -119,8 +121,7 @@ exports.cartridge = function(containerId){
 
 	// Init font
 	font.load(function(image){
-		fontImage = image;
-		font.init(fontImage, palette);
+		font.init(image, palette);
 
 		if(typeof(_load) !== 'undefined'){
 			_load(postLoad);
