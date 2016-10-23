@@ -9,7 +9,9 @@ var cellsize = 8; // pixels
 var screensize = 128; // pixels
 var mapSizeX = 128;
 var mapSizeY = 32;
-var maxSprites = 128;
+var maxSprites = 256;
+var spriteSheetSizeX = 128;
+var spriteSheetSizeY = 128;
 
 var mapData = new Uint8Array(mapSizeX * mapSizeY);
 var container;
@@ -32,12 +34,12 @@ var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
 var palette = colors.defaultPalette();
 var paletteHex = palette.map(colors.int2hex);
-var mapImage;
 var mapCacheCanvas;
 var mapCacheContext;
 var clickListener;
 var canvasListeners;
 var bodyListeners;
+var loaded = false;
 
 exports.cartridge = function(containerId){
 	container = document.getElementById(containerId);
@@ -55,8 +57,83 @@ exports.cartridge = function(containerId){
 	].join('\n');
 	document.getElementsByTagName('head')[0].appendChild(style);
 
-	loadImages(initialize);
+	// Init spritesheet canvas
+	spriteSheetCanvas = document.createElement('canvas');
+	spriteSheetCanvas.width = spriteSheetSizeX;
+	spriteSheetCanvas.height = spriteSheetSizeY;
+	spriteSheetContext = spriteSheetCanvas.getContext('2d');
+
+	// Init map cache
+	mapCacheCanvas = document.createElement('canvas');
+	mapCacheCanvas.width = mapSizeX * cellsize;
+	mapCacheCanvas.height = mapSizeY * cellsize;
+	mapCacheContext = mapCacheCanvas.getContext('2d');
+
+	// Init canvas
+	ctx = canvas.getContext('2d');
+	utils.disableImageSmoothing(ctx);
+
+	addInputListeners();
+	fit();
+
+	// Start render loop
+	var currentTime = 0;
+	var t0 = 0;
+	var t1 = 0;
+	var dt0 = Math.floor(1 / 30 * 1000);
+	var dt1 = Math.floor(1 / 60 * 1000);
+	var accumulator0 = 0;
+	var accumulator1 = 0;
+	function render(newTime){
+		if (currentTime) {
+			var frameTime = newTime - currentTime;
+			if ( frameTime > 250 )
+				frameTime = 250;
+			accumulator0 += frameTime;
+			while ( accumulator0 >= dt0 ){
+				_time = t0;
+				if(loaded){
+					_update();
+				}
+				t0 += dt0;
+				accumulator0 -= dt0;
+			}
+			accumulator1 += frameTime;
+			while ( accumulator1 >= dt1 ){
+				_time = t1;
+				if(loaded){
+					_update60();
+				}
+				t1 += dt1;
+				accumulator1 -= dt1;
+			}
+		}
+		_time = newTime;
+		if(loaded){
+			_draw();
+		}
+		currentTime = newTime;
+		requestAnimationFrame(render);
+	}
+	requestAnimationFrame(render);
+
+	// Init font
+	font.load(function(image){
+		fontImage = image;
+		font.init(fontImage, palette);
+
+		if(typeof(_load) !== 'undefined'){
+			_load(postLoad);
+		} else {
+			postLoad();
+		}
+	});
 };
+
+function postLoad(){
+	loaded = true;
+	_init();
+}
 
 exports.cls = function(){
 	ctx.clearRect(0,0,screensize,screensize);
@@ -100,16 +177,16 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	layer = layer === undefined ? 0 : layer;
 
 	if(layer === 0){
-		// Draw all sprites
+		// Draw from map cache
 		var _sx = cel_x * cellsize; // Clip start
 		var _sy = cel_y * cellsize;
 		var _x = sx; // Draw position
 		var _y = sy;
 		var _swidth = cel_w * cellsize; // Clip end
 		var _sheight = cel_h * cellsize;
-		var _width = cel_w * cellsize; // Width on target canvas
-		var _height = cel_h * cellsize;
-		ctx.drawImage(mapCacheCanvas,_sx,_sy,_swidth,_sheight,_x,_y, _width, _height);
+		var _width = _swidth; // Width on target canvas
+		var _height = _sheight;
+		ctx.drawImage(mapCacheCanvas,_sx,_sy,_swidth,_sheight,_x,_y,_width,_height);
 	} else {
 		// Draw only matching sprites
 		for(var i=0; i<cel_w; i++){
@@ -117,12 +194,18 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 				var spriteNumber = mget(i, j);
 				var flags = fget(spriteNumber);
 				if((layer & flags) === layer){
-					spr(spriteNumber, x + i * cellsize, y + j * cellsize);
+					spr(spriteNumber, sx + i * cellsize, sy + j * cellsize);
 				}
 			}
 		}
 	}
 };
+
+function spriteSheetCoords(n){
+	var x = n % 16;
+	var y = Math.floor(n / 16) % (16 * 16);
+	return {x:x,y:y};
+}
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	w = w !== undefined ? w : 1;
@@ -137,9 +220,10 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 		y + (flip_y ? sizey : 0)
 	);
 	ctx.scale(flip_x ? -1 : 1, flip_y ? -1 : 1);
+	var sscoord = spriteSheetCoords(n);
 	ctx.drawImage(
 		spriteSheetCanvas,
-		n * cellsize, 0,
+		sscoord.x * cellsize, sscoord.y * cellsize,
 		sizex, sizey,
 		0, 0,
 		sizex, sizey
@@ -171,14 +255,16 @@ exports.pset = function(x, y, col){
 
 // Get spritesheet pixel color
 exports.sget = function(x, y){
-	var data = ctx.getImageData(x, y, x+1, y+1).data;
+	var data = spriteSheetContext.getImageData(x, y, x+1, y+1).data;
 	var col = utils.rgbToDec(data[0], data[1], data[2]);
 	return palette.indexOf(col);
 };
 
 // Set spritesheet pixel color
 exports.sset = function(x, y, col){
-	rectfill(x,y,x,y,col);
+	col = col !== undefined ? col : defaultColor;
+	spriteSheetContext.fillStyle = paletteHex[col % palette.length];
+	spriteSheetContext.fillRect(x, y, 1, 1);
 };
 
 exports.btn = function btn(i, player){
@@ -221,31 +307,15 @@ exports.mset = function mset(x, y, i){
 };
 
 function updateMapCacheCanvas(x,y){
-	var spriteNumber = mget(x, y);
+	var n = mget(x, y);
+	var sscoord = spriteSheetCoords(n);
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
-		cellsize * spriteNumber, 0,
+		sscoord.x * cellsize, sscoord.y * cellsize,
 		cellsize, cellsize,
 		cellsize * x, cellsize * y,
 		cellsize, cellsize
 	);
-}
-
-// Load images. Should use internal PNG data format
-function loadImages(callback){
-	spriteSheetImage = new Image();
-	mapImage = new Image();
-	fontImage = new Image();
-	spriteSheetImage.onload = function(){
-		mapImage.onload = function(){
-			fontImage.onload = function(){
-				callback();
-			}
-			fontImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM8AAAAFAQMAAADYPCrOAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAAAAAAAKVnuc8AAAABdFJOUwBA5thmAAAAiklEQVQI1xXLsQkCMRgG0A8J4hhyWFg5wxUprDKF1SGZQYKFpLghQorwIZlCjkOcIhwiIfwzyL3+Qa4ySGrWWDI3yaPA6GlziwD9w+tUyTsZYpccEZzTJvVo/jPqmfm5MC7xK0WwdU71kHVRJ6b3IddjdF0ICutCj2x/tWXOw+tSReRUylnpabcH/k5GRml9ekAwAAAAAElFTkSuQmCC";
-		};
-		mapImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACAAgMAAAC+UIlYAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAQAAAMAABq0FY8AAAABdFJOUwBA5thmAAAAJ0lEQVRYw+3KMQ0AMAgAMESCR4JKHPDtWdq7MdNxqsrXAQAAAPjaAiHkBPfg4mmYAAAAAElFTkSuQmCC";
-	};
-	spriteSheetImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABQCAMAAAByFOZhAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABdUExURQAAAA/qWP+pExDrWP+oE/kGRplmAMyZMzNmM/gFRf//O/+oEhDqWPX45X0iU3wiU/gFRqpUN/X55giGUR4nVgmGUgICBPgGRvX55X0iVKpUOKlUN///Og/qVwmGUQmetpIAAAABdFJOUwBA5thmAAAAwUlEQVRYw+3PWXLDQAgEUBjACrNojZ099z+mkeXEqZTiygH6lQa+ulATCUsWITJzH51IU04p0cNVd0V7hDkzi5jbEHFXTSVrST/Ch/Xth09zra2xxeXezbUlLTG6NXc7vH+ZW/uQ+VR9tifzZ9fHpK8xvlOH7e1frsvyubD44EPvL6aap7d3LV+hu5drdM4sPI7ROIqXSOfofbt5p3M4Hrfd99uephjdL39kaxRftxH5uvXy/eu3AQAAAAAAAADg4gzcoQjX+MlqSgAAAABJRU5ErkJggg==";
 }
 
 function addInputListeners(){
@@ -306,80 +376,6 @@ function updateMouseCoords(evt){
 	_mousex = Math.floor((evt.clientX - rect.left - subx) / size * screensize);
 	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * screensize);
 }
-
-function initialize(){
-
-	// Init font
-	font.init(fontImage, palette);
-
-	// Init spritesheet canvas
-	spriteSheetCanvas = document.createElement('canvas');
-	spriteSheetCanvas.width = spriteSheetImage.width;
-	spriteSheetCanvas.height = spriteSheetImage.height;
-	spriteSheetContext = spriteSheetCanvas.getContext('2d');
-	spriteSheetContext.drawImage(spriteSheetImage, 0, 0, spriteSheetImage.width, spriteSheetImage.height);
-
-	// Init map
-	mapCacheCanvas = document.createElement('canvas');
-	mapCacheCanvas.width = mapSizeX;
-	mapCacheCanvas.height = mapSizeY;
-	mapCacheContext = mapCacheCanvas.getContext('2d');
-
-	// Load the data in the map image into mapPixelData
-	var mapImageAsCanvas = document.createElement('canvas');
-	mapImageAsCanvas.width = mapSizeX;
-	mapImageAsCanvas.height = mapSizeY;
-	mapImageAsCanvas.getContext('2d').drawImage(mapImage, 0, 0, mapImage.width, mapImage.height);
-	var mapPixelData = mapImageAsCanvas.getContext('2d').getImageData(0, 0, mapImage.width, mapImage.height).data;
-	for(var i=0; i<mapSizeX; i++){
-		for(var j=0; j<mapSizeY; j++){
-			mset(i,j,mapPixelData[4 * (j * mapSizeX + i)]);
-		}
-	}
-
-	// Init canvas
-	ctx = canvas.getContext('2d');
-	utils.disableImageSmoothing(ctx);
-
-	addInputListeners();
-	fit();
-	_init();
-
-	// Start render loop
-	var currentTime = 0;
-	var t0 = 0;
-	var t1 = 0;
-	var dt0 = Math.floor(1 / 30 * 1000);
-	var dt1 = Math.floor(1 / 60 * 1000);
-	var accumulator0 = 0;
-	var accumulator1 = 0;
-	function render(newTime){
-		if (currentTime) {
-			var frameTime = newTime - currentTime;
-			if ( frameTime > 250 )
-				frameTime = 250;
-			accumulator0 += frameTime;
-			while ( accumulator0 >= dt0 ){
-				_time = t0;
-				_update();
-				t0 += dt0;
-				accumulator0 -= dt0;
-			}
-			accumulator1 += frameTime;
-			while ( accumulator1 >= dt1 ){
-				_time = t1;
-				_update60();
-				t1 += dt1;
-				accumulator1 -= dt1;
-			}
-		}
-		_time = newTime;
-		_draw();
-		currentTime = newTime;
-		requestAnimationFrame(render);
-	}
-	requestAnimationFrame(render);
-};
 
 utils.makeGlobal(math);
 utils.makeGlobal(exports);
