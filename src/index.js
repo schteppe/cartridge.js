@@ -36,6 +36,8 @@ var mapImage;
 var mapCacheCanvas;
 var mapCacheContext;
 var clickListener;
+var canvasListeners;
+var bodyListeners;
 
 exports.cartridge = function(containerId){
 	container = document.getElementById(containerId);
@@ -246,6 +248,51 @@ function loadImages(callback){
 	spriteSheetImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABQCAMAAAByFOZhAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABdUExURQAAAA/qWP+pExDrWP+oE/kGRplmAMyZMzNmM/gFRf//O/+oEhDqWPX45X0iU3wiU/gFRqpUN/X55giGUR4nVgmGUgICBPgGRvX55X0iVKpUOKlUN///Og/qVwmGUQmetpIAAAABdFJOUwBA5thmAAAAwUlEQVRYw+3PWXLDQAgEUBjACrNojZ099z+mkeXEqZTiygH6lQa+ulATCUsWITJzH51IU04p0cNVd0V7hDkzi5jbEHFXTSVrST/Ch/Xth09zra2xxeXezbUlLTG6NXc7vH+ZW/uQ+VR9tifzZ9fHpK8xvlOH7e1frsvyubD44EPvL6aap7d3LV+hu5drdM4sPI7ROIqXSOfofbt5p3M4Hrfd99uephjdL39kaxRftxH5uvXy/eu3AQAAAAAAAADg4gzcoQjX+MlqSgAAAABJRU5ErkJggg==";
 }
 
+function addInputListeners(){
+	canvasListeners = {
+		click: function(){
+			if(clickListener){
+				clickListener();
+			}
+		},
+		mousedown: function(evt){
+			_mousebtns[evt.which] = true;
+			updateMouseCoords(evt);
+		},
+		mouseup: function(evt){
+			_mousebtns[evt.which] = false;
+			updateMouseCoords(evt);
+		}
+	};
+	for(var key in canvasListeners){
+		canvas.addEventListener(key, canvasListeners[key]);
+	}
+
+	bodyListeners = {
+		keydown: function(e){
+			buttonStates[e.keyCode] = 1;
+		},
+		keyup: function(e){
+			buttonStates[e.keyCode] = 0;
+		},
+		mousemove: function(evt){
+			updateMouseCoords(evt);
+		}
+	};
+	for(var key in bodyListeners){
+		document.body.addEventListener(key, bodyListeners[key]);
+	}
+}
+
+function removeInputListeners(){
+	for(var key in canvasListeners){
+		canvas.removeEventListener(key, canvasListeners[key]);
+	}
+	for(var key in bodyListeners){
+		document.body.removeEventListener(key, bodyListeners[key]);
+	}
+}
+
 function updateMouseCoords(evt){
 	var rect = canvas.getBoundingClientRect(); // cache this?
 	var size = Math.min(rect.width, rect.height);
@@ -277,6 +324,8 @@ function initialize(){
 	mapCacheCanvas.width = mapSizeX;
 	mapCacheCanvas.height = mapSizeY;
 	mapCacheContext = mapCacheCanvas.getContext('2d');
+
+	// Load the data in the map image into mapPixelData
 	var mapImageAsCanvas = document.createElement('canvas');
 	mapImageAsCanvas.width = mapSizeX;
 	mapImageAsCanvas.height = mapSizeY;
@@ -290,31 +339,9 @@ function initialize(){
 
 	// Init canvas
 	ctx = canvas.getContext('2d');
-	canvas.onclick = function(){
-		if(clickListener){
-			clickListener();
-		}
-	};
-	canvas.onmousedown = function(evt){
-		_mousebtns[evt.which] = true;
-		updateMouseCoords(evt);
-	};
-	canvas.onmouseup = function(evt){
-		_mousebtns[evt.which] = false;
-		updateMouseCoords(evt);
-	};
-	document.body.addEventListener('keydown', function(e){
-		buttonStates[e.keyCode] = 1;
-	});
-	document.body.addEventListener('keyup', function(e){
-		buttonStates[e.keyCode] = 0;
-	});
-	document.body.onmousemove = function(evt){
-		updateMouseCoords(evt);
-	};
-
 	utils.disableImageSmoothing(ctx);
 
+	addInputListeners();
 	fit();
 	_init();
 
