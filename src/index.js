@@ -176,6 +176,11 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 	}
 };
 
+exports.clip = function(x,y,w,h){
+	ctx.rect(x,y,w,h);
+	ctx.clip();
+};
+
 exports.camera = function camera(x, y){
 	if(camX === x && camY === y) return;
 
