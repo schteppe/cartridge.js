@@ -39,7 +39,8 @@ var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
 var palette = colors.defaultPalette();
 var paletteHex = palette.map(colors.int2hex);
-var transparentColor = 0;
+var transparentColors = palette.map(function(){ return false; });
+transparentColors[0] = true;
 var mapCacheCanvas;
 var mapCacheContext;
 var loaded = false; // Loaded state
@@ -149,12 +150,16 @@ exports.color = function(col){
 	defaultColor = col;
 };
 
+exports.palt = function(col, t){
+	transparentColors[col] = t;
+};
+
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	var w = x1 - x0;
 	var h = y1 - y0;
-	if(col === transparentColor){
-		ctx.clearRect(x0, y0, w, h);
+	if(transparentColors[col]){
+		ctx.clearRect(x0, y0, w, h); // correct?
 	} else {
 		ctx.fillStyle = paletteHex[col];
 		ctx.fillRect(x0, y0, w, h);
@@ -165,7 +170,7 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	var w = x1 - x0;
 	var h = y1 - y0;
-	if(col === transparentColor){
+	if(transparentColors[col]){
 		//ctx.clearRect(x0, y0, w, h);
 	} else {
 		ctx.fillStyle = paletteHex[col];
@@ -291,7 +296,7 @@ exports.sget = function(x, y){
 // Set spritesheet pixel color
 exports.sset = function(x, y, col){
 	col = col !== undefined ? col : defaultColor;
-	if(col === transparentColor){
+	if(transparentColors[col]){
 		spriteSheetContext.clearRect(x, y, 1, 1);
 	} else {
 		spriteSheetContext.fillStyle = paletteHex[col % palette.length];

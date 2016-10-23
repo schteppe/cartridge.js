@@ -31,6 +31,7 @@ Returns the absolute value of x.
 ### x = mousex()
 ### y = mousey()
 ### mset(x, y, i)
+### palt(col, t)
 ### color = pget(x, y)
 ### print(text, x, y, col)
 ### pset(x, y, col)
