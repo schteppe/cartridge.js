@@ -1,13 +1,17 @@
 var editSprite = 0;
 var spritePage = 0;
 var color = 8;
-var offsetX = 1;
+var offsetX = 0;
 var offsetY = 7;
 var scaleX = 8;
 var scaleY = 8;
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
+var paletteX = 64;
+var paletteY = 7;
+var paletteScaleX = 16;
+var paletteScaleY = 12;
 
 cartridge('container');
 document.body.onresize = document.body.mozfullscreenchange = function(){
@@ -48,6 +52,12 @@ function clickhandler(){
 		editSprite = spriteX + spriteY * 16;
 		dirty = true;
 	}
+	else if(mx >= paletteX && my >= paletteY && mx < paletteX+paletteScaleX*4 && my < paletteY+paletteScaleY*4){
+		var x = flr((mousex()-paletteX) / paletteScaleX);
+		var y = flr((mousey()-paletteY) / paletteScaleY);
+		color = x + 4 * y;
+		dirty = true;
+	}
 }
 click(clickhandler);
 
@@ -75,6 +85,7 @@ function _draw(){
 	rectfill(0, 0, 128, 128, 7);
 	drawviewport(offsetX,offsetY,scaleX,scaleY);
 	drawsprites(0,96);
+	drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
 	drawmouse(mousex(), mousey());
 	print('SPRITE ' + editSprite, 1, 1);
 }
@@ -108,13 +119,22 @@ function drawsprites(offsetX, offsetY){
 			spr(n++, i*8+offsetX, j*8+offsetY);
 		}
 	}
+	// Rectangle around the current editing sprite
 	var x = offsetX + ssx(editSprite) * 8;
 	var y = offsetY + ssy(editSprite) * 8;
 	rect(
-		x-1,
-		y-1,
-		x + 8,
-		y + 8,
+		x-1, y-1,
+		x+8, y+8,
 		6
 	);
+}
+
+function drawpalette(x, y, sx, sy){
+	var n=0;
+	for(var j=0; j<4; j++){
+		for(var i=0; i<4; i++){
+			rectfill(x+i*sx, y+j*sy, x+(i+1)*sx, y+(j+1)*sy, n);
+			n++;
+		}
+	}
 }
