@@ -8,9 +8,9 @@ var scaleY = 8;
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
-var paletteX = 64;
+var paletteX = 72;
 var paletteY = 7;
-var paletteScaleX = 16;
+var paletteScaleX = 12;
 var paletteScaleY = 12;
 
 cartridge('container');
@@ -86,19 +86,45 @@ function _draw(){
 	drawviewport(offsetX,offsetY,scaleX,scaleY);
 	drawsprites(0,96);
 	drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
-	drawmouse(mousex(), mousey());
+	drawbuttons(72,96-8);
+	drawflags(72,96-18,fget(editSprite));
 	print('SPRITE ' + editSprite, 1, 1);
+	drawmouse(mousex(), mousey());
+}
+
+function drawbuttons(x,y){
+	var padding = 4;
+	for(var i=0; i<4; i++){
+		rectfill(x + i * (6 + padding*2), y, x+5+padding*2 + i * (6+padding*2), y+7, 9);
+		print('' + (i+1), x+1+padding + i * (6+padding*2), y+1);
+	}
+}
+
+function drawflags(x,y,flags){
+	var size = 3;
+	for(var i=0; i<8; i++){
+		var rx = x + i * (size+3);
+		var ry = y;
+		var qx = x+(1+size) + i * (3+size);
+		var qy = y+1+size;
+
+		if((flags & (1 << i)) !== 0)
+			rectfill(rx, ry, qx, qy, 0);
+		else
+			rect(rx, ry, qx, qy, 0);
+	}
 }
 
 function drawmouse(x,y){
 	rectfill(x-4, y, x+5, y+1);
 	rectfill(x, y-4, x+1, y+5);
+	rectfill(x, y, x+1, y+1,5);
 }
 
 function drawviewport(offsetX, offsetY, scaleX, scaleY){
 	for(var i=0; i<8; i++){
 		for(var j=0; j<8; j++){
-			var x = (ssx(editSprite) * 8 + i) % 128; // wrong!
+			var x = (ssx(editSprite) * 8 + i) % 128;
 			var y = (ssy(editSprite) * 8 + j) % 128;
 			var col = sget(x, y);
 			rectfill(
@@ -113,6 +139,7 @@ function drawviewport(offsetX, offsetY, scaleX, scaleY){
 }
 
 function drawsprites(offsetX, offsetY){
+	rectfill(offsetX, offsetY, 128, 128, 0);
 	var n=0;
 	for(var j=0; j<4; j++){
 		for(var i=0; i<16; i++){

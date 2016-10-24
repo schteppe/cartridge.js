@@ -158,27 +158,29 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	var w = x1 - x0;
 	var h = y1 - y0;
-	if(transparentColors[col]){
+	/*if(transparentColors[col]){
 		ctx.clearRect(x0, y0, w, h); // correct?
-	} else {
+	} else {*/
 		ctx.fillStyle = paletteHex[col];
 		ctx.fillRect(x0, y0, w, h);
-	}
+	//}
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	var w = x1 - x0;
 	var h = y1 - y0;
+	/*
 	if(transparentColors[col]){
 		//ctx.clearRect(x0, y0, w, h);
 	} else {
+		*/
 		ctx.fillStyle = paletteHex[col];
 		ctx.fillRect(x0, y0, w, 1);
 		ctx.fillRect(x0, y0, 1, h);
 		ctx.fillRect(x1, y0, 1, h+1);
 		ctx.fillRect(x0, y1, w+1, 1);
-	}
+	//}
 };
 
 exports.clip = function(x,y,w,h){
