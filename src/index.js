@@ -156,8 +156,8 @@ exports.palt = function(col, t){
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
-	var w = x1 - x0;
-	var h = y1 - y0;
+	var w = x1 - x0 + 1;
+	var h = y1 - y0 + 1;
 	/*if(transparentColors[col]){
 		ctx.clearRect(x0, y0, w, h); // correct?
 	} else {*/
@@ -213,6 +213,20 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 
 	if(layer === 0){
 		// Draw from map cache
+		if(mapDirty){
+			// Update the map cache
+			// TODO: optimize
+			//var spriteNumber = flr(y / 8) * 16 + flr(x / 8);
+			for(var i=0; i<mapSizeX; i++){
+				for(var j=0; j<mapSizeY; j++){
+					//if(mapData[j*16+i] === spriteNumber){
+						updateMapCacheCanvas(i,j);
+					//}
+				}
+			}
+			mapDirty = false;
+		}
+
 		var _sx = cel_x * cellsize; // Clip start
 		var _sy = cel_y * cellsize;
 		var _x = sx; // Draw position
@@ -304,6 +318,7 @@ exports.sset = function(x, y, col){
 		spriteSheetContext.fillStyle = paletteHex[col % palette.length];
 		spriteSheetContext.fillRect(x, y, 1, 1);
 	}
+	mapDirty = true;
 };
 
 exports.btn = function btn(i, player){
@@ -388,6 +403,7 @@ exports.load = function(key){
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
 	var sscoord = spriteSheetCoords(n);
+	mapCacheContext.clearRect(x * cellsize, y * cellsize, cellsize, cellsize);
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
 		sscoord.x * cellsize, sscoord.y * cellsize,
@@ -399,7 +415,7 @@ function updateMapCacheCanvas(x,y){
 
 function addInputListeners(){
 	canvasListeners = {
-		click: function(){
+		click: function(evt){
 			if(clickListener){
 				clickListener();
 			}
