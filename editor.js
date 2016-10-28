@@ -3,14 +3,14 @@ var selectedSprite = 0;
 var spritePage = 0;
 var color = 8;
 var offsetX = 1;
-var offsetY = 7;
+var offsetY = 8;
 var scaleX = 9;
 var scaleY = 9;
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
 var paletteX = 79;
-var paletteY = 7;
+var paletteY = 8;
 var paletteScaleX = 12;
 var paletteScaleY = 12;
 var flagsX = paletteX;
@@ -52,7 +52,7 @@ function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
 
 function mousemovehandler(forceMouseDown){
 	if(mode === 0){
-		if(mousebtn(1)){
+		if(mousebtn(1) || forceMouseDown){
 			var x = flr((mousex()-offsetX) / scaleX);
 			var y = flr((mousey()-offsetY) / scaleY);
 
@@ -79,7 +79,7 @@ function mousemovehandler(forceMouseDown){
 			mapPanY = max(0,mapPanY);
 			mapPanX = min(128,mapPanX);
 			mapPanY = min(32,mapPanY);*/
-		} else if((forceMouseDown || mousebtn(1)) && mousey() < 96){
+		} else if((forceMouseDown || mousebtn(1)) && mousey() < 96 && mousey() > 8){
 			mset(
 				flr((mousex() - mapPanX) / 8),
 				flr((mousey() - mapPanY) / 8),
@@ -126,6 +126,9 @@ function clickhandler(){
 		var button = flr((mx-buttonsX) / 14);
 		spritePage = button;
 		dirty = true;
+	} else if(inrect(mx,my,0,0,32,8)){
+		mode = mode ? 0 : 1;
+		dirty = true;
 	}
 }
 click(clickhandler);
@@ -160,12 +163,13 @@ function _draw(){
 		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
 		drawbuttons(buttonsX, buttonsY);
 		drawflags(flagsX,flagsY,fget(selectedSprite));
-		print('SPRITE ' + selectedSprite, 1, 1);
 	} else {
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		drawsprites(0,96);
 		drawbuttons(buttonsX, buttonsY);
 	}
+	rectfill(0, 0, 128, 6, 0);
+	print(mode ? 'MAP' : 'SPRITE', 1, 1, 15);
 	drawmouse(mousex(), mousey());
 }
 
