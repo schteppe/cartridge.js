@@ -88,3 +88,18 @@ exports.fullscreen = function(element) {
 
 	return true;
 };
+
+exports.zeros = function(n){
+	var a = [];
+	while(n--){
+		a.push(0);
+	}
+	return a;
+};
+
+exports.createCanvas = function(w,h){
+	var canvas = document.createElement('canvas');
+	canvas.width = w;
+	canvas.height = h;
+	return canvas;
+}

@@ -22,15 +22,16 @@ var canvasListeners;
 var bodyListeners;
 var clickListener;
 
-var mapData = new Uint8Array(mapSizeX * mapSizeY);
+var mapData = utils.zeros(mapSizeX * mapSizeY);
+var mapCacheCanvas;
+var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
-var spriteFlags = new Uint8Array(maxSprites);
+var spriteFlags = utils.zeros(maxSprites);
 var ctx;
 var _time = 0;
 var camX = 0;
 var camY = 0;
-var defaultColor = 0;
 var _mousex = 0;
 var _mousey = 0;
 var _mousebtns = {};
@@ -39,10 +40,9 @@ var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
 var palette = colors.defaultPalette();
 var paletteHex;
+var defaultColor = 0;
 var transparentColors = palette.map(function(){ return false; });
 transparentColors[0] = true;
-var mapCacheCanvas;
-var mapCacheContext;
 var loaded = false; // Loaded state
 
 exports.cartridge = function(options){
@@ -67,18 +67,14 @@ exports.cartridge = function(options){
 	document.getElementsByTagName('head')[0].appendChild(style);
 
 	// Init spritesheet canvas
-	spriteSheetCanvas = document.createElement('canvas');
-	spriteSheetCanvas.width = spriteSheetSizeX;
-	spriteSheetCanvas.height = spriteSheetSizeY;
+	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX, spriteSheetSizeY);
 	spriteSheetContext = spriteSheetCanvas.getContext('2d');
 
 	// Init map cache
-	mapCacheCanvas = document.createElement('canvas');
-	mapCacheCanvas.width = mapSizeX * cellsize;
-	mapCacheCanvas.height = mapSizeY * cellsize;
+	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsize, mapSizeY * cellsize);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 
-	// Init canvas
+	// Init main canvas
 	ctx = canvas.getContext('2d');
 	utils.disableImageSmoothing(ctx);
 
@@ -163,29 +159,19 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
-	/*if(transparentColors[col]){
-		ctx.clearRect(x0, y0, w, h); // correct?
-	} else {*/
-		ctx.fillStyle = paletteHex[col];
-		ctx.fillRect(x0, y0, w, h);
-	//}
+	ctx.fillStyle = paletteHex[col];
+	ctx.fillRect(x0, y0, w, h);
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 	var w = x1 - x0;
 	var h = y1 - y0;
-	/*
-	if(transparentColors[col]){
-		//ctx.clearRect(x0, y0, w, h);
-	} else {
-		*/
-		ctx.fillStyle = paletteHex[col];
-		ctx.fillRect(x0, y0, w, 1);
-		ctx.fillRect(x0, y0, 1, h);
-		ctx.fillRect(x1, y0, 1, h+1);
-		ctx.fillRect(x0, y1, w+1, 1);
-	//}
+	ctx.fillStyle = paletteHex[col];
+	ctx.fillRect(x0, y0, w, 1);
+	ctx.fillRect(x0, y0, 1, h);
+	ctx.fillRect(x1, y0, 1, h+1);
+	ctx.fillRect(x0, y1, w+1, 1);
 };
 
 exports.clip = function(x,y,w,h){
@@ -220,13 +206,9 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 		// Draw from map cache
 		if(mapDirty){
 			// Update the map cache
-			// TODO: optimize
-			//var spriteNumber = flr(y / 8) * 16 + flr(x / 8);
 			for(var i=0; i<mapSizeX; i++){
 				for(var j=0; j<mapSizeY; j++){
-					//if(mapData[j*16+i] === spriteNumber){
-						updateMapCacheCanvas(i,j);
-					//}
+					updateMapCacheCanvas(i,j);
 				}
 			}
 			mapDirty = false;
