@@ -1,5 +1,7 @@
 // Init
-cartridge('container');
+cartridge({
+	containerId: 'container'
+});
 
 // Go fullscreen on click
 click(fullscreen);

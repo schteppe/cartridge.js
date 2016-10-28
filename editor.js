@@ -22,7 +22,30 @@ var keysdown = {};
 var mapPanX = 0;
 var mapPanY = 0;
 
-cartridge('container');
+cartridge({
+	containerId: 'container',
+	palette: [
+		0x000000, // 0
+		0x000053, // 1
+		0x7e2500, // 2
+		0x008000, // 3
+
+		0xab5236, // 4
+		0x5f574f, // 5
+		0xc2c3c7, // 6
+		0xfff1e8, // 7
+
+		0xff004d, // 8
+		0xffa300, // 9
+		0xfff024, // 10
+		0x00e756, // 11
+
+		0x29adff, // 12
+		0x83769c, // 13
+		0xff77a8, // 14
+		0xffffff  // 15
+	]
+});
 
 function ssx(n){ return n % 16; }
 function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
@@ -44,7 +67,7 @@ function mousemovehandler(forceMouseDown){
 			}
 		}
 	} else {
-		if(keysdown[32]){
+		if(keysdown[32] || mousebtn(2)){
 			var dx = mousex() - lastmx;
 			var dy = mousey() - lastmy;
 			mapPanX += dx;

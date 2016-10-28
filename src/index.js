@@ -38,17 +38,22 @@ var buttonStates = {};
 var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
 var palette = colors.defaultPalette();
-var paletteHex = palette.map(colors.int2hex);
+var paletteHex;
 var transparentColors = palette.map(function(){ return false; });
 transparentColors[0] = true;
 var mapCacheCanvas;
 var mapCacheContext;
 var loaded = false; // Loaded state
 
-exports.cartridge = function(containerId){
-	container = document.getElementById(containerId);
+exports.cartridge = function(options){
+	container = options.containerId ? document.getElementById(options.containerId) : null;
 	container.innerHTML = '<canvas class="cartridgeCanvas" id="cartridgeCanvas" width="' + screensize + '" height="' + screensize + '" moz-opaque></canvas>';
 	canvas = document.getElementById('cartridgeCanvas');
+
+	if(options.palette){
+		palette = options.palette.slice(0);
+	}
+	paletteHex = palette.map(colors.int2hex);
 
 	// Add style tag
 	var style = document.createElement('style');
