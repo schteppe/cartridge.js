@@ -1,4 +1,7 @@
-var mode = 0; // 0=sprite, 1=map
+var mode = 0;
+var SPRITE = 0;
+var MAP = 1;
+
 var selectedSprite = 0;
 var spritePage = 0;
 var color = 8;
@@ -46,6 +49,10 @@ cartridge({
 		0xffffff  // 15
 	]
 });
+
+document.body.onresize = document.body.mozfullscreenchange = function(){
+	fit();
+};
 
 function ssx(n){ return n % 16; }
 function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
@@ -98,7 +105,7 @@ function clickhandler(){
 	var mx = mousex();
 	var my = mousey();
 	mousemovehandler(true);
-	if(mode === 0){
+	if(mode === SPRITE){
 		// sprite
 		if(inrect(mx,my,paletteX,paletteY,paletteScaleX*4,paletteScaleY*4)){
 			var x = flr((mx-paletteX) / paletteScaleX);
@@ -113,21 +120,25 @@ function clickhandler(){
 			fset(selectedSprite, newFlags);
 			dirty = true;
 		}
-	} else {
+	} else if(mode === MAP){
 		// map
 	}
 
-	if(my>=96){
-		var spriteX = flr(mx / 8);
-		var spriteY = spritePage * 4 + flr((my-96) / 8);
-		selectedSprite = spriteX + spriteY * 16;
-		dirty = true;
-	} else if(inrect(mx,my,buttonsX,buttonsY,4*14,10)){
-		var button = flr((mx-buttonsX) / 14);
-		spritePage = button;
-		dirty = true;
-	} else if(inrect(mx,my,0,0,32,8)){
-		mode = mode ? 0 : 1;
+	if(mode === SPRITE || mode === MAP){
+		if(my>=96){
+			var spriteX = flr(mx / 8);
+			var spriteY = spritePage * 4 + flr((my-96) / 8);
+			selectedSprite = spriteX + spriteY * 16;
+			dirty = true;
+		} else if(inrect(mx,my,buttonsX,buttonsY,4*14,10)){
+			var button = flr((mx-buttonsX) / 14);
+			spritePage = button;
+			dirty = true;
+		}
+	}
+
+	if(inrect(mx,my,0,0,32,8)){
+		mode = (mode + 1) % 2;
 		dirty = true;
 	}
 }
@@ -168,9 +179,18 @@ function _draw(){
 		drawsprites(0,96);
 		drawbuttons(buttonsX, buttonsY);
 	}
-	rectfill(0, 0, 128, 6, 0);
-	print(mode ? 'MAP' : 'SPRITE', 1, 1, 15);
+	drawtop();
 	drawmouse(mousex(), mousey());
+}
+
+function drawtop(){
+	rectfill(0, 0, 128, 6, 0);
+	var modeText = '';
+	switch(mode){
+		case SPRITE: modeText = 'SPRITE'; break;
+		case MAP: modeText = 'MAP'; break;
+	}
+	print(modeText, 1, 1, 15);
 }
 
 function drawbuttons(x,y){

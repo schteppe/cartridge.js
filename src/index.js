@@ -344,10 +344,10 @@ exports.mget = function mget(x, y){
 
 exports.mset = function mset(x, y, i){
 	mapData[y * mapSizeX + x] = i;
-	updateMapCacheCanvas(x,y);
+	mapDirty = true;
 };
 
-exports.save = function(key){
+function toJSON(){
 	var data = {
 		version: 1,
 		map: [],
@@ -367,11 +367,35 @@ exports.save = function(key){
 			data.map[j*mapSizeX+i] = mget(i,j);
 		}
 	}
+	return data;
+}
+
+exports.save = function(key){
+	key = key || 'save';
+	var data = toJSON();
 	localStorage.setItem(key, JSON.stringify(data));
 };
 
 exports.load = function(key){
+	key = key || 'save';
 	var data = JSON.parse(localStorage.getItem(key));
+	loadJSON(data);
+};
+
+exports.download = function(key){
+	key = key || 'export';
+	var data = toJSON();
+	var url = URL.createObjectURL(new Blob([JSON.stringify(data)]));
+	var a = document.createElement('a');
+	a.href = url;
+	a.download = key + '.json';
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+};
+
+function loadJSON(data){
 	for(var i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
@@ -386,6 +410,8 @@ exports.load = function(key){
 		}
 	}
 };
+
+exports.loadjson = loadJSON;
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
