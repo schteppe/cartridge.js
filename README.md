@@ -3,7 +3,48 @@ cartridge.js
 
 Minimalistic retro game engine.
 
-# Documentation
+# Usage
+
+```html
+<html>
+<head>
+	<style>
+	#container {
+		width: 512px;
+		height: 512px;
+		background-color: black;
+	}
+	</style>
+</head>
+<body>
+	<div id="container"></div>
+	<script src="cartridge.js"></script>
+	<script>
+		var x = 50, y = 50;
+
+		// Initialize
+		cartridge({ containerId: 'container' });
+
+		// Called at 60Hz
+		function _update60(){
+			if (btn(0,1)) x--;
+			if (btn(1,1)) x++;
+			if (btn(2,1)) y--;
+			if (btn(3,1)) y++;
+		}
+
+		// Called each render frame
+		function _draw(){
+			cls(); // Clear screen
+			print('HELLO WORLD', 10, 10); // print a string
+			spr(0, x, y); // draw sprite from spritesheet
+		}
+	</script>
+</body>
+</html>
+```
+
+# API documentation
 
 ### y = abs(x)
 
