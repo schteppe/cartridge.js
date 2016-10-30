@@ -1,7 +1,7 @@
 cartridge.js
 ============
 
-Minimalistic retro game engine.
+Minimalistic retro game engine inspired by Pico-8. You can use it as a library and/or create content for your game using the editor.
 
 # Usage
 
@@ -46,44 +46,232 @@ Minimalistic retro game engine.
 
 # API documentation
 
-### y = abs(x)
+### abs
+
+```js
+var y = abs(x);
+```
 
 Returns the absolute value of x.
 
-### angle = atan2(x,y)
-### isdown = btn(i, player)
-### camera(x, y)
-### cartridge(containerId)
-### click(callback)
-### cls()
-### clip(x,y,w,h)
-### color(col)
-### y = cos(x)
-### flags = fget(n)
-### fit()
-### y = flr(x)
-### fset(n, flags)
-### fullscreen()
-### map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer)
-### z = max(x, y)
-### z = mget(x, y)
-### z = min(x, y)
-### isdown = mousebtn(i)
-### x = mousex()
-### y = mousey()
-### mset(x, y, i)
-### palt(col, t)
-### color = pget(x, y)
-### print(text, x, y, col)
-### pset(x, y, col)
-### rect(x0, y0, x1, y1, col)
-### rectfill(x0, y0, x1, y1, col)
-### y = rnd(x)
-### sfx(n [, channelIndex [, offset]])
-### color = sget(x, y)
-### y = sgn(x)
-### y = sin(x)
-### spr(n, x, y, w, h, flip_x, flip_y)
-### y = sqrt(x)
-### sset(x, y, col)
-### t = time()
+### atan2
+
+```js
+var angle = atan2(x,y);
+```
+
+### btn
+
+```js
+var isdown = btn(i, player);
+```
+
+### camera
+
+```js
+camera(x, y);
+```
+
+### cartridge
+
+```js
+cartridge(options);
+```
+
+### click
+
+```js
+click(callback);
+```
+
+### cls
+
+```js
+cls();
+```
+
+### clip
+
+```js
+clip(x,y,w,h);
+```
+
+### color
+
+```js
+color(col);
+```
+
+### cos
+
+```js
+var y = cos(x);
+```
+
+### fget
+
+```js
+var flags = fget(n);
+```
+
+### fit
+
+```js
+fit();
+```
+
+### flr
+
+```js
+y = flr(x);
+```
+
+### fset
+
+```js
+fset(n, flags);
+```
+
+### fullscreen
+
+```js
+fullscreen();
+```
+
+### map
+
+```js
+map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer);
+```
+
+### max
+
+```js
+var z = max(x, y);
+```
+
+### mget
+
+```js
+var z = mget(x, y);
+```
+
+### min
+
+```js
+var z = min(x, y);
+```
+
+### mousebtn
+
+```js
+var isdown = mousebtn(i);
+```
+
+### mousex
+
+```js
+var x = mousex();
+```
+
+### mousey
+
+```js
+var y = mousey();
+```
+
+### mset
+
+```js
+mset(x, y, i);
+```
+
+### palt
+
+```js
+palt(col, t);
+```
+
+### pget
+
+```js
+var color = pget(x, y);
+```
+
+### print
+
+```js
+print(text, x, y, col);
+```
+
+### pset
+
+```js
+pset(x, y, col);
+```
+
+### rect
+
+```js
+rect(x0, y0, x1, y1, col);
+```
+
+### rectfill
+
+```js
+rectfill(x0, y0, x1, y1, col);
+```
+
+### rnd
+
+```js
+y = rnd(x);
+```
+
+### sfx
+
+```js
+sfx(n [, channelIndex [, offset]]);
+```
+
+### sget
+
+```js
+color = sget(x, y);
+```
+
+### sgn
+
+```js
+y = sgn(x);
+```
+
+### sin
+
+```js
+y = sin(x);
+```
+
+### spr
+
+```js
+spr(n, x, y, w, h, flip_x, flip_y);
+```
+
+### sqrt
+
+```js
+y = sqrt(x);
+```
+
+### sset
+
+```js
+sset(x, y, col);
+```
+
+### time
+
+```js
+t = time();
+```
