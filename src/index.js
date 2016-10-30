@@ -52,7 +52,7 @@ exports.cartridge = function(options){
 	container = options.containerId ? document.getElementById(options.containerId) : null;
 	container.innerHTML = '';
 	for(var i=0; i<numCanvases; i++){
-		container.innerHTML += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensize + '" height="' + screensize + '" moz-opaque></canvas>';
+		container.innerHTML += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensize + '" height="' + screensize + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
 	}
 
 	for(var i=0; i<numCanvases; i++){
