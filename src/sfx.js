@@ -19,7 +19,7 @@ for(var j=0; j<4; j++){
 	};
 	channels.push(channel);
 
-	// add oscillators to channel
+	// add oscillators and gains to channel
 	for(var i=0; i<oscillatorTypes.length; i++){
 		var osc = context.createOscillator();
 		var type = oscillatorTypes[i];
@@ -37,14 +37,13 @@ for(var j=0; j<4; j++){
 }
 
 var effects = [
-{
-	types: ['sine','sawtooth','triangle','sine'],
-	frequencies: [100,200,300,200],
-	volumes: [1,0.8,0.5,1],
-	speed: 1
-}
+	{
+		types: ['sine','sawtooth','triangle','sine'],
+		frequencies: [100,200,300,200],
+		volumes: [1,0.8,0.5,1],
+		speed: 1
+	}
 ];
-
 
 function createAudioContext(desiredSampleRate) {
 	var AudioCtor = window.AudioContext || window.webkitAudioContext;
