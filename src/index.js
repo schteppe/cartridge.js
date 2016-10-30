@@ -4,6 +4,7 @@ var utils = require('./utils');
 var font = require('./font');
 var math = require('./math');
 var colors = require('./colors');
+var sfx = require('./sfx');
 
 // Constants
 var cellsize = 8; // pixels
@@ -527,6 +528,7 @@ exports.help = function(){
 };
 
 utils.makeGlobal(math);
+utils.makeGlobal(sfx);
 utils.makeGlobal(exports);
 
 help.hello();
