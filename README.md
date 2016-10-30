@@ -79,6 +79,7 @@ Returns the absolute value of x.
 ### rect(x0, y0, x1, y1, col)
 ### rectfill(x0, y0, x1, y1, col)
 ### y = rnd(x)
+### sfx(n [, channelIndex [, offset]])
 ### color = sget(x, y)
 ### y = sgn(x)
 ### y = sin(x)

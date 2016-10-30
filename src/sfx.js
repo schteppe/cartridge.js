@@ -1,3 +1,51 @@
+var context = new createAudioContext();
+var masterGain = context.createGain();
+masterGain.gain.value = 1;
+masterGain.connect(context.destination);
+
+var oscillatorTypes = [
+	'sine',
+	'square',
+	'triangle',
+	'sawtooth'
+];
+
+var channels = [];
+for(var j=0; j<4; j++){
+	var channel = {
+		oscillators: {},
+		gains: {},
+		occupiedUntil: -1
+	};
+	channels.push(channel);
+
+	// add oscillators to channel
+	for(var i=0; i<oscillatorTypes.length; i++){
+		var osc = context.createOscillator();
+		var type = oscillatorTypes[i];
+		osc.type = type;
+
+		var gain = context.createGain();
+		gain.gain.value = 0;
+		gain.connect(masterGain);
+
+		osc.connect(gain);
+		channel.oscillators[type] = osc;
+		channel.gains[type] = gain;
+		osc.start(context.currentTime);
+	}
+}
+
+var effects = [
+{
+	types: ['sine','sawtooth','triangle','sine'],
+	frequencies: [100,200,300,200],
+	volumes: [1,0.8,0.5,1],
+	speed: 1
+}
+];
+
+
 function createAudioContext(desiredSampleRate) {
 	var AudioCtor = window.AudioContext || window.webkitAudioContext;
 	desiredSampleRate = typeof desiredSampleRate === 'number' ? desiredSampleRate : 44100;
@@ -19,56 +67,27 @@ function createAudioContext(desiredSampleRate) {
 	return context;
 }
 
-var context = new createAudioContext();
-var masterGain = context.createGain();
-masterGain.gain.value = 1;
-masterGain.connect(context.destination);
+function play(channel, types, frequencies, volumes, speed, offset){
+	var i,j;
+	var osc = channel.oscillators[types[offset+0]];
+	var gain = channel.gains[types[offset+0]];
+	gain.gain.value = volumes[offset+0];
+	osc.frequency.value = frequencies[offset+0];
 
-// oscillators
-var oscillatorTypes = [
-	'sine',
-	'square',
-	'triangle',
-	'sawtooth'
-];
-var oscillators = {};
-var gains = {};
-for(var i=0; i<oscillatorTypes.length; i++){
-	var osc = context.createOscillator();
-	var type = oscillatorTypes[i];
-	osc.type = type;
-
-	var gain = context.createGain();
-	gain.gain.value = 0;
-	gain.connect(masterGain);
-
-	osc.connect(gain);
-	oscillators[type] = osc;
-	gains[type] = gain;
-	osc.start(context.currentTime);
-}
-
-exports.play = function(types, frequencies, volumes, speed){
-	var osc = oscillators[types[0]];
-	var gain = gains[types[0]];
-	gain.gain.value = volumes[0];
-	osc.frequency.value = frequencies[0];
-
-	var len = types.length / speed;
+	var len = (types.length - offset) / speed;
 	var currentTime = context.currentTime;
-	for(var i=0; i<types.length; i++){
+	for(i=offset; i<types.length; i++){
 		var type = types[i];
-		osc = oscillators[type];
+		osc = channel.oscillators[type];
 
 		var startTime = currentTime + (len / types.length) * i;
 
 		// Set other gains to zero
-		for(var j=0; j<oscillatorTypes.length; j++){
-			gain = gains[oscillatorTypes[j]];
+		for(j=0; j<oscillatorTypes.length; j++){
+			gain = channel.gains[oscillatorTypes[j]];
 			if(oscillatorTypes[j] !== type){
 				gain.gain.setValueAtTime(0, startTime);
 			} else {
-				console.log(i, startTime, osc.type, frequencies[i], volumes[i]);
 				osc.frequency.setValueAtTime(frequencies[i], startTime);
 				gain.gain.setValueAtTime(volumes[i], startTime);
 			}
@@ -77,10 +96,40 @@ exports.play = function(types, frequencies, volumes, speed){
 
 	// Set the volume at the end to zero
 	var endTime = currentTime + len;
-	console.log(len);
-	for(var j=0; j<oscillatorTypes.length; j++){
-		gain = gains[oscillatorTypes[j]];
+	for(j=0; j<oscillatorTypes.length; j++){
+		gain = channel.gains[oscillatorTypes[j]];
 		gain.gain.setValueAtTime(0, endTime);
-		console.log('set end to zero', endTime, 0);
 	}
+
+	channel.occupiedUntil = endTime;
+}
+
+exports.sfx = function(n, channelIndex, offset){
+	channelIndex = channelIndex !== undefined ? channelIndex : -1;
+	offset = offset !== undefined ? offset : 0;
+
+	var effect = effects[n];
+	if(!effect){
+		return false;
+	}
+
+	if(channelIndex === -1){
+		for(var i=0; i<channels.length; i++){
+			var candidateIndex = i;
+			if(channels[candidateIndex].occupiedUntil < context.currentTime){
+				channelIndex = candidateIndex;
+				break;
+			}
+		}
+	} else if(channels[channelIndex].occupiedUntil >= context.currentTime){
+		return false;
+	}
+
+	if(!channels[channelIndex]){
+		return false;
+	}
+
+	play(channels[channelIndex], effect.types, effect.frequencies, effect.volumes, effect.speed, offset);
+
+	return true;
 };
