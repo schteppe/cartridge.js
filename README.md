@@ -36,8 +36,8 @@ Minimalistic retro game engine.
 		// Called each render frame
 		function _draw(){
 			cls(); // Clear screen
-			print('HELLO WORLD', 10, 10); // print a string
-			spr(0, x, y); // draw sprite from spritesheet
+			print('HELLO WORLD', 10, 10); // draw a string at 10,10
+			spr(1, x, y); // draw sprite 1 from spritesheet
 		}
 	</script>
 </body>
