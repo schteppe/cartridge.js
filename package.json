@@ -1,0 +1,24 @@
+{
+  "name": "cartridge.js",
+  "version": "0.0.1",
+  "description": "Retro game engine",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "browserify": "^13.1.1"
+  },
+  "scripts": {
+    "build": "browserify --entry src/index.js --outfile cartridge.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/schteppe/cartridge.js.git"
+  },
+  "author": "Stefan Hedman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/schteppe/cartridge.js/issues"
+  },
+  "homepage": "https://github.com/schteppe/cartridge.js#readme"
+}
