@@ -27,6 +27,7 @@ var mapPanY = 0;
 
 cartridge({
 	containerId: 'container',
+	layers: 2,
 	palette: [
 		0x000000, // 0
 		0x000053, // 1
@@ -86,6 +87,7 @@ function mousemovehandler(forceMouseDown){
 			mapPanY = max(0,mapPanY);
 			mapPanX = min(128,mapPanX);
 			mapPanY = min(32,mapPanY);*/
+			dirty = true;
 		} else if((forceMouseDown || mousebtn(1)) && mousey() < 96 && mousey() > 8){
 			mset(
 				flr((mousex() - mapPanX) / 8),
@@ -137,6 +139,7 @@ function clickhandler(){
 		}
 	}
 
+	// Click the upper left corner
 	if(inrect(mx,my,0,0,32,8)){
 		mode = (mode + 1) % 2;
 		dirty = true;
@@ -145,14 +148,13 @@ function clickhandler(){
 click(clickhandler);
 
 function _load(callback){
-	load('game');
+	load();
 	callback();
 };
 
 function _init(){}
 
-function _update60(){
-}
+function _update60(){}
 
 function _draw(){
 	var mx = mousex();
@@ -180,7 +182,10 @@ function _draw(){
 		drawbuttons(buttonsX, buttonsY);
 	}
 	drawtop();
+	canvas(1);
+	cls();
 	drawmouse(mousex(), mousey());
+	canvas(0);
 }
 
 function drawtop(){

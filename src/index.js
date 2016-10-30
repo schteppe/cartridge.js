@@ -1,3 +1,4 @@
+var help = require('./help');
 var input = require('./input');
 var utils = require('./utils');
 var font = require('./font');
@@ -15,7 +16,7 @@ var spriteSheetSizeY = 128; // 16x8 pixels
 
 // DOM elements
 var container;
-var canvas;
+var canvases = [];
 
 // Listeners/callbacks
 var canvasListeners;
@@ -38,22 +39,37 @@ var _mousebtns = {};
 var buttonStates = {};
 var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
-var palette = colors.defaultPalette();
+var palette;
 var paletteHex;
 var defaultColor = 0;
-var transparentColors = palette.map(function(){ return false; });
+var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 
 exports.cartridge = function(options){
+
+	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
-	container.innerHTML = '<canvas class="cartridgeCanvas" id="cartridgeCanvas" width="' + screensize + '" height="' + screensize + '" moz-opaque></canvas>';
-	canvas = document.getElementById('cartridgeCanvas');
+	container.innerHTML = '';
+	for(var i=0; i<numCanvases; i++){
+		container.innerHTML += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensize + '" height="' + screensize + '" moz-opaque></canvas>';
+	}
+
+	for(var i=0; i<numCanvases; i++){
+		var c = document.getElementById('cartridgeCanvas' + i);
+		canvases.push(c);
+		if(i !== 0){
+			c.style.pointerEvents = 'none';
+		}
+		c.style.position = 'absolute';
+		utils.disableImageSmoothing(c.getContext('2d'));
+	}
 
 	if(options.palette){
-		palette = options.palette.slice(0);
+		setPalette(options.palette);
+	} else {
+		setPalette(colors.defaultPalette());
 	}
-	paletteHex = palette.map(colors.int2hex);
 
 	// Add style tag
 	var style = document.createElement('style');
@@ -74,9 +90,8 @@ exports.cartridge = function(options){
 	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsize, mapSizeY * cellsize);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 
-	// Init main canvas
-	ctx = canvas.getContext('2d');
-	utils.disableImageSmoothing(ctx);
+	// Set main canvas
+	canvas(0);
 
 	addInputListeners();
 	fit();
@@ -139,6 +154,12 @@ function postLoad(){
 	_init();
 }
 
+function setPalette(p){
+	palette = p.slice(0);
+	paletteHex = palette.map(colors.int2hex);
+	mapDirty = true;
+}
+
 exports.cls = function(){
 	ctx.clearRect(0,0,screensize,screensize);
 };
@@ -177,6 +198,10 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 exports.clip = function(x,y,w,h){
 	ctx.rect(x,y,w,h);
 	ctx.clip();
+};
+
+exports.canvas = function canvas(n){
+	ctx = canvases[n].getContext('2d');
 };
 
 exports.camera = function camera(x, y){
@@ -237,10 +262,14 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	}
 };
 
-function spriteSheetCoords(n){
-	var x = n % 16;
-	var y = Math.floor(n / 16) % (16 * 16);
-	return {x:x,y:y};
+// Returns the sprite X position in the 16x16 spritesheet
+function ssx(n){
+	return n % 16;
+}
+
+// Returns the sprite Y position in the 16x16 spritesheet
+function ssy(n){
+	return Math.floor(n / 16) % (16 * 16);
 }
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
@@ -256,10 +285,9 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 		y + (flip_y ? sizey : 0)
 	);
 	ctx.scale(flip_x ? -1 : 1, flip_y ? -1 : 1);
-	var sscoord = spriteSheetCoords(n);
 	ctx.drawImage(
 		spriteSheetCanvas,
-		sscoord.x * cellsize, sscoord.y * cellsize,
+		ssx(n) * cellsize, ssy(n) * cellsize,
 		sizex, sizey,
 		0, 0,
 		sizex, sizey
@@ -331,7 +359,10 @@ exports.print = function(text, x, y, col){
 };
 
 exports.fit = function fit(){
-	utils.scaleToFit(canvas, container);
+	var i = canvases.length;
+	while(i--){
+		utils.scaleToFit(canvases[i], container);
+	}
 };
 
 exports.click = function(callback){
@@ -352,7 +383,8 @@ function toJSON(){
 		version: 1,
 		map: [],
 		sprites: [],
-		flags: []
+		flags: [],
+		palette: palette.slice(0)
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
@@ -378,8 +410,13 @@ exports.save = function(key){
 
 exports.load = function(key){
 	key = key || 'save';
-	var data = JSON.parse(localStorage.getItem(key));
-	loadJSON(data);
+	try{
+		var data = JSON.parse(localStorage.getItem(key));
+		loadJSON(data);
+		return true;
+	} catch(err) {
+		return false;
+	}
 };
 
 exports.download = function(key){
@@ -409,17 +446,17 @@ function loadJSON(data){
 			mset(i,j,data.map[j*mapSizeX+i]);
 		}
 	}
+	setPalette(data.palette);
 };
 
 exports.loadjson = loadJSON;
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
-	var sscoord = spriteSheetCoords(n);
 	mapCacheContext.clearRect(x * cellsize, y * cellsize, cellsize, cellsize);
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
-		sscoord.x * cellsize, sscoord.y * cellsize,
+		ssx(n) * cellsize, ssy(n) * cellsize,
 		cellsize, cellsize,
 		cellsize * x, cellsize * y,
 		cellsize, cellsize
@@ -443,7 +480,7 @@ function addInputListeners(){
 		}
 	};
 	for(var key in canvasListeners){
-		canvas.addEventListener(key, canvasListeners[key]);
+		canvases[0].addEventListener(key, canvasListeners[key]);
 	}
 
 	bodyListeners = {
@@ -464,7 +501,7 @@ function addInputListeners(){
 
 function removeInputListeners(){
 	for(var key in canvasListeners){
-		canvas.removeEventListener(key, canvasListeners[key]);
+		canvases[0].removeEventListener(key, canvasListeners[key]);
 	}
 	for(var key in bodyListeners){
 		document.body.removeEventListener(key, bodyListeners[key]);
@@ -472,7 +509,7 @@ function removeInputListeners(){
 }
 
 function updateMouseCoords(evt){
-	var rect = canvas.getBoundingClientRect(); // cache this?
+	var rect = canvases[0].getBoundingClientRect(); // cache this?
 	var size = Math.min(rect.width, rect.height);
 	var subx = 0;
 	var suby = 0;
@@ -485,5 +522,12 @@ function updateMouseCoords(evt){
 	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * screensize);
 }
 
+exports.help = function(){
+	help.print();
+};
+
 utils.makeGlobal(math);
 utils.makeGlobal(exports);
+
+help.hello();
+help.print();
