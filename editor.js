@@ -88,7 +88,7 @@ function mousemovehandler(forceMouseDown){
 			mapPanX = min(128,mapPanX);
 			mapPanY = min(32,mapPanY);*/
 			dirty = true;
-		} else if((forceMouseDown || mousebtn(1)) && mousey() < 96 && mousey() > 8){
+		} else if((forceMouseDown || mousebtn(1)) && mousey() < 89 && mousey() > 8){
 			mset(
 				flr((mousex() - mapPanX) / 8),
 				flr((mousey() - mapPanY) / 8),
