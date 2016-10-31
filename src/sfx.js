@@ -1,3 +1,5 @@
+var utils = require('./utils');
+
 var context = new createAudioContext();
 var masterGain = context.createGain();
 masterGain.gain.value = 1;
@@ -36,14 +38,16 @@ for(var j=0; j<4; j++){
 	}
 }
 
-var effects = [
-	{
-		types: ['sine','sawtooth','triangle','sine'],
-		frequencies: [100,200,300,200],
-		volumes: [1,0.8,0.5,1],
+var maxEffects = 64;
+var effects = [];
+for(var i=0; i<maxEffects; i++){
+	effects.push({
+		types: utils.zeros(maxEffects),
+		frequencies: utils.zeros(maxEffects),
+		volumes: utils.zeros(maxEffects),
 		speed: 1
-	}
-];
+	});
+}
 
 function createAudioContext(desiredSampleRate) {
 	var AudioCtor = window.AudioContext || window.webkitAudioContext;
@@ -68,15 +72,15 @@ function createAudioContext(desiredSampleRate) {
 
 function play(channel, types, frequencies, volumes, speed, offset){
 	var i,j;
-	var osc = channel.oscillators[types[offset+0]];
-	var gain = channel.gains[types[offset+0]];
+	var osc = channel.oscillators[oscillatorTypes[types[offset+0]]];
+	var gain = channel.gains[oscillatorTypes[types[offset+0]]];
 	gain.gain.value = volumes[offset+0];
 	osc.frequency.value = frequencies[offset+0];
 
 	var len = (types.length - offset) / speed;
 	var currentTime = context.currentTime;
 	for(i=offset; i<types.length; i++){
-		var type = types[i];
+		var type = oscillatorTypes[types[i]];
 		osc = channel.oscillators[type];
 
 		var startTime = currentTime + (len / types.length) * i;

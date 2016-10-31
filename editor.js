@@ -1,6 +1,8 @@
 var mode = 0;
+var numModes = 3;
 var SPRITE = 0;
 var MAP = 1;
+var SFX = 2;
 
 var selectedSprite = 0;
 var spritePage = 0;
@@ -126,6 +128,7 @@ function clickhandler(){
 		// map
 	}
 
+	// Sprite select
 	if(mode === SPRITE || mode === MAP){
 		if(my>=96){
 			var spriteX = flr(mx / 8);
@@ -139,9 +142,9 @@ function clickhandler(){
 		}
 	}
 
-	// Click the upper left corner
+	// Click the upper left corner - switch mode
 	if(inrect(mx,my,0,0,32,8)){
-		mode = (mode + 1) % 2;
+		mode = (mode + 1) % numModes;
 		dirty = true;
 	}
 }
@@ -170,17 +173,20 @@ function _draw(){
 	dirty = false;
 
 	rectfill(0, 0, 128, 128, 7);
-	if(mode === 0){
+	if(mode === SPRITE){
 		drawviewport(offsetX,offsetY,scaleX,scaleY);
 		drawsprites(0,96);
 		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
 		drawbuttons(buttonsX, buttonsY);
 		drawflags(flagsX,flagsY,fget(selectedSprite));
-	} else {
+	} else if(mode === MAP){
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		drawsprites(0,96);
 		drawbuttons(buttonsX, buttonsY);
+	} else if(mode === SFX){
+		drawpitches(0, 14, 64);
 	}
+
 	drawtop();
 	canvas(1);
 	cls();
@@ -194,6 +200,7 @@ function drawtop(){
 	switch(mode){
 		case SPRITE: modeText = 'SPRITE'; break;
 		case MAP: modeText = 'MAP'; break;
+		case SFX: modeText = 'SFX'; break;
 	}
 	print(modeText, 1, 1, 15);
 }
@@ -285,6 +292,15 @@ function drawpalette(x, y, sx, sy){
 	}
 }
 
+function drawpitches(x, y, height){
+	for(var i=0; i<32; i++){
+		var x0 = x + i * 4 + 1;
+		var y0 = y + height - 1;
+		var pitch = flr(rnd(height));
+		rectfill(x0, y0 - pitch, x0 + 1, y0, 1);
+	}
+}
+
 window.onkeyup = function(evt){
 	keysdown[evt.keyCode] = false;
 };
@@ -293,7 +309,7 @@ window.onkeydown = function(evt){
 	keysdown[evt.keyCode] = true;
 	var key = String.fromCharCode(evt.keyCode).toLowerCase();
 	switch(key){
-		case 's': mode = mode ? 0 : 1; break;
+		case 's': mode = (++mode) % numModes; break;
 	}
 	dirty = true;
 };
