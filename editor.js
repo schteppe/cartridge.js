@@ -5,6 +5,7 @@ var MAP = 1;
 var SFX = 2;
 
 var selectedSprite = 0;
+var currentSoundEffect = 0;
 var spritePage = 0;
 var color = 8;
 var offsetX = 1;
@@ -61,7 +62,7 @@ function ssx(n){ return n % 16; }
 function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
 
 function mousemovehandler(forceMouseDown){
-	if(mode === 0){
+	if(mode === SPRITE){
 		if(mousebtn(1) || forceMouseDown){
 			var x = flr((mousex()-offsetX) / scaleX);
 			var y = flr((mousey()-offsetY) / scaleY);
@@ -76,7 +77,7 @@ function mousemovehandler(forceMouseDown){
 				dirty = true;
 			}
 		}
-	} else {
+	} else if(mode === MAP) {
 		if(keysdown[32] || mousebtn(2)){
 			var dx = mousex() - lastmx;
 			var dy = mousey() - lastmy;
@@ -97,6 +98,30 @@ function mousemovehandler(forceMouseDown){
 				selectedSprite
 			);
 			dirty = true;
+		}
+	} else if(mode === SFX){
+		if(mousebtn(1) || forceMouseDown){
+			var n = flr(mousex() / 128 * 32);
+			var pitch = flr((64 - mousey() + 14) / 64 * 255);
+
+			// Within editing sprite?
+			if(mid(0,n,32) === n && mid(0,pitch,255) === pitch){
+				afset(
+					currentSoundEffect,
+					n,
+					pitch
+				);
+				avset(
+					currentSoundEffect,
+					n,
+					255
+				);
+				asset(
+					currentSoundEffect,
+					20
+				);
+				dirty = true;
+			}
 		}
 	}
 }
@@ -296,7 +321,7 @@ function drawpitches(x, y, height){
 	for(var i=0; i<32; i++){
 		var x0 = x + i * 4 + 1;
 		var y0 = y + height - 1;
-		var pitch = flr(rnd(height));
+		var pitch = afget(currentSoundEffect,i) / 255 * height;
 		rectfill(x0, y0 - pitch, x0 + 1, y0, 1);
 	}
 }
@@ -310,6 +335,7 @@ window.onkeydown = function(evt){
 	var key = String.fromCharCode(evt.keyCode).toLowerCase();
 	switch(key){
 		case 's': mode = (++mode) % numModes; break;
+		case ' ': if(mode === SFX) sfx(currentSoundEffect); break;
 	}
 	dirty = true;
 };

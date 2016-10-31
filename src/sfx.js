@@ -1,5 +1,8 @@
 var utils = require('./utils');
 
+var minFrequency = 0;
+var maxFrequency = 1000;
+
 var context = new createAudioContext();
 var masterGain = context.createGain();
 masterGain.gain.value = 1;
@@ -74,8 +77,8 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	var i,j;
 	var osc = channel.oscillators[oscillatorTypes[types[offset+0]]];
 	var gain = channel.gains[oscillatorTypes[types[offset+0]]];
-	gain.gain.value = volumes[offset+0];
-	osc.frequency.value = frequencies[offset+0];
+	gain.gain.value = volumes[offset+0] / 255;
+	osc.frequency.value = frequencies[offset+0] / 255 * (maxFrequency - minFrequency) + minFrequency;
 
 	var len = (types.length - offset) / speed;
 	var currentTime = context.currentTime;
@@ -91,8 +94,8 @@ function play(channel, types, frequencies, volumes, speed, offset){
 			if(oscillatorTypes[j] !== type){
 				gain.gain.setValueAtTime(0, startTime);
 			} else {
-				osc.frequency.setValueAtTime(frequencies[i], startTime);
-				gain.gain.setValueAtTime(volumes[i], startTime);
+				osc.frequency.setValueAtTime(frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency, startTime);
+				gain.gain.setValueAtTime(volumes[i] / 255, startTime);
 			}
 		}
 	}
@@ -106,6 +109,22 @@ function play(channel, types, frequencies, volumes, speed, offset){
 
 	channel.occupiedUntil = endTime;
 }
+
+// Speed is 0 to 255
+exports.asset = function(n, speed){ effects[n].speed = speed; };
+exports.asget = function(n){ return effects[n].speed; };
+
+// volume is 0 to 255
+exports.avset = function(n, offset, volume){ effects[n].volumes[offset] = volume; };
+exports.avget = function(n, offset){ return effects[n].volumes[offset]; };
+
+// frequency is 0 to 255
+exports.afset = function(n, offset, frequency){ effects[n].frequencies[offset] = frequency; };
+exports.afget = function(n, offset){ return effects[n].frequencies[offset]; };
+
+// wave is 0,1,2,3
+exports.awset = function(n, offset, waveform){ effects[n].types[offset] = waveform; };
+exports.awget = function(n, offset){ return effects[n].types[offset]; };
 
 exports.sfx = function(n, channelIndex, offset){
 	channelIndex = channelIndex !== undefined ? channelIndex : -1;
