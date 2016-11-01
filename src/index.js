@@ -49,6 +49,7 @@ var defaultColor = 0;
 var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
+var mapDirty = true; // TODO: dirtiness per cell
 
 exports.cartridge = function(options){
 	screensizeX = options.width !== undefined ? options.width : 128;
@@ -387,6 +388,8 @@ exports.mget = function mget(x, y){
 };
 
 exports.mset = function mset(x, y, i){
+	if(mget(x,y) === i) return;
+
 	mapData[y * mapSizeX + x] = i;
 	mapDirty = true;
 };
