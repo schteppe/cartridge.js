@@ -10,19 +10,9 @@ var spritePage = 0;
 var color = 8;
 var offsetX = 1;
 var offsetY = 8;
-var scaleX = 9;
-var scaleY = 9;
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
-var paletteX = 79;
-var paletteY = 8;
-var paletteScaleX = 12;
-var paletteScaleY = 12;
-var flagsX = paletteX;
-var flagsY = paletteY+paletteScaleY*4+1;
-var buttonsX = 72;
-var buttonsY = 96-8+1;
 var keysdown = {};
 
 var mapPanX = 0;
@@ -33,6 +23,8 @@ cartridge({
 	layers: 2,
 	width: 128,
 	height: 128,
+	cellwidth: 8,
+	cellheight: 8,
 	palette: [
 		0x000000, // 0
 		0x000053, // 1
@@ -56,6 +48,17 @@ cartridge({
 	]
 });
 
+var scaleX = flr((width() * 0.5) / cellwidth());
+var scaleY = flr((height() * 0.5) / cellheight());
+var paletteScaleX = flr((width() * 0.4) / 4);
+var paletteScaleY = flr((height() * 0.4) / 4);
+var paletteX = width() - paletteScaleX * 4 - 1;
+var paletteY = 8;
+var flagsX = paletteX;
+var flagsY = paletteY + paletteScaleY * 4 + 1;
+var buttonsX = width() - 56;
+var buttonsY = height() - 4 * cellheight() - 7;
+
 document.body.onresize = document.body.mozfullscreenchange = function(){
 	fit();
 };
@@ -70,10 +73,10 @@ function mousemovehandler(forceMouseDown){
 			var y = flr((mousey()-offsetY) / scaleY);
 
 			// Within editing sprite?
-			if(x < 8 && x >= 0 && y < 8 && y >= 0){
+			if(x < cellwidth() && x >= 0 && y < cellheight() && y >= 0){
 				sset(
-					ssx(selectedSprite)*8 + x,
-					ssy(selectedSprite)*8 + y,
+					ssx(selectedSprite) * cellwidth() + x,
+					ssy(selectedSprite) * cellheight() + y,
 					color
 				);
 				dirty = true;
@@ -95,8 +98,8 @@ function mousemovehandler(forceMouseDown){
 			dirty = true;
 		} else if((forceMouseDown || mousebtn(1)) && mousey() < 89 && mousey() > 8){
 			mset(
-				flr((mousex() - mapPanX) / 8),
-				flr((mousey() - mapPanY) / 8),
+				flr((mousex() - mapPanX) / cellwidth()),
+				flr((mousey() - mapPanY) / cellheight()),
 				selectedSprite
 			);
 			dirty = true;
@@ -157,9 +160,10 @@ function clickhandler(){
 
 	// Sprite select
 	if(mode === SPRITE || mode === MAP){
-		if(my>=96){
-			var spriteX = flr(mx / 8);
-			var spriteY = spritePage * 4 + flr((my-96) / 8);
+		var spritesHeight = height() - cellheight() * 4;
+		if(my >= height() - cellheight() * 4){
+			var spriteX = flr(mx / cellwidth());
+			var spriteY = spritePage * 4 + flr((my-spritesHeight) / cellheight());
 			selectedSprite = spriteX + spriteY * 16;
 			dirty = true;
 		} else if(inrect(mx,my,buttonsX,buttonsY,4*14,10)){
@@ -202,13 +206,13 @@ function _draw(){
 	rectfill(0, 0, width(), height(), 7);
 	if(mode === SPRITE){
 		drawviewport(offsetX,offsetY,scaleX,scaleY);
-		drawsprites(0,96);
+		drawsprites(0,height() - cellheight() * 4);
 		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
 		drawbuttons(buttonsX, buttonsY);
 		drawflags(flagsX,flagsY,fget(selectedSprite));
 	} else if(mode === MAP){
 		map(0, 0, mapPanX, mapPanY, 128, 32);
-		drawsprites(0,96);
+		drawsprites(0,height() - cellheight() * 4);
 		drawbuttons(buttonsX, buttonsY);
 	} else if(mode === SFX){
 		drawpitches(0, 14, 64);
@@ -265,10 +269,10 @@ function drawmouse(x,y){
 }
 
 function drawviewport(offsetX, offsetY, scaleX, scaleY){
-	for(var i=0; i<8; i++){
-		for(var j=0; j<8; j++){
-			var x = (ssx(selectedSprite) * 8 + i) % width();
-			var y = (ssy(selectedSprite) * 8 + j) % height();
+	for(var i=0; i<cellwidth(); i++){
+		for(var j=0; j<cellheight(); j++){
+			var x = (ssx(selectedSprite) * cellwidth() + i) % width();
+			var y = (ssy(selectedSprite) * cellheight() + j) % height();
 			var col = sget(x, y);
 			rectfill(
 				offsetX + i * scaleX,
@@ -286,17 +290,17 @@ function drawsprites(offsetX, offsetY){
 	var n=spritePage*4*16;
 	for(var j=0; j<4; j++){
 		for(var i=0; i<16; i++){
-			spr(n, i*8+offsetX, j*8+offsetY);
+			spr(n, i*cellwidth()+offsetX, j*cellheight()+offsetY);
 			n++;
 		}
 	}
 	// Rectangle around the current editing sprite
 	if(ssy(selectedSprite)/4 >= spritePage && ssy(selectedSprite)/4 < spritePage+1){
-		var x = offsetX + ssx(selectedSprite) * 8;
-		var y = offsetY + ssy(selectedSprite) * 8 - spritePage * 4 * 8;
+		var x = offsetX + ssx(selectedSprite) * cellwidth();
+		var y = offsetY + ssy(selectedSprite) * cellheight() - spritePage * 4 * cellheight();
 		rect(
 			x-1, y-1,
-			x+8, y+8,
+			x+cellwidth(), y+cellheight(),
 			6
 		);
 	}

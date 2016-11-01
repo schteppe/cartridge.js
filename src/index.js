@@ -53,6 +53,8 @@ var loaded = false; // Loaded state
 exports.cartridge = function(options){
 	screensizeX = options.width !== undefined ? options.width : 128;
 	screensizeY = options.height !== undefined ? options.height : 128;
+	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8;
+	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8;
 
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
