@@ -31,6 +31,8 @@ var mapPanY = 0;
 cartridge({
 	containerId: 'container',
 	layers: 2,
+	width: 128,
+	height: 128,
 	palette: [
 		0x000000, // 0
 		0x000053, // 1
@@ -101,7 +103,7 @@ function mousemovehandler(forceMouseDown){
 		}
 	} else if(mode === SFX){
 		if(mousebtn(1) || forceMouseDown){
-			var n = flr(mousex() / 128 * 32);
+			var n = flr(mousex() / width() * 32);
 			var pitch = flr((64 - mousey() + 14) / 64 * 255);
 
 			// Within editing sprite?
@@ -197,7 +199,7 @@ function _draw(){
 	if(!dirty) return;
 	dirty = false;
 
-	rectfill(0, 0, 128, 128, 7);
+	rectfill(0, 0, width(), height(), 7);
 	if(mode === SPRITE){
 		drawviewport(offsetX,offsetY,scaleX,scaleY);
 		drawsprites(0,96);
@@ -220,7 +222,7 @@ function _draw(){
 }
 
 function drawtop(){
-	rectfill(0, 0, 128, 6, 0);
+	rectfill(0, 0, width(), 6, 0);
 	var modeText = '';
 	switch(mode){
 		case SPRITE: modeText = 'SPRITE'; break;
@@ -265,8 +267,8 @@ function drawmouse(x,y){
 function drawviewport(offsetX, offsetY, scaleX, scaleY){
 	for(var i=0; i<8; i++){
 		for(var j=0; j<8; j++){
-			var x = (ssx(selectedSprite) * 8 + i) % 128;
-			var y = (ssy(selectedSprite) * 8 + j) % 128;
+			var x = (ssx(selectedSprite) * 8 + i) % width();
+			var y = (ssy(selectedSprite) * 8 + j) % height();
 			var col = sget(x, y);
 			rectfill(
 				offsetX + i * scaleX,
@@ -280,7 +282,7 @@ function drawviewport(offsetX, offsetY, scaleX, scaleY){
 }
 
 function drawsprites(offsetX, offsetY){
-	rectfill(offsetX, offsetY, 128, 128, 0);
+	rectfill(offsetX, offsetY, width(), height(), 0);
 	var n=spritePage*4*16;
 	for(var j=0; j<4; j++){
 		for(var i=0; i<16; i++){

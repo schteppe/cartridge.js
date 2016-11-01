@@ -7,13 +7,16 @@ var colors = require('./colors');
 var sfx = require('./sfx');
 
 // Constants
-var cellsize = 8; // pixels
-var screensize = 128; // pixels
-var mapSizeX = 128;
-var mapSizeY = 32;
-var maxSprites = 256; // 16x16 sprites
-var spriteSheetSizeX = 128; // 16x8 pixels
-var spriteSheetSizeY = 128; // 16x8 pixels
+var cellsizeX = 8; // pixels
+var cellsizeY = 8; // pixels
+var screensizeX = 128; // pixels
+var screensizeY = 128; // pixels
+var mapSizeX = 128; // cells
+var mapSizeY = 32; // cells
+var spriteSheetSizeX = 16; // sprites
+var spriteSheetSizeY = 16; // sprites
+
+var maxSprites = spriteSheetSizeX * spriteSheetSizeY; // sprites
 
 // DOM elements
 var container;
@@ -48,12 +51,14 @@ transparentColors[0] = true;
 var loaded = false; // Loaded state
 
 exports.cartridge = function(options){
+	screensizeX = options.width !== undefined ? options.width : 128;
+	screensizeY = options.height !== undefined ? options.height : 128;
 
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
 	container.innerHTML = '';
 	for(var i=0; i<numCanvases; i++){
-		container.innerHTML += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensize + '" height="' + screensize + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
+		container.innerHTML += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensizeX + '" height="' + screensizeY + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
 	}
 
 	for(var i=0; i<numCanvases; i++){
@@ -84,11 +89,11 @@ exports.cartridge = function(options){
 	document.getElementsByTagName('head')[0].appendChild(style);
 
 	// Init spritesheet canvas
-	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX, spriteSheetSizeY);
+	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
 	spriteSheetContext = spriteSheetCanvas.getContext('2d');
 
 	// Init map cache
-	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsize, mapSizeY * cellsize);
+	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 
 	// Set main canvas
@@ -161,8 +166,13 @@ function setPalette(p){
 	mapDirty = true;
 }
 
+exports.width = function(){ return screensizeX; };
+exports.height = function(){ return screensizeY; };
+exports.cellwidth = function(){ return cellsizeX; };
+exports.cellheight = function(){ return cellsizeY; };
+
 exports.cls = function(){
-	ctx.clearRect(0,0,screensize,screensize);
+	ctx.clearRect(0,0,screensizeX,screensizeY);
 };
 
 exports.time = function(){
@@ -240,12 +250,12 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 			mapDirty = false;
 		}
 
-		var _sx = cel_x * cellsize; // Clip start
-		var _sy = cel_y * cellsize;
+		var _sx = cel_x * cellsizeX; // Clip start
+		var _sy = cel_y * cellsizeY;
 		var _x = sx; // Draw position
 		var _y = sy;
-		var _swidth = cel_w * cellsize; // Clip end
-		var _sheight = cel_h * cellsize;
+		var _swidth = cel_w * cellsizeX; // Clip end
+		var _sheight = cel_h * cellsizeY;
 		var _width = _swidth; // Width on target canvas
 		var _height = _sheight;
 		ctx.drawImage(mapCacheCanvas,_sx,_sy,_swidth,_sheight,_x,_y,_width,_height);
@@ -256,7 +266,7 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 				var spriteNumber = mget(i, j);
 				var flags = fget(spriteNumber);
 				if((layer & flags) === layer){
-					spr(spriteNumber, sx + i * cellsize, sy + j * cellsize);
+					spr(spriteNumber, sx + i * cellsizeX, sy + j * cellsizeY);
 				}
 			}
 		}
@@ -278,8 +288,8 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
 	flip_y = flip_y !== undefined ? flip_y : false;
-	var sizex = cellsize * w;
-	var sizey = cellsize * h;
+	var sizex = cellsizeX * w;
+	var sizey = cellsizeY * h;
 	ctx.save();
 	ctx.translate(
 		x + (flip_x ? sizex : 0),
@@ -288,7 +298,7 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	ctx.scale(flip_x ? -1 : 1, flip_y ? -1 : 1);
 	ctx.drawImage(
 		spriteSheetCanvas,
-		ssx(n) * cellsize, ssy(n) * cellsize,
+		ssx(n) * cellsizeX, ssy(n) * cellsizeY,
 		sizex, sizey,
 		0, 0,
 		sizex, sizey
@@ -454,13 +464,13 @@ exports.loadjson = loadJSON;
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
-	mapCacheContext.clearRect(x * cellsize, y * cellsize, cellsize, cellsize);
+	mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
-		ssx(n) * cellsize, ssy(n) * cellsize,
-		cellsize, cellsize,
-		cellsize * x, cellsize * y,
-		cellsize, cellsize
+		ssx(n) * cellsizeX, ssy(n) * cellsizeY,
+		cellsizeX, cellsizeY,
+		cellsizeX * x, cellsizeY * y,
+		cellsizeX, cellsizeY
 	);
 }
 
@@ -519,8 +529,8 @@ function updateMouseCoords(evt){
 	} else {
 		suby = (rect.height - size) * 0.5;
 	}
-	_mousex = Math.floor((evt.clientX - rect.left - subx) / size * screensize);
-	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * screensize);
+	_mousex = Math.floor((evt.clientX - rect.left - subx) / size * screensizeX);
+	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * screensizeY);
 }
 
 exports.help = function(){
