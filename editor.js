@@ -121,10 +121,6 @@ function mousemovehandler(forceMouseDown){
 					n,
 					255
 				);
-				asset(
-					currentSoundEffect,
-					20
-				);
 				dirty = true;
 			}
 		}
@@ -185,10 +181,6 @@ function _load(callback){
 	load();
 	callback();
 };
-
-function _init(){}
-
-function _update60(){}
 
 function _draw(){
 	var mx = mousex();

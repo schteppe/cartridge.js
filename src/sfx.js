@@ -48,7 +48,7 @@ for(var i=0; i<maxEffects; i++){
 		types: utils.zeros(maxEffects),
 		frequencies: utils.zeros(maxEffects),
 		volumes: utils.zeros(maxEffects),
-		speed: 1
+		speed: 16
 	});
 }
 

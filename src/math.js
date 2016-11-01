@@ -11,11 +11,11 @@ module.exports = {
 	sqrt: Math.sqrt,
 	mid: function(x,y,z){
 		var m = z;
-		if(x > y && x <= z){
+		if(x >= y && x <= z){
 			m = x;
-		} else if(y > x && y <= z){
+		} else if(y >= x && y <= z){
 			m = y;
-		} else if(z > x && z <= y){
+		} else if(z >= x && z <= y){
 			m = z;
 		}
 		return m;

@@ -160,7 +160,9 @@ exports.cartridge = function(options){
 
 function postLoad(){
 	loaded = true;
-	_init();
+	if(typeof(_init) !== 'undefined'){
+		_init();
+	}
 }
 
 function setPalette(p){
