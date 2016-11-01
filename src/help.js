@@ -10,6 +10,7 @@ exports.hello = function(){
 exports.print = function(){
 	console.log([
 		'download()   Download the contents to a JSON file.',
+		'fullscreen() Enable full screen.',
 		'help()       Print this message.',
 		'load([name]) Load sprites and map from localStorage.',
 		'save([name]) Save sprites and map to localStorage.'
