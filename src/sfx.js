@@ -15,6 +15,10 @@ var oscillatorTypes = [
 	'sawtooth'
 ];
 
+var allTypes = oscillatorTypes.concat([
+	'white'
+]);
+
 var channels = [];
 for(var j=0; j<4; j++){
 	var channel = {
@@ -24,7 +28,7 @@ for(var j=0; j<4; j++){
 	};
 	channels.push(channel);
 
-	// add oscillators and gains to channel
+	// add 4 basic oscillators and gains to channel
 	for(var i=0; i<oscillatorTypes.length; i++){
 		var osc = context.createOscillator();
 		var type = oscillatorTypes[i];
@@ -39,6 +43,15 @@ for(var j=0; j<4; j++){
 		channel.gains[type] = gain;
 		osc.start(context.currentTime);
 	}
+
+	// Add white noise
+	var gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var whiteNoise = createWhiteNoise(gain);
+	channel.oscillators.white = whiteNoise;
+	channel.gains.white = gain;
+	whiteNoise.start(context.currentTime);
 }
 
 var maxEffects = 64;
@@ -75,26 +88,30 @@ function createAudioContext(desiredSampleRate) {
 
 function play(channel, types, frequencies, volumes, speed, offset){
 	var i,j;
-	var osc = channel.oscillators[oscillatorTypes[types[offset+0]]];
-	var gain = channel.gains[oscillatorTypes[types[offset+0]]];
+	var osc = channel.oscillators[allTypes[types[offset+0]]];
+	var gain = channel.gains[allTypes[types[offset+0]]];
 	gain.gain.value = volumes[offset+0] / 255;
-	osc.frequency.value = frequencies[offset+0] / 255 * (maxFrequency - minFrequency) + minFrequency;
+	if(osc.frequency){ // noises dont have frequency
+		osc.frequency.value = frequencies[offset+0] / 255 * (maxFrequency - minFrequency) + minFrequency;
+	}
 
 	var len = (types.length - offset) / speed;
 	var currentTime = context.currentTime;
 	for(i=offset; i<types.length; i++){
-		var type = oscillatorTypes[types[i]];
+		var type = allTypes[types[i]];
 		osc = channel.oscillators[type];
 
 		var startTime = currentTime + (len / types.length) * i;
 
 		// Set other gains to zero
-		for(j=0; j<oscillatorTypes.length; j++){
-			gain = channel.gains[oscillatorTypes[j]];
-			if(oscillatorTypes[j] !== type){
+		for(j=0; j<allTypes.length; j++){
+			gain = channel.gains[allTypes[j]];
+			if(allTypes[j] !== type){
 				gain.gain.setValueAtTime(0, startTime);
 			} else {
-				osc.frequency.setValueAtTime(frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency, startTime);
+				if(osc.frequency){
+					osc.frequency.setValueAtTime(frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency, startTime);
+				}
 				gain.gain.setValueAtTime(volumes[i] / 255, startTime);
 			}
 		}
@@ -102,8 +119,8 @@ function play(channel, types, frequencies, volumes, speed, offset){
 
 	// Set the volume at the end to zero
 	var endTime = currentTime + len;
-	for(j=0; j<oscillatorTypes.length; j++){
-		gain = channel.gains[oscillatorTypes[j]];
+	for(j=0; j<allTypes.length; j++){
+		gain = channel.gains[allTypes[j]];
 		gain.gain.setValueAtTime(0, endTime);
 	}
 
@@ -122,7 +139,7 @@ exports.avget = function(n, offset){ return effects[n].volumes[offset]; };
 exports.afset = function(n, offset, frequency){ effects[n].frequencies[offset] = frequency; };
 exports.afget = function(n, offset){ return effects[n].frequencies[offset]; };
 
-// wave is 0,1,2,3
+// wave is 0,1,2,3,4
 exports.awset = function(n, offset, waveform){ effects[n].types[offset] = waveform; };
 exports.awget = function(n, offset){ return effects[n].types[offset]; };
 
@@ -155,3 +172,20 @@ exports.sfx = function(n, channelIndex, offset){
 
 	return true;
 };
+
+function createWhiteNoise(destination) {
+	var bufferSize = 2 * context.sampleRate,
+		noiseBuffer = context.createBuffer(1, bufferSize, context.sampleRate),
+		output = noiseBuffer.getChannelData(0);
+	for (var i = 0; i < bufferSize; i++) {
+		output[i] = Math.random() * 2 - 1;
+	}
+
+	var whiteNoise = context.createBufferSource();
+	whiteNoise.buffer = noiseBuffer;
+	whiteNoise.loop = true;
+
+	whiteNoise.connect(destination);
+
+	return whiteNoise;
+}

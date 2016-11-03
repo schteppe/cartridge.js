@@ -121,6 +121,11 @@ function mousemovehandler(forceMouseDown){
 					n,
 					255
 				);
+				awset(
+					currentSoundEffect,
+					n,
+					4
+				);
 				dirty = true;
 			}
 		}
