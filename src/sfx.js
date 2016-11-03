@@ -1,5 +1,5 @@
 var utils = require('./utils');
-
+var DFT = require('./DFT').DFT;
 var minFrequency = 0;
 var maxFrequency = 1000;
 
@@ -16,6 +16,7 @@ var oscillatorTypes = [
 ];
 
 var allTypes = oscillatorTypes.concat([
+	'square25',
 	'white'
 ]);
 
@@ -44,8 +45,17 @@ for(var j=0; j<4; j++){
 		osc.start(context.currentTime);
 	}
 
-	// Add white noise
+	// Add square25
 	var gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var square25 = createPulse(gain);
+	channel.oscillators.square25 = square25;
+	channel.gains.square25 = gain;
+	square25.start(context.currentTime);
+
+	// Add white noise
+	gain = context.createGain();
 	gain.gain.value = 0;
 	gain.connect(masterGain);
 	var whiteNoise = createWhiteNoise(gain);
@@ -188,4 +198,20 @@ function createWhiteNoise(destination) {
 	whiteNoise.connect(destination);
 
 	return whiteNoise;
+}
+
+function createPulse(destination){
+	var count = 128;
+	var vals = new Array(count);
+	for (var i = 0; i < count; i++) {
+		var x = i / count;
+		vals[i] = x < 0.25 ? -1 : 1;
+	}
+	var ft = new DFT(vals.length);
+	ft.forward(vals);
+	var hornTable = context.createPeriodicWave(ft.real, ft.imag);
+	osc = context.createOscillator();
+	osc.setPeriodicWave(hornTable);
+	osc.connect(destination);
+	return osc;
 }
