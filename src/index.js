@@ -423,7 +423,13 @@ function toJSON(){
 exports.save = function(key){
 	key = key || 'save';
 	var data = toJSON();
-	localStorage.setItem(key, JSON.stringify(data));
+
+	var idx = key.indexOf('.json');
+	if(idx !== -1){
+		download(key.substr(0,idx));
+	} else {
+		localStorage.setItem(key, JSON.stringify(data));
+	}
 };
 
 exports.load = function(key){
@@ -437,7 +443,7 @@ exports.load = function(key){
 	}
 };
 
-exports.download = function(key){
+function download(key){
 	key = key || 'export';
 	var data = toJSON();
 	var url = URL.createObjectURL(new Blob([JSON.stringify(data)]));
@@ -448,7 +454,7 @@ exports.download = function(key){
 	a.click();
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
-};
+}
 
 function loadJSON(data){
 	for(var i=0; i<spriteFlags.length; i++){
