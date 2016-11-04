@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "Retro game engine",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "dsp.js": "git+https://github.com/corbanbrook/dsp.js.git"
+  },
   "devDependencies": {
     "browserify": "^13.1.1"
   },

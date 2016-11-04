@@ -1,5 +1,6 @@
+var db = require('decibels');
 var utils = require('./utils');
-var DFT = require('./DFT').DFT;
+var DFT = require('dsp.js/dsp').DFT;
 var minFrequency = 0;
 var maxFrequency = 1000;
 
@@ -202,16 +203,23 @@ function createWhiteNoise(destination) {
 
 function createPulse(destination){
 	var count = 128;
-	var vals = new Array(count);
+	var vals2 = [];
 	for (var i = 0; i < count; i++) {
 		var x = i / count;
-		vals[i] = x < 0.25 ? -1 : 1;
+		var val = x < 0.25 ? -1 : 1;
+		vals2.push(val);
 	}
-	var ft = new DFT(vals.length);
-	ft.forward(vals);
-	var hornTable = context.createPeriodicWave(ft.real, ft.imag);
+
+ 	var a = new DFT(vals2.length);
+	a.forward(vals2);
+	var hornTable = context.createPeriodicWave(
+		new Float32Array(a.real), // DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
+		new Float32Array(a.imag)
+	);
+
 	osc = context.createOscillator();
 	osc.setPeriodicWave(hornTable);
 	osc.connect(destination);
+
 	return osc;
 }
