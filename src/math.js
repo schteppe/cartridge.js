@@ -2,6 +2,7 @@ module.exports = {
 	sin: Math.sin,
 	cos: Math.cos,
 	flr: Math.floor,
+	ceil: Math.ceil,
 	rnd: function (x){ return Math.random() * x; },
 	abs: Math.abs,
 	atan2: Math.atan2,

@@ -1,4 +1,3 @@
-var db = require('decibels');
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
 var minFrequency = 0;
@@ -46,7 +45,7 @@ for(var j=0; j<4; j++){
 		osc.start(context.currentTime);
 	}
 
-	// Add square25
+	// Add square25 / pulse
 	var gain = context.createGain();
 	gain.gain.value = 0;
 	gain.connect(masterGain);
