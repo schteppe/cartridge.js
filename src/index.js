@@ -419,14 +419,14 @@ function toJSON(){
 		}
 	}
 
-	for(var n=0; n<32; n++){
+	for(var n=0; n<64; n++){
 		data.sfx[n] = {
 			speed: asget(n),
 			volumes: [],
 			pitches: [],
 			waves: []
 		};
-		for(var offset=0; offset<64; offset++){
+		for(var offset=0; offset<32; offset++){
 			data.sfx[n].volumes.push(avget(n, offset));
 			data.sfx[n].pitches.push(afget(n, offset));
 			data.sfx[n].waves.push(awget(n, offset));
@@ -488,9 +488,9 @@ function loadJSON(data){
 	}
 	setPalette(data.palette);
 
-	for(var n=0; n<32; n++){
+	for(var n=0; n<data.sfx.length; n++){
 		asset(n, data.sfx[n].speed);
-		for(var offset=0; offset<64; offset++){
+		for(var offset=0; offset<data.sfx[n].volumes.length; offset++){
 			avset(n, offset, data.sfx[n].volumes[offset]);
 			afset(n, offset, data.sfx[n].pitches[offset]);
 			awset(n, offset, data.sfx[n].waves[offset]);
