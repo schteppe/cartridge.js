@@ -402,7 +402,8 @@ function toJSON(){
 		map: [],
 		sprites: [],
 		flags: [],
-		palette: palette.slice(0)
+		palette: palette.slice(0),
+		sfx: []
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
@@ -417,6 +418,21 @@ function toJSON(){
 			data.map[j*mapSizeX+i] = mget(i,j);
 		}
 	}
+
+	for(var n=0; n<32; n++){
+		data.sfx[n] = {
+			speed: asget(n),
+			volumes: [],
+			pitches: [],
+			waves: []
+		};
+		for(var offset=0; offset<64; offset++){
+			data.sfx[n].volumes.push(avget(n, offset));
+			data.sfx[n].pitches.push(afget(n, offset));
+			data.sfx[n].waves.push(awget(n, offset));
+		}
+	}
+
 	return data;
 }
 
@@ -471,6 +487,15 @@ function loadJSON(data){
 		}
 	}
 	setPalette(data.palette);
+
+	for(var n=0; n<32; n++){
+		asset(n, data.sfx[n].speed);
+		for(var offset=0; offset<64; offset++){
+			avset(n, offset, data.sfx[n].volumes[offset]);
+			afset(n, offset, data.sfx[n].pitches[offset]);
+			awset(n, offset, data.sfx[n].waves[offset]);
+		}
+	}
 };
 
 exports.loadjson = loadJSON;
