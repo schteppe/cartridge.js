@@ -41,6 +41,7 @@ var _mousex = 0;
 var _mousey = 0;
 var _mousebtns = {};
 var buttonStates = {};
+var buttonStatesPrev = {};
 var keyMap0 = input.defaultKeyMap(1);
 var keyMap1 = input.defaultKeyMap(2);
 var palette;
@@ -142,6 +143,7 @@ exports.cartridge = function(options){
 			_draw();
 		}
 		currentTime = newTime;
+		buttonStatesTick();
 		requestAnimationFrame(render);
 	}
 	requestAnimationFrame(render);
@@ -362,6 +364,24 @@ exports.btn = function btn(i, player){
 	}
 	return !!buttonStates[keyCode];
 };
+
+exports.btnp = function btnp(i, player){
+	player = player !== undefined ? player : 1;
+	var keyCode = 0;
+	if(player === 1){
+		keyCode = keyMap0[i];
+	} else if(player === 2){
+		keyCode = keyMap1[i];
+	}
+	return !!buttonStatesPrev[keyCode];
+};
+
+function buttonStatesTick(){
+	var keys = Object.keys(buttonStates);
+	for(var i=0; i<keys.length; i++){
+		buttonStatesPrev[keys[i]] = buttonStates[keys[i]];
+	}
+}
 
 exports.fullscreen = function fullscreen(){
 	utils.fullscreen(container);
