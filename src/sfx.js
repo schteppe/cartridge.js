@@ -105,13 +105,21 @@ function play(channel, types, frequencies, volumes, speed, offset){
 		osc.frequency.value = frequencies[offset+0] / 255 * (maxFrequency - minFrequency) + minFrequency;
 	}
 
-	var len = (types.length - offset) / speed;
+	// Get the length by looking at the volume values
+	var endPosition = 0;
+	for(i=0; i<volumes.length; i++){
+		if(volumes[i]){
+			endPosition = i;
+		}
+	}
+
+	var len = (endPosition - offset) / speed;
 	var currentTime = context.currentTime;
-	for(i=offset; i<types.length; i++){
+	for(i=offset; i<endPosition; i++){
 		var type = allTypes[types[i]];
 		osc = channel.oscillators[type];
 
-		var startTime = currentTime + (len / types.length) * i;
+		var startTime = currentTime + i / speed;
 
 		// Set other gains to zero
 		for(j=0; j<allTypes.length; j++){
@@ -128,7 +136,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	}
 
 	// Set the volume at the end to zero
-	var endTime = currentTime + len;
+	var endTime = currentTime + (endPosition-offset) / speed;
 	for(j=0; j<allTypes.length; j++){
 		gain = channel.gains[allTypes[j]];
 		gain.gain.setValueAtTime(0, endTime);
@@ -162,15 +170,17 @@ exports.sfx = function(n, channelIndex, offset){
 		return false;
 	}
 
+	var contextTime = context.currentTime;
 	if(channelIndex === -1){
+		// Find good channel
 		for(var i=0; i<channels.length; i++){
 			var candidateIndex = i;
-			if(channels[candidateIndex].occupiedUntil < context.currentTime){
+			if(channels[candidateIndex].occupiedUntil < contextTime){
 				channelIndex = candidateIndex;
 				break;
 			}
 		}
-	} else if(channels[channelIndex].occupiedUntil >= context.currentTime){
+	} else if(channels[channelIndex].occupiedUntil >= contextTime){
 		return false;
 	}
 

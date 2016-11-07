@@ -104,7 +104,7 @@ function Player(){
                     var ty = (cy+1) * ch;
                     var sy0 = y + ch;
                     // sy0 + vy = ty  <=>  vy = ty - sy0
-                    vy = max(-gravity, ty - sy0);
+                    vy = max(-0.5*gravity, ty - sy0);
                 }
             }
         }
