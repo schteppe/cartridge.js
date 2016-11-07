@@ -19,8 +19,7 @@ function Player(){
         var cx0 = flr(x / cw);
         var cy0 = flr(y / ch);
         if(dy !== 0){
-            if((x % cw) === 0) cx0--;
-            for(var i=0; i < w+1; i++){
+            for(var i=0; i < w + ((x % cw) ? 1 : 0); i++){
                 var adjust = dy > 0 ? ch : 0;
                 var checkY = flr((y+dy+adjust) / ch);
                 var checkX = cx0+i;
@@ -30,11 +29,10 @@ function Player(){
             }
         }
         if(dx !== 0){
-            if((y % ch) === 0) cy0--;
-            for(var i=0; i < h+1; i++){
+            for(var i=0; i < h+((y % ch) ? 1 : 0); i++){
                 var adjust = dx > 0 ? cw : 0;
                 var checkY = cy0+i;
-                var checkX = flr((x+dx) / cw);
+                var checkX = flr((x+dx+adjust) / cw);
                 if((groundFlag & fget(mget(checkX,checkY)))){
                     return true;
                 }
@@ -63,12 +61,13 @@ function Player(){
         // Add velocities
         vy += gravity;
 
+        // Clamp velocity to max
         vy = min(1,vy);
 
         vx = 0;
         if (btn(0,playerNumber)) vx -= 1;
         if (btn(1,playerNumber)) vx += 1;
-        if (btn(2,playerNumber) && !btnp(2,playerNumber)){
+        if (btn(2,playerNumber) && !btnp(2,playerNumber) && collidesBelow && !collidesAbove){
             vy = -2;
             if(jumpSfx >= 0){
                 sfx(jumpSfx);
@@ -105,7 +104,7 @@ function Player(){
                     var ty = (cy+1) * ch;
                     var sy0 = y + ch;
                     // sy0 + vy = ty  <=>  vy = ty - sy0
-                    vy = max(0, ty - sy0);
+                    vy = max(-gravity, ty - sy0);
                 }
             }
         }
