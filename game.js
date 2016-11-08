@@ -5,32 +5,33 @@ function Player(){
     var gravity = 0.1;
     var playerNumber = 1;
     var groundFlag = 1 << 0;
-    var collidesBelow = false;
+    var collidesBelow = false, collidesAbove = false, collidesLeft = false, collidesRight = false;
     var cw = cellwidth();
     var ch = cellheight();
     var jumpSfx = 0;
     var direction = -1;
 
     function collides(x,y,dx,dy){
+        var adjust, checkX, checkY, i;
         x = flr(x);
         y = flr(y);
         var cx0 = flr(x / cw);
         var cy0 = flr(y / ch);
         if(dy !== 0){
-            for(var i=0; i < w + ((x % cw) ? 1 : 0); i++){
-                var adjust = dy > 0 ? ch : 0;
-                var checkY = flr((y+dy+adjust) / ch);
-                var checkX = cx0+i;
+            for(i = 0; i < w + ((x % cw) ? 1 : 0); i++){
+                adjust = dy > 0 ? ch : 0;
+                checkY = flr((y+dy+adjust) / ch);
+                checkX = cx0+i;
                 if((groundFlag & fget(mget(checkX,checkY)))){
                     return true;
                 }
             }
         }
         if(dx !== 0){
-            for(var i=0; i < h+((y % ch) ? 1 : 0); i++){
-                var adjust = dx > 0 ? cw : 0;
-                var checkY = cy0+i;
-                var checkX = flr((x+dx+adjust) / cw);
+            for(i = 0; i < h+((y % ch) ? 1 : 0); i++){
+                adjust = dx > 0 ? cw : 0;
+                checkY = cy0+i;
+                checkX = flr((x+dx+adjust) / cw);
                 if((groundFlag & fget(mget(checkX,checkY)))){
                     return true;
                 }
