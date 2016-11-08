@@ -10,7 +10,6 @@ function Player(){
     var ch = cellheight();
     var jumpSfx = 0;
     var direction = -1;
-    var frames = 0;
 
     function collides(x,y,dx,dy){
         x = flr(x);
@@ -103,7 +102,7 @@ function Player(){
                     var ty = (cy+1) * ch;
                     var sy0 = y + ch;
                     // sy0 + vy = ty  <=>  vy = ty - sy0
-                    vy = max(-0.5*gravity, ty - sy0);
+                    vy = max(-0.5*gravity, ty - sy0); // not zero, to overcome the situation when precisely overcoming an edge
                 }
             }
         }
@@ -157,6 +156,6 @@ function _draw(){
     player.update();
     camera(64-player.x(), 0);
 	cls();
-	map(0, 0, 0, 0, 100, 32, 0);
+	map(0, 0, 0, 0, 128, 32, 0);
     player.draw();
 }
