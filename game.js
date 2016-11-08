@@ -1,10 +1,7 @@
 function Player(){
-    var w = 1; // Player size in cells
-    var h = 1;
-    var x = 0; // relative to map origin
-    var y = 0;
-    var vx = 0;
-    var vy = 0;
+    var w = 1, h = 1; // Player size in cells
+    var x = 0, y = 0; // relative to map origin
+    var vx = 0, vy = 0;
     var gravity = 0.1;
     var playerNumber = 1;
     var groundFlag = 1 << 0;
@@ -12,6 +9,8 @@ function Player(){
     var cw = cellwidth();
     var ch = cellheight();
     var jumpSfx = 0;
+    var direction = -1;
+    var frames = 0;
 
     function collides(x,y,dx,dy){
         x = flr(x);
@@ -123,10 +122,18 @@ function Player(){
         // Add
         x += vx;
         y += vy;
+
+        if(vx !== 0){
+            direction = sgn(vx);
+        }
     };
 
     this.x = function(){ return flr(x); };
     this.y = function(){ return flr(y); };
+
+	this.draw = function(){
+        spr(1+flr(abs(vx))*flr(time()*20)%2, this.x(), this.y(), 1, 1, direction < 0, false);
+    };
 }
 
 cartridge({ containerId: 'container' });
@@ -139,14 +146,17 @@ var player = new Player();
 function _init(){
     load('game');
 }
+
 function _update(){
 }
+
 function _update60(){
 }
 
 function _draw(){
     player.update();
+    camera(64-player.x(), 0);
 	cls();
 	map(0, 0, 0, 0, 100, 32, 0);
-	spr(1, player.x(), player.y());
+    player.draw();
 }

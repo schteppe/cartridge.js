@@ -179,7 +179,7 @@ exports.cellwidth = function(){ return cellsizeX; };
 exports.cellheight = function(){ return cellsizeY; };
 
 exports.cls = function(){
-	ctx.clearRect(0,0,screensizeX,screensizeY);
+	ctx.clearRect(-camX,-camY,screensizeX,screensizeY);
 };
 
 exports.time = function(){
@@ -428,9 +428,9 @@ function toJSON(){
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
 	}
-	for(var i=0; i<spriteSheetSizeX; i++){
-		for(var j=0; j<spriteSheetSizeY; j++){
-			data.sprites[j*spriteSheetSizeX+i] = sget(i,j);
+	for(var i=0; i<spriteSheetSizeX*cellwidth(); i++){
+		for(var j=0; j<spriteSheetSizeY*cellheight(); j++){
+			data.sprites[j*spriteSheetSizeX*cellwidth()+i] = sget(i,j);
 		}
 	}
 	for(var i=0; i<mapSizeX; i++){
@@ -496,9 +496,9 @@ function loadJSON(data){
 	for(var i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
-	for(var i=0; i<spriteSheetSizeX; i++){
-		for(var j=0; j<spriteSheetSizeY; j++){
-			sset(i,j,data.sprites[j*spriteSheetSizeX+i]);
+	for(var i=0; i<spriteSheetSizeX*cellwidth(); i++){
+		for(var j=0; j<spriteSheetSizeY*cellheight(); j++){
+			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i]);
 		}
 	}
 	for(var i=0; i<mapSizeX; i++){
