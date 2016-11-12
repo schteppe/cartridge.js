@@ -73,6 +73,8 @@ function Player(){
             }
         }
 
+        // Fall down into pit
+
         // Clamp motion
         var cx = flr((x+vx) / cw);
         var cy = flr((y+vy) / ch);
@@ -80,12 +82,14 @@ function Player(){
         var nx = ceil((x+vx+w*cw) / cw) - cx;
 
         var ny = ceil((y+h*ch) / ch) - cy;
+        var right = false;
         for(i=0; i < ny; i++){
             // Check tile(s) to the right
             if(vx > 0 && groundFlag & fget(mget(cx+1,cy+i))){
                 tx = (cx+1) * ch;
                 sx0 = x + ch;
                 vx = max(0, tx - sx0);
+                right = true;
             }
 
             // Check tile(s) to the left
@@ -93,6 +97,7 @@ function Player(){
                 tx = cx * ch;
                 sx0 = x - ch;
                 vx = min(0, tx - sx0);
+                right = true;
             }
         }
 
@@ -103,7 +108,7 @@ function Player(){
                     var ty = (cy+1) * ch;
                     var sy0 = y + ch;
                     // sy0 + vy = ty  <=>  vy = ty - sy0
-                    vy = max(-0.5*gravity, ty - sy0); // not zero, to overcome the situation when precisely overcoming an edge
+                    vy = max(right ? -0.3*gravity : 0, ty - sy0); // not zero, to overcome the situation when precisely overcoming an edge
                 }
             }
         }
