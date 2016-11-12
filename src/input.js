@@ -20,43 +20,71 @@ function defaultKeyMap(player){
 	}
 
 	return null;
-};
+}
 
-var buttonStates = {};
-var buttonStatesPrev = {};
+var keyboardStates = {};
+var keyboardStatesPrev = {};
 var keyMap0 = defaultKeyMap(1);
 var keyMap1 = defaultKeyMap(2);
 var _mousex = 0;
 var _mousey = 0;
 var _mousebtns = {};
+var gamepads = [];
+var stickSensitivity = 0.1;
+
+function buttonPressed(b) {
+  if (typeof(b) == "object") {
+    return b.pressed;
+  }
+  return b == 1.0;
+}
 
 exports.btn = function btn(i, player){
 	player = player !== undefined ? player : 1;
 	var keyCode = 0;
-	if(player === 1){
-		keyCode = keyMap0[i];
-	} else if(player === 2){
-		keyCode = keyMap1[i];
+
+	if(player === 1 || player === 2){
+		if(player === 1){
+			keyCode = keyMap0[i];
+		} else if(player === 2){
+			keyCode = keyMap1[i];
+		}
+		return !!keyboardStates[keyCode];
+	} else if(player === 3){
+		if(gamepads[0]){
+			if(i === 4) return buttonPressed(gamepads[0].buttons[0]);
+			else if(i === 5) return buttonPressed(gamepads[0].buttons[1]);
+			else if(i === 0) return gamepads[0].axes[0] < -stickSensitivity;
+			else if(i === 1) return gamepads[0].axes[0] > stickSensitivity;
+			else if(i === 2) return gamepads[0].axes[1] < -stickSensitivity;
+			else if(i === 3) return gamepads[0].axes[1] > stickSensitivity;
+		}
 	}
-	return !!buttonStates[keyCode];
 };
 
 exports.btnp = function btnp(i, player){
 	player = player !== undefined ? player : 1;
 	var keyCode = 0;
-	if(player === 1){
-		keyCode = keyMap0[i];
-	} else if(player === 2){
-		keyCode = keyMap1[i];
+
+	if(player === 1 || player === 2){
+		if(player === 1){
+			keyCode = keyMap0[i];
+		} else if(player === 2){
+			keyCode = keyMap1[i];
+		}
+		return !!keyboardStatesPrev[keyCode];
+	} else if(player === 3){
+		// TODO
+		return false;
 	}
-	return !!buttonStatesPrev[keyCode];
 };
 
 exports.update = function (){
-	var keys = Object.keys(buttonStates);
+	var keys = Object.keys(keyboardStates);
 	for(var i=0; i<keys.length; i++){
-		buttonStatesPrev[keys[i]] = buttonStates[keys[i]];
+		keyboardStatesPrev[keys[i]] = keyboardStates[keys[i]];
 	}
+	updateGamepads();
 };
 
 exports.init = function(canvases){
@@ -102,10 +130,10 @@ function addInputListeners(canvases){
 
 	bodyListeners = {
 		keydown: function(e){
-			buttonStates[e.keyCode] = 1;
+			keyboardStates[e.keyCode] = 1;
 		},
 		keyup: function(e){
-			buttonStates[e.keyCode] = 0;
+			keyboardStates[e.keyCode] = 0;
 		},
 		mousemove: function(evt){
 			updateMouseCoords(evt);
@@ -137,6 +165,10 @@ function updateMouseCoords(evt){
 	}
 	_mousex = Math.floor((evt.clientX - rect.left - subx) / size * 128);
 	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * 128);
+}
+
+function updateGamepads() {
+  gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
 }
 
 exports.global = {
