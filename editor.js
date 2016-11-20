@@ -26,6 +26,7 @@ cartridge({
 	cellwidth: 8,
 	cellheight: 8,
 	palette: [
+		/*
 		0x000000, // 0
 		0x000053, // 1
 		0x7e2500, // 2
@@ -45,6 +46,29 @@ cartridge({
 		0x83769c, // 13
 		0xff77a8, // 14
 		0xffffff  // 15
+		*/
+
+		0x000000, // 0
+		0x0829fc, // 1
+		0x7e2500, // 2
+		0x008000, // 3
+
+		0xab5236, // 4
+		0x5f574f, // 5
+		0xc2c3c7, // 6
+		0xfff1e8, // 7
+
+		0xe40405, // 8
+		0xffa300, // 9
+		0xfff024, // 10
+		0x00e756, // 11
+
+		0x8bf9fc, // 12
+		0x83769c, // 13
+		0xff8e7d, // 14
+		0xffffff  // 15
+
+
 	]
 });
 
@@ -337,8 +361,34 @@ window.onkeydown = function(evt){
 	keysdown[evt.keyCode] = true;
 	var key = String.fromCharCode(evt.keyCode).toLowerCase();
 	switch(key){
-		case 's': mode = (++mode) % numModes; break;
 		case ' ': if(mode === SFX) sfx(currentSoundEffect); break;
+		case 's': save('game.json'); break;
+		case 'o': openfile(); break;
 	}
 	dirty = true;
 };
+
+function readSingleFile(e) {
+  var file = e.target.files[0];
+  if (!file) {
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+		var json = JSON.parse(e.target.result);
+		loadjson(json);
+		dirty = true;
+	} catch(err){
+		console.error("Could not open file.");
+	}
+  };
+  reader.readAsText(file);
+}
+
+function openfile(){
+	var input = document.createElement('input');
+	input.type = 'file';
+	input.addEventListener('change', readSingleFile, false);
+	input.click();
+}
