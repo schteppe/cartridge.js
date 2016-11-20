@@ -67,8 +67,6 @@ cartridge({
 		0x83769c, // 13
 		0xff8e7d, // 14
 		0xffffff  // 15
-
-
 	]
 });
 
@@ -82,6 +80,16 @@ var flagsX = paletteX;
 var flagsY = paletteY + paletteScaleY * 4 + 1;
 var buttonsX = width() - 56;
 var buttonsY = height() - 4 * cellheight() - 7;
+
+var pitchesX = 0;
+var pitchesY = 14;
+var pitchesW = width();
+var pitchesH = flr(height() / 2);
+
+var volumesX = pitchesX;
+var volumesY = pitchesY + pitchesH + 2;
+var volumesW = pitchesW;
+var volumesH = flr(height() / 6);
 
 document.body.onresize = document.body.mozfullscreenchange = function(){
 	fit();
@@ -131,19 +139,15 @@ function mousemovehandler(forceMouseDown){
 	} else if(mode === SFX){
 		if(mousebtn(1) || forceMouseDown){
 			var n = flr(mousex() / width() * 32);
-			var pitch = flr((64 - mousey() + 14) / 64 * 255);
+			var pitch = flr((pitchesH - mousey() + pitchesY) / pitchesH * 255);
+			var vol = flr((volumesH - mousey() + volumesY) / volumesH * 255);
 
-			// Within editing sprite?
+			// Within editing area?
 			if(mid(0,n,32) === n && mid(0,pitch,255) === pitch){
 				afset(
 					currentSoundEffect,
 					n,
 					pitch
-				);
-				avset(
-					currentSoundEffect,
-					n,
-					255
 				);
 				awset(
 					currentSoundEffect,
@@ -151,6 +155,12 @@ function mousemovehandler(forceMouseDown){
 					4
 				);
 				dirty = true;
+			} else if(mid(0,n,32) === n && mid(0,vol,255) === vol){
+				avset(
+					currentSoundEffect,
+					n,
+					vol
+				);
 			}
 		}
 	}
@@ -236,7 +246,8 @@ function _draw(){
 		drawsprites(0,height() - cellheight() * 4);
 		drawbuttons(buttonsX, buttonsY);
 	} else if(mode === SFX){
-		drawpitches(0, 14, 64);
+		drawpitches(pitchesX, pitchesY, pitchesW, pitchesH, 0);
+		drawpitches(volumesX, volumesY, volumesW, volumesH, 1);
 	}
 
 	drawtop();
@@ -344,12 +355,14 @@ function drawpalette(x, y, sx, sy){
 	}
 }
 
-function drawpitches(x, y, height){
+function drawpitches(x, y, w, h, source){
+	var pitchWidth = flr(w / 32);
 	for(var i=0; i<32; i++){
-		var x0 = x + i * 4 + 1;
-		var y0 = y + height - 1;
-		var pitch = afget(currentSoundEffect,i) / 255 * height;
-		rectfill(x0, y0 - pitch, x0 + 1, y0, 1);
+		var x0 = x + i * pitchWidth + 1;
+		var y0 = y + h - 1;
+		var value = source === 1 ? (avget(currentSoundEffect,i) / 255) : (afget(currentSoundEffect,i) / 255);
+		var pitch = flr(value * h);
+		rectfill(x0, y0 - pitch, x0 + pitchWidth - 2, y0, 1);
 	}
 }
 
