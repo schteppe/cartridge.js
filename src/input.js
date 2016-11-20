@@ -163,19 +163,25 @@ function updateMouseCoords(evt){
 	} else {
 		suby = (rect.height - size) * 0.5;
 	}
-	_mousex = Math.floor((evt.clientX - rect.left - subx) / size * 128);
-	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * 128);
+	_mousex = (evt.clientX - rect.left - subx) / size;
+	_mousey = (evt.clientY - rect.top - suby) / size;
 }
 
 function updateGamepads() {
   gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
 }
 
+exports.mousexNormalized = function(){
+	return _mousex;
+};
+
+exports.mouseyNormalized = function(){
+	return _mousey;
+};
+
 exports.global = {
 	btn: exports.btn,
 	btnp: exports.btnp,
-	mousex: exports.mousex,
-	mousey: exports.mousey,
 	mousebtn: exports.mousebtn,
 	click: exports.click
 };
