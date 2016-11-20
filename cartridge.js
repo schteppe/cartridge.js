@@ -2758,11 +2758,13 @@ exports.pget = function(x, y){
 };
 
 // Set pixel color
+// TODO: draw to a separate canvas and "flush" it when another command is executed
 exports.pset = function(x, y, col){
 	rectfill(x,y,x+1,y+1,col);
 };
 
 // Get spritesheet pixel color
+// TODO: cache the image data and invalidate when the canvas is drawn to
 exports.sget = function(x, y){
 	var data = spriteSheetContext.getImageData(x, y, x+1, y+1).data;
 	var col = utils.rgbToDec(data[0], data[1], data[2]);
@@ -2928,6 +2930,14 @@ function updateMapCacheCanvas(x,y){
 
 exports.help = function(){
 	help.print();
+};
+
+exports.mousex = function(){
+	return Math.floor(input.mousexNormalized() * screensizeX);
+};
+
+exports.mousey = function(){
+	return Math.floor(input.mouseyNormalized() * screensizeY);
 };
 
 utils.makeGlobal(math);
@@ -3103,19 +3113,25 @@ function updateMouseCoords(evt){
 	} else {
 		suby = (rect.height - size) * 0.5;
 	}
-	_mousex = Math.floor((evt.clientX - rect.left - subx) / size * 128);
-	_mousey = Math.floor((evt.clientY - rect.top - suby) / size * 128);
+	_mousex = (evt.clientX - rect.left - subx) / size;
+	_mousey = (evt.clientY - rect.top - suby) / size;
 }
 
 function updateGamepads() {
   gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
 }
 
+exports.mousexNormalized = function(){
+	return _mousex;
+};
+
+exports.mouseyNormalized = function(){
+	return _mousey;
+};
+
 exports.global = {
 	btn: exports.btn,
 	btnp: exports.btnp,
-	mousex: exports.mousex,
-	mousey: exports.mousey,
 	mousebtn: exports.mousebtn,
 	click: exports.click
 };
