@@ -4,7 +4,7 @@ var SPRITE = 0;
 var MAP = 1;
 var SFX = 2;
 
-var selectedSprite = 0;
+var selectedSprite = 1; // Because zero is "empty sprite"
 var currentSoundEffect = 0;
 var spritePage = 0;
 var color = 8;
@@ -337,7 +337,7 @@ function drawpalette(x, y, sx, sy){
 			var rh = y+(j+1)*sy-1;
 			rectfill(rx, ry, rw, rh, n);
 			if(color === n){
-				rect(rx, ry, rw, rh, 0);
+				rect(rx, ry, rw, rh, color === 0 ? 7 : 0);
 			}
 			n++;
 		}
