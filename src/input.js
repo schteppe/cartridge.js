@@ -1,3 +1,5 @@
+var math = require('./math');
+
 function defaultKeyMap(player){
 	if(player === 1){
 		return {
@@ -117,11 +119,11 @@ function addInputListeners(canvases){
 		},
 		mousedown: function(evt){
 			_mousebtns[evt.which] = true;
-			updateMouseCoords(evt);
+			updateMouseCoords(evt, canvases);
 		},
 		mouseup: function(evt){
 			_mousebtns[evt.which] = false;
-			updateMouseCoords(evt);
+			updateMouseCoords(evt, canvases);
 		}
 	};
 	for(var key in canvasListeners){
@@ -136,7 +138,7 @@ function addInputListeners(canvases){
 			keyboardStates[e.keyCode] = 0;
 		},
 		mousemove: function(evt){
-			updateMouseCoords(evt);
+			updateMouseCoords(evt, canvases);
 		}
 	};
 	for(var key in bodyListeners){
@@ -153,18 +155,21 @@ function removeInputListeners(canvases){
 	}
 }
 
-function updateMouseCoords(evt){
+function updateMouseCoords(evt, canvases){
+	if(canvases.indexOf(evt.target) === -1) return;
+
 	var rect = evt.target.getBoundingClientRect(); // cache this?
+	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var size = Math.min(rect.width, rect.height);
 	var subx = 0;
 	var suby = 0;
-	if(rect.width > rect.height){
-		subx = (rect.width - size) * 0.5;
+	if(rect.width / rect.height > parentRect.width / parentRect.height){
+		subx = (parentRect.width - rect.width) * 0.5;
 	} else {
-		suby = (rect.height - size) * 0.5;
+		suby = (parentRect.height - rect.height) * 0.5;
 	}
-	_mousex = (evt.clientX - rect.left - subx) / size;
-	_mousey = (evt.clientY - rect.top - suby) / size;
+	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
+	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
 }
 
 function updateGamepads() {

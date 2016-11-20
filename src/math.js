@@ -20,5 +20,8 @@ module.exports = {
 			m = z;
 		}
 		return m;
+	},
+	clamp: function(x,min,max){
+		return Math.min(Math.max(x,min), max);
 	}
 };
