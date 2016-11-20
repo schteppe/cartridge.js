@@ -2490,6 +2490,7 @@ var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var mapDirty = true; // TODO: dirtiness per cell
+var _alpha = 0;
 
 exports.cartridge = function(options){
 	screensizeX = options.width !== undefined ? options.width : 128;
@@ -2564,20 +2565,22 @@ exports.cartridge = function(options){
 			accumulator0 += frameTime;
 			while ( accumulator0 >= dt0 ){
 				_time = t0;
-				if(loaded && typeof(_update) !== 'undefined'){
-					_update();
-				}
 				t0 += dt0;
 				accumulator0 -= dt0;
+				if(loaded && typeof(_update) !== 'undefined'){
+					_alpha = accumulator0 / dt0;
+					_update();
+				}
 			}
 			accumulator1 += frameTime;
 			while ( accumulator1 >= dt1 ){
 				_time = t1;
-				if(loaded && typeof(_update60) !== 'undefined'){
-					_update60();
-				}
 				t1 += dt1;
 				accumulator1 -= dt1;
+				if(loaded && typeof(_update60) !== 'undefined'){
+					_alpha = accumulator1 / dt1;
+					_update60();
+				}
 			}
 		}
 		_time = newTime;
@@ -2615,6 +2618,7 @@ function setPalette(p){
 	mapDirty = true;
 }
 
+exports.alpha = function(){ return _alpha; }; // for interpolation
 exports.width = function(){ return screensizeX; };
 exports.height = function(){ return screensizeY; };
 exports.cellwidth = function(){ return cellsizeX; };
@@ -2959,6 +2963,8 @@ utils.makeGlobal(input.global);
 help.hello();
 help.print();
 },{"./colors":2,"./font":3,"./help":4,"./input":6,"./math":7,"./sfx":8,"./utils":9}],6:[function(require,module,exports){
+var math = require('./math');
+
 function defaultKeyMap(player){
 	if(player === 1){
 		return {
@@ -3078,11 +3084,11 @@ function addInputListeners(canvases){
 		},
 		mousedown: function(evt){
 			_mousebtns[evt.which] = true;
-			updateMouseCoords(evt);
+			updateMouseCoords(evt, canvases);
 		},
 		mouseup: function(evt){
 			_mousebtns[evt.which] = false;
-			updateMouseCoords(evt);
+			updateMouseCoords(evt, canvases);
 		}
 	};
 	for(var key in canvasListeners){
@@ -3097,7 +3103,7 @@ function addInputListeners(canvases){
 			keyboardStates[e.keyCode] = 0;
 		},
 		mousemove: function(evt){
-			updateMouseCoords(evt);
+			updateMouseCoords(evt, canvases);
 		}
 	};
 	for(var key in bodyListeners){
@@ -3114,18 +3120,21 @@ function removeInputListeners(canvases){
 	}
 }
 
-function updateMouseCoords(evt){
+function updateMouseCoords(evt, canvases){
+	if(canvases.indexOf(evt.target) === -1) return;
+
 	var rect = evt.target.getBoundingClientRect(); // cache this?
+	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var size = Math.min(rect.width, rect.height);
 	var subx = 0;
 	var suby = 0;
-	if(rect.width > rect.height){
-		subx = (rect.width - size) * 0.5;
+	if(rect.width / rect.height > parentRect.width / parentRect.height){
+		subx = (parentRect.width - rect.width) * 0.5;
 	} else {
-		suby = (rect.height - size) * 0.5;
+		suby = (parentRect.height - rect.height) * 0.5;
 	}
-	_mousex = (evt.clientX - rect.left - subx) / size;
-	_mousey = (evt.clientY - rect.top - suby) / size;
+	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
+	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
 }
 
 function updateGamepads() {
@@ -3147,7 +3156,7 @@ exports.global = {
 	click: exports.click
 };
 
-},{}],7:[function(require,module,exports){
+},{"./math":7}],7:[function(require,module,exports){
 module.exports = {
 	sin: Math.sin,
 	cos: Math.cos,
@@ -3158,6 +3167,9 @@ module.exports = {
 	atan2: Math.atan2,
 	max: Math.max,
 	min: Math.min,
+	mix: function(a,b,alpha){
+		return a * alpha + b * ( 1.0 - alpha );
+	},
 	sgn: Math.sign, // sgn(x) -- returns argument sign: -1, 1; sgn(0) = 1,
 	sqrt: Math.sqrt,
 	mid: function(x,y,z){
@@ -3170,6 +3182,9 @@ module.exports = {
 			m = z;
 		}
 		return m;
+	},
+	clamp: function(x,min,max){
+		return Math.min(Math.max(x,min), max);
 	}
 };
 },{}],8:[function(require,module,exports){
