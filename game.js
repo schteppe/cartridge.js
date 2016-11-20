@@ -1,7 +1,8 @@
 function Player(){
     var w = 1, h = 1; // Player size in cells
     var x = 0, y = 0; // relative to map origin
-    var vx = 0, vy = 0;
+    var px = 0, py = 0; // previous position
+    var vx = 0, vy = 0; // velocity
     var gravity = 0.1;
     var playerNumber = 1;
     var groundFlag = 1 << 0;
@@ -42,6 +43,8 @@ function Player(){
 
     this.update = function(){
         var i, tx, sx0;
+        px = x;
+        py = y;
 
         // Cell before movement
         var cx0 = flr(x / cw);
@@ -133,11 +136,17 @@ function Player(){
         }
     };
 
-    this.x = function(){ return flr(x); };
-    this.y = function(){ return flr(y); };
+    this.x = function(a){ return flr(mix(px, x, a)); };
+    this.y = function(a){ return flr(mix(py, y, a)); };
 
-	this.draw = function(){
-        spr(1+flr(abs(vx))*flr(time()*20)%2, this.x(), this.y(), 1, 1, direction < 0, false);
+	this.draw = function(a){
+        spr(
+            1+flr(abs(vx))*flr(time()*20)%2,
+            flr(mix(px, x, a)), flr(mix(py, y, a)),
+            1, 1,
+            direction < 0,
+            false
+        );
     };
 }
 
@@ -156,12 +165,12 @@ function _update(){
 }
 
 function _update60(){
+    player.update();
 }
 
 function _draw(){
-    player.update();
-    camera(64-player.x(), 0);
+    camera(64-player.x(alpha()), 0);
 	cls();
 	map(0, 0, 0, 0, 128, 32, 0);
-    player.draw();
+    player.draw(alpha());
 }
