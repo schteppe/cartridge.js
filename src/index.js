@@ -43,6 +43,7 @@ var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var mapDirty = true; // TODO: dirtiness per cell
+var _alpha = 0;
 
 exports.cartridge = function(options){
 	screensizeX = options.width !== undefined ? options.width : 128;
@@ -117,20 +118,22 @@ exports.cartridge = function(options){
 			accumulator0 += frameTime;
 			while ( accumulator0 >= dt0 ){
 				_time = t0;
-				if(loaded && typeof(_update) !== 'undefined'){
-					_update();
-				}
 				t0 += dt0;
 				accumulator0 -= dt0;
+				if(loaded && typeof(_update) !== 'undefined'){
+					_alpha = accumulator0 / dt0;
+					_update();
+				}
 			}
 			accumulator1 += frameTime;
 			while ( accumulator1 >= dt1 ){
 				_time = t1;
-				if(loaded && typeof(_update60) !== 'undefined'){
-					_update60();
-				}
 				t1 += dt1;
 				accumulator1 -= dt1;
+				if(loaded && typeof(_update60) !== 'undefined'){
+					_alpha = accumulator1 / dt1;
+					_update60();
+				}
 			}
 		}
 		_time = newTime;
@@ -168,6 +171,7 @@ function setPalette(p){
 	mapDirty = true;
 }
 
+exports.alpha = function(){ return _alpha; }; // for interpolation
 exports.width = function(){ return screensizeX; };
 exports.height = function(){ return screensizeY; };
 exports.cellwidth = function(){ return cellsizeX; };
