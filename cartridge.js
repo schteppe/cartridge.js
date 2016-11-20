@@ -2474,6 +2474,8 @@ var canvasListeners;
 var bodyListeners;
 
 var mapData = utils.zeros(mapSizeX * mapSizeY);
+var mapDataDirty = utils.zeros(mapSizeX * mapSizeY); // dirtiness per cell
+var mapDirty = true; // is all of the map dirty?
 var mapCacheCanvas;
 var mapCacheContext;
 var spriteSheetCanvas;
@@ -2489,7 +2491,6 @@ var defaultColor = 0;
 var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
-var mapDirty = true; // TODO: dirtiness per cell
 var _alpha = 0;
 
 exports.cartridge = function(options){
@@ -2679,16 +2680,25 @@ exports.camera = function camera(x, y){
 exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	layer = layer === undefined ? 0 : layer;
 
+	var i,j;
+
 	if(layer === 0){
-		// Draw from map cache
+		// Update invalidated map cache
 		if(mapDirty){
-			// Update the map cache
-			for(var i=0; i<mapSizeX; i++){
-				for(var j=0; j<mapSizeY; j++){
+			for(i=0; i<mapSizeX; i++){
+				for(j=0; j<mapSizeY; j++){
 					updateMapCacheCanvas(i,j);
 				}
 			}
 			mapDirty = false;
+		}
+		for(i=0; i<mapSizeX; i++){
+			for(j=0; j<mapSizeY; j++){
+				if(mapDataDirty[j * mapSizeX + i]){
+					updateMapCacheCanvas(i,j);
+					mapDataDirty[j * mapSizeX + i] = 0;
+				}
+			}
 		}
 
 		var _sx = cel_x * cellsizeX; // Clip start
@@ -2702,8 +2712,8 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 		ctx.drawImage(mapCacheCanvas,_sx,_sy,_swidth,_sheight,_x,_y,_width,_height);
 	} else {
 		// Draw only matching sprites
-		for(var i=0; i<cel_w; i++){
-			for(var j=0; j<cel_h; j++){
+		for(i=0; i<cel_w; i++){
+			for(j=0; j<cel_h; j++){
 				var spriteNumber = mget(i, j);
 				var flags = fget(spriteNumber);
 				if((layer & flags) === layer){
@@ -2794,7 +2804,7 @@ exports.sset = function(x, y, col){
 		spriteSheetContext.fillStyle = paletteHex[col % palette.length];
 		spriteSheetContext.fillRect(x, y, 1, 1);
 	}
-	mapDirty = true;
+	mapDirty = true; // TODO: Only invalidate matching map positions
 	sgetData = null;
 };
 
@@ -2824,7 +2834,7 @@ exports.mset = function mset(x, y, i){
 	if(mget(x,y) === i) return;
 
 	mapData[y * mapSizeX + x] = i;
-	mapDirty = true;
+	mapDataDirty[y * mapSizeX + x] = 1;
 };
 
 function toJSON(){
