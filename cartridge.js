@@ -2506,6 +2506,9 @@ exports.cartridge = function(options){
 
 	for(var i=0; i<numCanvases; i++){
 		var c = document.getElementById('cartridgeCanvas' + i);
+		c.oncontextmenu = function(){
+			return false;
+		};
 		canvases.push(c);
 		if(i !== 0){
 			c.style.pointerEvents = 'none';
