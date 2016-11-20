@@ -8,6 +8,9 @@ module.exports = {
 	atan2: Math.atan2,
 	max: Math.max,
 	min: Math.min,
+	mix: function(a,b,alpha){
+		return a * alpha + b * ( 1.0 - alpha );
+	},
 	sgn: Math.sign, // sgn(x) -- returns argument sign: -1, 1; sgn(0) = 1,
 	sqrt: Math.sqrt,
 	mid: function(x,y,z){
