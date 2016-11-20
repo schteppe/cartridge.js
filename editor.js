@@ -115,7 +115,7 @@ function mousemovehandler(forceMouseDown){
 			}
 		}
 	} else if(mode === MAP) {
-		if(keysdown[32] || mousebtn(2)){
+		if(keysdown[32] || mousebtn(2) || mousebtn(3)){
 			var dx = mousex() - lastmx;
 			var dy = mousey() - lastmy;
 			mapPanX += dx;
