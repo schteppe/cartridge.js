@@ -2764,10 +2764,17 @@ exports.pset = function(x, y, col){
 };
 
 // Get spritesheet pixel color
-// TODO: cache the image data and invalidate when the canvas is drawn to
+var sgetData = null;
 exports.sget = function(x, y){
-	var data = spriteSheetContext.getImageData(x, y, x+1, y+1).data;
-	var col = utils.rgbToDec(data[0], data[1], data[2]);
+	if(!sgetData){
+		sgetData = spriteSheetContext.getImageData(0, 0, screensizeX, screensizeY).data;
+	}
+	var p = screensizeX * 4 * y + x * 4;
+	var col = utils.rgbToDec(
+		sgetData[p + 0],
+		sgetData[p + 1],
+		sgetData[p + 2]
+	);
 	return palette.indexOf(col);
 };
 
@@ -2781,6 +2788,7 @@ exports.sset = function(x, y, col){
 		spriteSheetContext.fillRect(x, y, 1, 1);
 	}
 	mapDirty = true;
+	sgetData = null;
 };
 
 exports.fullscreen = function fullscreen(){
