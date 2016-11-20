@@ -21,10 +21,10 @@ var mapPanY = 0;
 cartridge({
 	containerId: 'container',
 	layers: 2,
-	width: 128,
-	height: 128,
-	cellwidth: 8,
-	cellheight: 8,
+	width: 256,
+	height: 240,
+	cellwidth: 16,
+	cellheight: 16,
 	palette: [
 		/*
 		0x000000, // 0
@@ -359,11 +359,10 @@ window.onkeyup = function(evt){
 
 window.onkeydown = function(evt){
 	keysdown[evt.keyCode] = true;
-	var key = String.fromCharCode(evt.keyCode).toLowerCase();
-	switch(key){
-		case ' ': if(mode === SFX) sfx(currentSoundEffect); break;
-		case 's': save('game.json'); break;
-		case 'o': openfile(); break;
+	switch(evt.keyCode){
+		case 32: if(mode === SFX) sfx(currentSoundEffect); break;
+		case 83: save('game.json'); break;
+		case 79: openfile(); break;
 	}
 	dirty = true;
 };
