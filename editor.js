@@ -243,6 +243,7 @@ function _draw(){
 		drawflags(flagsX,flagsY,fget(selectedSprite));
 	} else if(mode === MAP){
 		map(0, 0, mapPanX, mapPanY, 128, 32);
+		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		drawsprites(0,height() - cellheight() * 4);
 		drawbuttons(buttonsX, buttonsY);
 	} else if(mode === SFX){
