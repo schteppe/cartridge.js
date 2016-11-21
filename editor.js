@@ -219,7 +219,7 @@ click(clickhandler);
 function _load(callback){
 	load();
 	callback();
-};
+}
 
 function _draw(){
 	var mx = mousex();
