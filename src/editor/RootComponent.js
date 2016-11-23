@@ -17,7 +17,7 @@ RootComponent.prototype.traverse = function(f){
     var queue = [];
     queue.push(this);
     while(queue.length){
-        var component = queue.pop();
+        var component = queue.shift();
         var shouldStop = f.call(this, component);
         if(shouldStop) return;
         for(var i=0; i<component.children.length; i++){

@@ -1,6 +1,7 @@
 var TopBar = require('./TopBar');
 var Mouse = require('./Mouse');
 var Component = require('./Component');
+var Palette = require('./Palette');
 
 module.exports = Editor;
 
@@ -19,6 +20,9 @@ function Editor(){
         'sfx'
     ];
     this.mode = this.modes[0];
+
+    this.palette = new Palette();
+    this.add(this.palette);
 
     // Top bar
     this.topBar = new TopBar();
@@ -66,6 +70,13 @@ Editor.prototype.draw = function(){
 	rectfill(0, 0, this.w, this.h, this.color);
 
     this.topBar.text = this.mode.toUpperCase();
+    this.topBar.w = this.w;
+    this.topBar.h = this.h;
+
+    this.palette.x = this.x + this.w / 3;
+    this.palette.y = this.y;
+    this.palette.w = this.w / 3;
+    this.palette.h = this.h / 3;
 
     this.dirty = false;
 };
