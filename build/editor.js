@@ -38,6 +38,7 @@ Component.prototype = {
 var TopBar = require('./TopBar');
 var Mouse = require('./Mouse');
 var Component = require('./Component');
+var Palette = require('./Palette');
 
 module.exports = Editor;
 
@@ -56,6 +57,9 @@ function Editor(){
         'sfx'
     ];
     this.mode = this.modes[0];
+
+    this.palette = new Palette();
+    this.add(this.palette);
 
     // Top bar
     this.topBar = new TopBar();
@@ -103,6 +107,13 @@ Editor.prototype.draw = function(){
 	rectfill(0, 0, this.w, this.h, this.color);
 
     this.topBar.text = this.mode.toUpperCase();
+    this.topBar.w = this.w;
+    this.topBar.h = this.h;
+
+    this.palette.x = this.x + this.w / 3;
+    this.palette.y = this.y;
+    this.palette.w = this.w / 3;
+    this.palette.h = this.h / 3;
 
     this.dirty = false;
 };
@@ -150,7 +161,7 @@ Editor.prototype.addListeners = function(){
     }
 };
 
-},{"./Component":1,"./Mouse":3,"./TopBar":5}],3:[function(require,module,exports){
+},{"./Component":1,"./Mouse":3,"./Palette":4,"./TopBar":6}],3:[function(require,module,exports){
 var Component = require('./Component');
 
 module.exports = Mouse;
@@ -178,6 +189,39 @@ Mouse.prototype.mousemove = function(x,y){
 },{"./Component":1}],4:[function(require,module,exports){
 var Component = require('./Component');
 
+module.exports = Palette;
+
+function Palette(){
+    Component.call(this);
+    this.selectedColor = 1;
+}
+Palette.prototype = Object.create(Component.prototype);
+
+Palette.prototype.draw = function(){
+    var n=0;
+    var x = this.x;
+    var y = this.y;
+    var sx = flr(this.w / 4);
+    var sy = flr(this.h / 4);
+
+    for(var j=0; j<4; j++){
+        for(var i=0; i<4; i++){
+            var rx = x+i*sx;
+            var ry = y+j*sy;
+            var rw = x+(i+1)*sx-1;
+            var rh = y+(j+1)*sy-1;
+            rectfill(rx, ry, rw, rh, n);
+            if(this.selectedColor === n){
+                rect(rx, ry, rw, rh, this.selectedColor === 0 ? 7 : 0);
+            }
+            n++;
+        }
+    }
+};
+
+},{"./Component":1}],5:[function(require,module,exports){
+var Component = require('./Component');
+
 module.exports = RootComponent;
 
 function RootComponent(){
@@ -195,7 +239,7 @@ RootComponent.prototype.traverse = function(f){
     var queue = [];
     queue.push(this);
     while(queue.length){
-        var component = queue.pop();
+        var component = queue.shift();
         var shouldStop = f.call(this, component);
         if(shouldStop) return;
         for(var i=0; i<component.children.length; i++){
@@ -234,7 +278,7 @@ RootComponent.prototype.click = function(x,y){
         return component.click(x,y);
     });
 };
-},{"./Component":1}],5:[function(require,module,exports){
+},{"./Component":1}],6:[function(require,module,exports){
 var Component = require('./Component');
 
 module.exports = TopBar;
@@ -255,10 +299,10 @@ TopBar.prototype.draw = function(){
     rectfill(x,y,w,h,this.color);
 	print(this.text, x+1, y+1, this.textColor);
 };
-},{"./Component":1}],6:[function(require,module,exports){
+},{"./Component":1}],7:[function(require,module,exports){
 module.exports = {
     Editor: require('./Editor'),
     RootComponent: require('./RootComponent')
 };
-},{"./Editor":2,"./RootComponent":4}]},{},[6])(6)
+},{"./Editor":2,"./RootComponent":5}]},{},[7])(7)
 });

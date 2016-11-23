@@ -2642,7 +2642,13 @@ exports.palt = function(col, t){
 };
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
+	// Floor coords
+	x0 = x0 | 0;
+	y0 = y0 | 0;
+	x1 = x1 | 0;
+	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
+
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
 	ctx.fillStyle = paletteHex[col];
@@ -2650,7 +2656,13 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
+	// Floor coords
+	x0 = x0 | 0;
+	y0 = y0 | 0;
+	x1 = x1 | 0;
+	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
+
 	var w = x1 - x0;
 	var h = y1 - y0;
 	ctx.fillStyle = paletteHex[col];
@@ -2661,6 +2673,11 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 };
 
 exports.clip = function(x,y,w,h){
+	x = x | 0;
+	y = y | 0;
+	w = w | 0;
+	h = h | 0;
+
 	ctx.rect(x,y,w,h);
 	ctx.clip();
 };
@@ -2670,6 +2687,8 @@ exports.canvas = function canvas(n){
 };
 
 exports.camera = function camera(x, y){
+	x = x | 0;
+	y = y | 0;
 	if(camX === x && camY === y) return;
 
 	ctx.translate(x - camX, y - camY);
