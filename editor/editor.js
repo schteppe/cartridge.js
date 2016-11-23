@@ -33,3 +33,7 @@ root.add(new EDITOR.Editor());
 function _draw(){
 	root.draw();
 }
+
+document.body.onresize = document.body.mozfullscreenchange = function(){
+	fit();
+};

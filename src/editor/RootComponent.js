@@ -17,11 +17,15 @@ RootComponent.prototype.traverse = function(f){
     var queue = [];
     queue.push(this);
     while(queue.length){
-        var component = queue.shift();
+        var component = queue.pop();
         var shouldStop = f.call(this, component);
-        if(shouldStop) return;
-        for(var i=0; i<component.children.length; i++){
-            queue.push(component.children[i]);
+        if(!shouldStop){
+            for(var i=0; i<component.children.length; i++){
+                var child = component.children[i];
+                if(component.hidden !== null)
+                    child.hidden = component.hidden;
+                queue.push(child);
+            }
         }
     }
 };
@@ -43,11 +47,18 @@ RootComponent.prototype.draw = function(){
 	this.lastmx = mx;
 	this.lastmy = my;
 
+    var drawComponents = [];
     this.traverse(function(component){
         if(component.root === component) return false;
         if(component.hidden) return true;
-        return component.draw();
+        drawComponents.push(component);
     });
+    drawComponents = drawComponents.sort(function(a,b){ // todo: cache sorted list
+        return a.z - b.z;
+    });
+    for(var i=0; i<drawComponents.length; i++){
+        drawComponents[i].draw();
+    }
 };
 
 RootComponent.prototype.click = function(x,y){

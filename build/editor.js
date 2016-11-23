@@ -4,11 +4,12 @@ module.exports = Component;
 function Component(){
     this.x = 0;
     this.y = 0;
+    this.z = 0;
     this.w = 128;
     this.h = 128;
     this.root = null;
     this.parent = null;
-    this.hidden = false;
+    this.hidden = null; // null, true or false. Children will inherit if not null.
     this.children = [];
     this.onclick = function(x,y){};
     this.onmousemove = function(x,y){};
@@ -38,7 +39,7 @@ Component.prototype = {
 var TopBar = require('./TopBar');
 var Mouse = require('./Mouse');
 var Component = require('./Component');
-var Palette = require('./Palette');
+var SpriteEditor = require('./SpriteEditor');
 
 module.exports = Editor;
 
@@ -58,11 +59,14 @@ function Editor(){
     ];
     this.mode = this.modes[0];
 
-    this.palette = new Palette();
-    this.add(this.palette);
+    // Sprite editor view
+    this.spriteEditor = new SpriteEditor();
+    this.spriteEditor.z = 100;
+    this.add(this.spriteEditor);
 
     // Top bar
     this.topBar = new TopBar();
+    this.topBar.z = 200;
     this.topBar.onclick = function(){
         that.nextMode();
     };
@@ -70,6 +74,7 @@ function Editor(){
 
     // Mouse
     this.mouse = new Mouse();
+    this.mouse.z = 300;
     this.add(this.mouse);
 
     this.keysdown = {};
@@ -81,14 +86,7 @@ Editor.prototype.nextMode = function(){
     var newModeIndex = (this.modes.indexOf(this.mode) + 1) % this.modes.length;
     this.mode = this.modes[newModeIndex];
 
-    switch(this.mode){
-    case "sprite":
-        break;
-    case "map":
-        break;
-    case "sfx":
-        break;
-    }
+    this.spriteEditor.hidden = this.mode !== "sprite";
 
     this.dirty = true;
 };
@@ -108,12 +106,12 @@ Editor.prototype.draw = function(){
 
     this.topBar.text = this.mode.toUpperCase();
     this.topBar.w = this.w;
-    this.topBar.h = this.h;
+    this.topBar.h = 6;
 
-    this.palette.x = this.x + this.w / 3;
-    this.palette.y = this.y;
-    this.palette.w = this.w / 3;
-    this.palette.h = this.h / 3;
+    this.spriteEditor.x = this.x;
+    this.spriteEditor.y = this.y + this.topBar.h;
+    this.spriteEditor.w = this.w;
+    this.spriteEditor.h = this.h - this.topBar.h;
 
     this.dirty = false;
 };
@@ -161,7 +159,7 @@ Editor.prototype.addListeners = function(){
     }
 };
 
-},{"./Component":1,"./Mouse":3,"./Palette":4,"./TopBar":6}],3:[function(require,module,exports){
+},{"./Component":1,"./Mouse":3,"./SpriteEditor":6,"./TopBar":7}],3:[function(require,module,exports){
 var Component = require('./Component');
 
 module.exports = Mouse;
@@ -239,11 +237,15 @@ RootComponent.prototype.traverse = function(f){
     var queue = [];
     queue.push(this);
     while(queue.length){
-        var component = queue.shift();
+        var component = queue.pop();
         var shouldStop = f.call(this, component);
-        if(shouldStop) return;
-        for(var i=0; i<component.children.length; i++){
-            queue.push(component.children[i]);
+        if(!shouldStop){
+            for(var i=0; i<component.children.length; i++){
+                var child = component.children[i];
+                if(component.hidden !== null)
+                    child.hidden = component.hidden;
+                queue.push(child);
+            }
         }
     }
 };
@@ -265,11 +267,18 @@ RootComponent.prototype.draw = function(){
 	this.lastmx = mx;
 	this.lastmy = my;
 
+    var drawComponents = [];
     this.traverse(function(component){
         if(component.root === component) return false;
         if(component.hidden) return true;
-        return component.draw();
+        drawComponents.push(component);
     });
+    drawComponents = drawComponents.sort(function(a,b){ // todo: cache sorted list
+        return a.z - b.z;
+    });
+    for(var i=0; i<drawComponents.length; i++){
+        drawComponents[i].draw();
+    }
 };
 
 RootComponent.prototype.click = function(x,y){
@@ -279,6 +288,28 @@ RootComponent.prototype.click = function(x,y){
     });
 };
 },{"./Component":1}],6:[function(require,module,exports){
+var Component = require('./Component');
+var Palette = require('./Palette');
+
+module.exports = SpriteEditor;
+
+function SpriteEditor(){
+    Component.call(this);
+
+    // Sprite editor view
+    this.palette = new Palette();
+    this.add(this.palette);
+}
+SpriteEditor.prototype = Object.create(Component.prototype);
+
+SpriteEditor.prototype.draw = function(){
+    this.palette.x = this.x + this.w / 2;
+    this.palette.y = this.y + 1;
+    this.palette.w = this.w / 2;
+    this.palette.h = this.h / 2;
+};
+
+},{"./Component":1,"./Palette":4}],7:[function(require,module,exports){
 var Component = require('./Component');
 
 module.exports = TopBar;
@@ -299,10 +330,10 @@ TopBar.prototype.draw = function(){
     rectfill(x,y,w,h,this.color);
 	print(this.text, x+1, y+1, this.textColor);
 };
-},{"./Component":1}],7:[function(require,module,exports){
+},{"./Component":1}],8:[function(require,module,exports){
 module.exports = {
     Editor: require('./Editor'),
     RootComponent: require('./RootComponent')
 };
-},{"./Editor":2,"./RootComponent":5}]},{},[7])(7)
+},{"./Editor":2,"./RootComponent":5}]},{},[8])(8)
 });

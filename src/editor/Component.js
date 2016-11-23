@@ -3,11 +3,12 @@ module.exports = Component;
 function Component(){
     this.x = 0;
     this.y = 0;
+    this.z = 0;
     this.w = 128;
     this.h = 128;
     this.root = null;
     this.parent = null;
-    this.hidden = false;
+    this.hidden = null; // null, true or false. Children will inherit if not null.
     this.children = [];
     this.onclick = function(x,y){};
     this.onmousemove = function(x,y){};

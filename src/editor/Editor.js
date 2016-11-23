@@ -1,7 +1,7 @@
 var TopBar = require('./TopBar');
 var Mouse = require('./Mouse');
 var Component = require('./Component');
-var Palette = require('./Palette');
+var SpriteEditor = require('./SpriteEditor');
 
 module.exports = Editor;
 
@@ -21,11 +21,14 @@ function Editor(){
     ];
     this.mode = this.modes[0];
 
-    this.palette = new Palette();
-    this.add(this.palette);
+    // Sprite editor view
+    this.spriteEditor = new SpriteEditor();
+    this.spriteEditor.z = 100;
+    this.add(this.spriteEditor);
 
     // Top bar
     this.topBar = new TopBar();
+    this.topBar.z = 200;
     this.topBar.onclick = function(){
         that.nextMode();
     };
@@ -33,6 +36,7 @@ function Editor(){
 
     // Mouse
     this.mouse = new Mouse();
+    this.mouse.z = 300;
     this.add(this.mouse);
 
     this.keysdown = {};
@@ -44,14 +48,7 @@ Editor.prototype.nextMode = function(){
     var newModeIndex = (this.modes.indexOf(this.mode) + 1) % this.modes.length;
     this.mode = this.modes[newModeIndex];
 
-    switch(this.mode){
-    case "sprite":
-        break;
-    case "map":
-        break;
-    case "sfx":
-        break;
-    }
+    this.spriteEditor.hidden = this.mode !== "sprite";
 
     this.dirty = true;
 };
@@ -71,12 +68,12 @@ Editor.prototype.draw = function(){
 
     this.topBar.text = this.mode.toUpperCase();
     this.topBar.w = this.w;
-    this.topBar.h = this.h;
+    this.topBar.h = 6;
 
-    this.palette.x = this.x + this.w / 3;
-    this.palette.y = this.y;
-    this.palette.w = this.w / 3;
-    this.palette.h = this.h / 3;
+    this.spriteEditor.x = this.x;
+    this.spriteEditor.y = this.y + this.topBar.h;
+    this.spriteEditor.w = this.w;
+    this.spriteEditor.h = this.h - this.topBar.h;
 
     this.dirty = false;
 };
