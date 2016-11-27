@@ -27,32 +27,31 @@ cartridge({
 
 document.body.onresize = document.body.mozfullscreenchange = fit;
 
-var mode = 0;
-var numModes = 3;
-var SPRITE = 0;
-var MAP = 1;
-var SFX = 2;
+var modes = ['sprite', 'map', 'sfx'];
+var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
 var currentSoundEffect = 0;
 var spritePage = 0;
 var color = 8;
-var offsetX = 1;
-var offsetY = 8;
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
 var keysdown = {};
 
+var offsetX = 1;
+var offsetY = 8;
+var scaleX = flr((width() * 0.5) / cellwidth());
+var scaleY = flr((height() * 0.5) / cellheight());
+
 var mapPanX = 0;
 var mapPanY = 0;
 
-var scaleX = flr((width() * 0.5) / cellwidth());
-var scaleY = flr((height() * 0.5) / cellheight());
 var paletteScaleX = flr((width() * 0.4) / 4);
 var paletteScaleY = flr((height() * 0.4) / 4);
 var paletteX = width() - paletteScaleX * 4 - 1;
 var paletteY = 8;
+
 var flagsX = paletteX;
 var flagsY = paletteY + paletteScaleY * 4 + 1;
 var buttonsX = width() - 56;
@@ -74,13 +73,13 @@ function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
 function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y < ry + rh; }
 
 function mousemovehandler(forceMouseDown){
-	if(mode === SPRITE){
+	switch(mode){
+	case 'sprite':
 		if(mousebtn(1) || forceMouseDown){
+			// Draw on sprite
 			var x = flr((mousex()-offsetX) / scaleX);
 			var y = flr((mousey()-offsetY) / scaleY);
-
-			// Within editing sprite?
-			if(x < cellwidth() && x >= 0 && y < cellheight() && y >= 0){
+			if(inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				sset(
 					ssx(selectedSprite) * cellwidth() + x,
 					ssy(selectedSprite) * cellheight() + y,
@@ -89,21 +88,19 @@ function mousemovehandler(forceMouseDown){
 				dirty = true;
 			}
 		}
-	} else if(mode === MAP) {
+		break;
+
+	case 'map':
 		if(keysdown[32] || mousebtn(2) || mousebtn(3)){
+			// Pan map
 			var dx = mousex() - lastmx;
 			var dy = mousey() - lastmy;
+			// TODO: clamp panning
 			mapPanX += dx;
 			mapPanY += dy;
-
-			// TODO: clamp panning
-			/*mapPanX = min(128*8,mapPanX);
-			mapPanX = max(0,mapPanX);
-			mapPanY = max(0,mapPanY);
-			mapPanX = min(128,mapPanX);
-			mapPanY = min(32,mapPanY);*/
 			dirty = true;
-		} else if((forceMouseDown || mousebtn(1)) && mousey() < buttonsY && mousey() > 8){
+		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), buttonsY-9)){
+			// Draw on map
 			mset(
 				flr((mousex() - mapPanX) / cellwidth()),
 				flr((mousey() - mapPanY) / cellheight()),
@@ -111,33 +108,24 @@ function mousemovehandler(forceMouseDown){
 			);
 			dirty = true;
 		}
-	} else if(mode === SFX){
+		break;
+
+	case 'sfx':
 		if(mousebtn(1) || forceMouseDown){
 			var n = flr(mousex() / width() * 32);
 			var pitch = flr((pitchesH - mousey() + pitchesY) / pitchesH * 255);
 			var vol = flr((volumesH - mousey() + volumesY) / volumesH * 255);
 
 			// Within editing area?
-			if(mid(0,n,32) === n && mid(0,pitch,255) === pitch){
-				afset(
-					currentSoundEffect,
-					n,
-					pitch
-				);
-				awset(
-					currentSoundEffect,
-					n,
-					4
-				);
+			if(clamp(n,0,32) === n && clamp(pitch,0,255) === pitch){
+				afset(currentSoundEffect, n, pitch);
+				awset(currentSoundEffect, n, 4); // TODO: waveform select
 				dirty = true;
 			} else if(mid(0,n,32) === n && mid(0,vol,255) === vol){
-				avset(
-					currentSoundEffect,
-					n,
-					vol
-				);
+				avset(currentSoundEffect, n, vol);
 			}
 		}
+		break;
 	}
 }
 
@@ -145,8 +133,7 @@ function clickhandler(){
 	var mx = mousex();
 	var my = mousey();
 	mousemovehandler(true);
-	if(mode === SPRITE){
-		// sprite
+	if(mode === 'sprite'){
 		if(inrect(mx,my,paletteX,paletteY,paletteScaleX*4,paletteScaleY*4)){
 			var x = flr((mx-paletteX) / paletteScaleX);
 			var y = flr((my-paletteY) / paletteScaleY);
@@ -160,12 +147,10 @@ function clickhandler(){
 			fset(selectedSprite, newFlags);
 			dirty = true;
 		}
-	} else if(mode === MAP){
-		// map
 	}
 
 	// Sprite select
-	if(mode === SPRITE || mode === MAP){
+	if(mode === 'sprite' || mode === 'map'){
 		var spritesHeight = height() - cellheight() * 4;
 		if(my >= height() - cellheight() * 4){
 			var spriteX = flr(mx / cellwidth());
@@ -181,7 +166,7 @@ function clickhandler(){
 
 	// Click the upper left corner - switch mode
 	if(inrect(mx,my,0,0,32,8)){
-		mode = (mode + 1) % numModes;
+		mode = modes[(modes.indexOf(mode) + 1) % modes.length];
 		dirty = true;
 	}
 }
@@ -206,20 +191,24 @@ function _draw(){
 	dirty = false;
 
 	rectfill(0, 0, width(), height(), 7);
-	if(mode === SPRITE){
+	switch(mode){
+	case 'sprite':
 		drawviewport(offsetX,offsetY,scaleX,scaleY);
 		drawsprites(0,height() - cellheight() * 4);
 		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
 		drawbuttons(buttonsX, buttonsY);
 		drawflags(flagsX,flagsY,fget(selectedSprite));
-	} else if(mode === MAP){
+		break;
+	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		drawsprites(0,height() - cellheight() * 4);
 		drawbuttons(buttonsX, buttonsY);
-	} else if(mode === SFX){
+		break;
+	case 'sfx':
 		drawpitches(pitchesX, pitchesY, pitchesW, pitchesH, 0);
 		drawpitches(volumesX, volumesY, volumesW, volumesH, 1);
+		break;
 	}
 
 	drawtop();
@@ -231,13 +220,7 @@ function _draw(){
 
 function drawtop(){
 	rectfill(0, 0, width(), 6, 0);
-	var modeText = '';
-	switch(mode){
-		case SPRITE: modeText = 'SPRITE'; break;
-		case MAP: modeText = 'MAP'; break;
-		case SFX: modeText = 'SFX'; break;
-	}
-	print(modeText, 1, 1, 15);
+	print(mode.toUpperCase(), 1, 1, 15);
 }
 
 function drawbuttons(x,y){
@@ -345,7 +328,7 @@ window.onkeyup = function(evt){
 window.onkeydown = function(evt){
 	keysdown[evt.keyCode] = true;
 	switch(evt.keyCode){
-		case 32: if(mode === SFX) sfx(currentSoundEffect); break;
+		case 32: if(mode === 'sfx') sfx(currentSoundEffect); break;
 		case 83: save('game.json'); break;
 		case 79: openfile(); break;
 	}
