@@ -39,10 +39,28 @@ var lastmx = 0;
 var lastmy = 0;
 var keysdown = {};
 
-var offsetX = 1;
-var offsetY = 8;
-var scaleX = flr((width() * 0.5) / cellwidth());
-var scaleY = flr((height() * 0.5) / cellheight());
+var viewport = {
+	x: 1,
+	y: 8,
+	sx: flr((width() * 0.5) / cellwidth()),
+	sy: flr((height() * 0.5) / cellheight()),
+	draw: function(){
+		for(var i=0; i<cellwidth(); i++){
+			for(var j=0; j<cellheight(); j++){
+				var x = (ssx(selectedSprite) * cellwidth() + i) % width();
+				var y = (ssy(selectedSprite) * cellheight() + j) % height();
+				var col = sget(x, y);
+				rectfill(
+					this.x + i * this.sx,
+					this.y + j * this.sy,
+					this.x + (i+1) * this.sx-1,
+					this.y + (j+1) * this.sy-1,
+					col
+				);
+			}
+		}
+	}
+};
 
 var mapPanX = 0;
 var mapPanY = 0;
@@ -54,6 +72,7 @@ var paletteY = 8;
 
 var flagsX = paletteX;
 var flagsY = paletteY + paletteScaleY * 4 + 1;
+
 var buttonsX = width() - 56;
 var buttonsY = height() - 4 * cellheight() - 7;
 
@@ -77,8 +96,8 @@ function mousemovehandler(forceMouseDown){
 	case 'sprite':
 		if(mousebtn(1) || forceMouseDown){
 			// Draw on sprite
-			var x = flr((mousex()-offsetX) / scaleX);
-			var y = flr((mousey()-offsetY) / scaleY);
+			var x = flr((mousex()-viewport.x) / viewport.sx);
+			var y = flr((mousey()-viewport.y) / viewport.sy);
 			if(inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				sset(
 					ssx(selectedSprite) * cellwidth() + x,
@@ -121,8 +140,9 @@ function mousemovehandler(forceMouseDown){
 				afset(currentSoundEffect, n, pitch);
 				awset(currentSoundEffect, n, 4); // TODO: waveform select
 				dirty = true;
-			} else if(mid(0,n,32) === n && mid(0,vol,255) === vol){
+			} else if(clamp(n,0,32) === n && clamp(vol,0,255) === vol){
 				avset(currentSoundEffect, n, vol);
+				dirty = true;
 			}
 		}
 		break;
@@ -193,7 +213,7 @@ function _draw(){
 	rectfill(0, 0, width(), height(), 7);
 	switch(mode){
 	case 'sprite':
-		drawviewport(offsetX,offsetY,scaleX,scaleY);
+		viewport.draw();
 		drawsprites(0,height() - cellheight() * 4);
 		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
 		drawbuttons(buttonsX, buttonsY);
@@ -253,23 +273,6 @@ function drawmouse(x,y){
 	rectfill(x-4, y, x+4, y);
 	rectfill(x, y-4, x, y+4);
 	rectfill(x, y, x, y, 4);
-}
-
-function drawviewport(offsetX, offsetY, scaleX, scaleY){
-	for(var i=0; i<cellwidth(); i++){
-		for(var j=0; j<cellheight(); j++){
-			var x = (ssx(selectedSprite) * cellwidth() + i) % width();
-			var y = (ssy(selectedSprite) * cellheight() + j) % height();
-			var col = sget(x, y);
-			rectfill(
-				offsetX + i * scaleX,
-				offsetY + j * scaleY,
-				offsetX + (i+1) * scaleX-1,
-				offsetY + (j+1) * scaleY-1,
-				col
-			);
-		}
-	}
 }
 
 function drawsprites(offsetX, offsetY){
