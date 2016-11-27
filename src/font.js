@@ -4,7 +4,7 @@ var fontImages = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
-var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-';
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_';
 
 exports.init = function(fontImage, palette){
 	for(var i=0; i<palette.length; i++){
@@ -64,5 +64,7 @@ exports.load = function(callback){
 	im.onload = function(){
 		callback(im);
 	};
-	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM8AAAAFAQMAAADYPCrOAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAAAAAAAKVnuc8AAAABdFJOUwBA5thmAAAAiklEQVQI1xXLsQkCMRgG0A8J4hhyWFg5wxUprDKF1SGZQYKFpLghQorwIZlCjkOcIhwiIfwzyL3+Qa4ySGrWWDI3yaPA6GlziwD9w+tUyTsZYpccEZzTJvVo/jPqmfm5MC7xK0WwdU71kHVRJ6b3IddjdF0ICutCj2x/tWXOw+tSReRUylnpabcH/k5GRml9ekAwAAAAAElFTkSuQmCC";
+	// To decode, use e.g. http://codebeautify.org/base64-to-image-converter
+	// To encode, use e.g. https://www.base64-image.de/
+	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAFCAYAAACKATq1AAABCUlEQVR42tVX7Q7EIAjr+7907+/lcpN+6JaZLIsTBwKlAgD8evBnjot1XMgr+7GQpyAPQT8G+3/tg3n+yb7mTWGOwn8M/Lny3zQU/07yGL5d6UzknLNBzLfUvqNDTUqY6xD3K8F3wX/i7drX6qGZnDTjOiV64hcHhDT1KzFwikkabxi+T+e3FQWFWaakWFXqCaxu5WeYpC4zqvYm4G7+v+OmojD5TubHwIwt+BGAq8UHxUK04zyvZ36HyRjoaxiWQpAc8DvX8IQhnWRDGUcGgEpbgieYv7Hx1E3gVuZH0PM3PaQCFgdcCtNPjlb3OwWkOf+uecrk6nrSLydgVXv+J5h1d8/fFitpfADsjsdHBKkY4wAAAABJRU5ErkJggg==";
 };

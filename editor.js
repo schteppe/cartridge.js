@@ -371,19 +371,20 @@ window.onkeydown = function(evt){
 			code.ccol=max(code.ccol-1,0);
 			break;
 		case 39: // right
-			if(code.ccol === code.code[code.crow].length-1 && code.crow !== code.code.length-1){
+			if(code.ccol === code.code[code.crow].length && code.crow !== code.code.length-1){
 				code.ccol=0;
 				code.crow=min(code.crow+1,code.code.length-1);
 			} else {
-				code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
+				code.ccol=min(code.ccol+1,code.code[code.crow].length);
 			}
 			break;
 		case 38: // up
 			code.crow=max(code.crow-1,0);
+			code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
 			break;
 		case 40: // down
 			code.crow=min(code.crow+1,code.code.length-1);
-			code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
+			code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
 			break;
 		case 8: // backspace
 			var after = code.code[code.crow].substr(code.ccol);
@@ -410,7 +411,7 @@ window.onkeydown = function(evt){
 window.onkeypress = function(evt){
 	if(mode === 'code'){
 		var char = String.fromCharCode(evt.keyCode).toUpperCase();
-		if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;'.indexOf(char) !== -1){
+		if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_'.indexOf(char) !== -1){
 			code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char);
 			code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
 		} else if(evt.keyCode === 13){ // enter
