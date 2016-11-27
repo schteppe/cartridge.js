@@ -1,3 +1,32 @@
+cartridge({
+	containerId: 'container',
+	layers: 2,
+	width: 256,
+	height: 240,
+	cellwidth: 16,
+	cellheight: 16,
+	palette: [
+		0x000000, // 0
+		0x0829fc, // 1
+		0x7e2500, // 2
+		0x008000, // 3
+		0xab5236, // 4
+		0x5f574f, // 5
+		0xc2c3c7, // 6
+		0xfff1e8, // 7
+		0xe40405, // 8
+		0xffa300, // 9
+		0xfff024, // 10
+		0x00e756, // 11
+		0x8bf9fc, // 12
+		0x83769c, // 13
+		0xff8e7d, // 14
+		0xffffff  // 15
+	]
+});
+
+document.body.onresize = document.body.mozfullscreenchange = fit;
+
 var mode = 0;
 var numModes = 3;
 var SPRITE = 0;
@@ -17,58 +46,6 @@ var keysdown = {};
 
 var mapPanX = 0;
 var mapPanY = 0;
-
-cartridge({
-	containerId: 'container',
-	layers: 2,
-	width: 256,
-	height: 240,
-	cellwidth: 16,
-	cellheight: 16,
-	palette: [
-		/*
-		0x000000, // 0
-		0x000053, // 1
-		0x7e2500, // 2
-		0x008000, // 3
-
-		0xab5236, // 4
-		0x5f574f, // 5
-		0xc2c3c7, // 6
-		0xfff1e8, // 7
-
-		0xff004d, // 8
-		0xffa300, // 9
-		0xfff024, // 10
-		0x00e756, // 11
-
-		0x29adff, // 12
-		0x83769c, // 13
-		0xff77a8, // 14
-		0xffffff  // 15
-		*/
-
-		0x000000, // 0
-		0x0829fc, // 1
-		0x7e2500, // 2
-		0x008000, // 3
-
-		0xab5236, // 4
-		0x5f574f, // 5
-		0xc2c3c7, // 6
-		0xfff1e8, // 7
-
-		0xe40405, // 8
-		0xffa300, // 9
-		0xfff024, // 10
-		0x00e756, // 11
-
-		0x8bf9fc, // 12
-		0x83769c, // 13
-		0xff8e7d, // 14
-		0xffffff  // 15
-	]
-});
 
 var scaleX = flr((width() * 0.5) / cellwidth());
 var scaleY = flr((height() * 0.5) / cellheight());
@@ -91,12 +68,10 @@ var volumesY = pitchesY + pitchesH + 2;
 var volumesW = pitchesW;
 var volumesH = flr(height() / 6);
 
-document.body.onresize = document.body.mozfullscreenchange = function(){
-	fit();
-};
-
+// Helpers
 function ssx(n){ return n % 16; }
 function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
+function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y < ry + rh; }
 
 function mousemovehandler(forceMouseDown){
 	if(mode === SPRITE){
@@ -164,10 +139,6 @@ function mousemovehandler(forceMouseDown){
 			}
 		}
 	}
-}
-
-function inrect(x,y,rx,ry,rw,rh){
-	return x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 }
 
 function clickhandler(){
@@ -381,6 +352,13 @@ window.onkeydown = function(evt){
 	dirty = true;
 };
 
+function openfile(){
+	var input = document.createElement('input');
+	input.type = 'file';
+	input.addEventListener('change', readSingleFile, false);
+	input.click();
+}
+
 function readSingleFile(e) {
   var file = e.target.files[0];
   if (!file) {
@@ -397,11 +375,4 @@ function readSingleFile(e) {
 	}
   };
   reader.readAsText(file);
-}
-
-function openfile(){
-	var input = document.createElement('input');
-	input.type = 'file';
-	input.addEventListener('change', readSingleFile, false);
-	input.click();
 }
