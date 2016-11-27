@@ -4,7 +4,7 @@ var fontImages = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
-var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="´+-';
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-';
 
 exports.init = function(fontImage, palette){
 	for(var i=0; i<palette.length; i++){

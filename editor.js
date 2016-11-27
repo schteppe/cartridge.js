@@ -27,7 +27,7 @@ cartridge({
 
 document.body.onresize = document.body.mozfullscreenchange = fit;
 
-var modes = ['sprite', 'map', 'sfx'];
+var modes = ['code', 'sprite', 'map', 'sfx'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
@@ -58,6 +58,36 @@ var viewport = {
 					col
 				);
 			}
+		}
+	}
+};
+
+var code = {
+	x: 1,
+	y: 8,
+	fontHeight: 6,
+	fontWidth: 4,
+	ccol: 0, // cursor
+	crow: 0,
+	wcol: 0, // window position
+	wrow: 0,
+	code: ['HELLO WORLD!', 'LINE 2!'],
+	cursorVisible: true,
+	draw: function(){
+		// Draw code
+		for(var i=0; i<this.code.length; i++){
+			print(this.code[i], this.x, this.y + i * this.fontHeight);
+		}
+
+		// Draw cursor
+		if(this.cursorVisible){
+			rectfill(
+				this.x + this.ccol * this.fontWidth,
+				this.y + this.crow * this.fontHeight,
+				this.x + (this.ccol+1) * this.fontWidth-2,
+				this.y + (this.crow+1) * this.fontHeight-2,
+				0
+			);
 		}
 	}
 };
@@ -212,6 +242,9 @@ function _draw(){
 
 	rectfill(0, 0, width(), height(), 7);
 	switch(mode){
+	case 'code':
+		code.draw();
+		break;
 	case 'sprite':
 		viewport.draw();
 		drawsprites(0,height() - cellheight() * 4);
@@ -327,16 +360,70 @@ function drawpitches(x, y, w, h, source){
 window.onkeyup = function(evt){
 	keysdown[evt.keyCode] = false;
 };
-
+function strInsertAt(str, index, character) {
+    return str.substr(0, index) + character + str.substr(index+character.length-1);
+}
 window.onkeydown = function(evt){
 	keysdown[evt.keyCode] = true;
-	switch(evt.keyCode){
-		case 32: if(mode === 'sfx') sfx(currentSoundEffect); break;
-		case 83: save('game.json'); break;
-		case 79: openfile(); break;
+	if(mode === 'code'){
+		switch(evt.keyCode){
+		case 37: // left
+			code.ccol=max(code.ccol-1,0);
+			break;
+		case 39: // right
+			if(code.ccol === code.code[code.crow].length-1 && code.crow !== code.code.length-1){
+				code.ccol=0;
+				code.crow=min(code.crow+1,code.code.length-1);
+			} else {
+				code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
+			}
+			break;
+		case 38: // up
+			code.crow=max(code.crow-1,0);
+			break;
+		case 40: // down
+			code.crow=min(code.crow+1,code.code.length-1);
+			code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
+			break;
+		case 8: // backspace
+			var after = code.code[code.crow].substr(code.ccol);
+			var before = code.code[code.crow].substr(0,code.ccol-1);
+			code.code[code.crow] = before + after;
+			// Move cursor
+			code.ccol=max(0,code.ccol-1);
+			break;
+		case 46: // delete
+			var after = code.code[code.crow].substr(code.ccol+1);
+			var before = code.code[code.crow].substr(0,code.ccol);
+			code.code[code.crow] = before + after;
+			break;
+		}
+	} else {
+		switch(evt.keyCode){
+			case 32: if(mode === 'sfx') sfx(currentSoundEffect); break;
+			case 83: save('game.json'); break;
+			case 79: openfile(); break;
+		}
 	}
 	dirty = true;
 };
+window.onkeypress = function(evt){
+	if(mode === 'code'){
+		var char = String.fromCharCode(evt.keyCode).toUpperCase();
+		if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;'.indexOf(char) !== -1){
+			code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char);
+			code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
+		} else if(evt.keyCode === 13){ // enter
+			var after = code.code[code.crow].substr(code.ccol);
+			var before = code.code[code.crow].substr(0,code.ccol);
+			code.code.splice(code.crow+1, 0, after);
+			code.code[code.crow] = before;
+			// Move cursor
+			code.ccol=0;
+			code.crow=min(code.crow+1,code.code.length-1);
+		}
+	}
+}
 
 function openfile(){
 	var input = document.createElement('input');
