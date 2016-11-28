@@ -57,9 +57,12 @@ exports.scaleToFit = function scaleToFit(element, containerElement){
 	var scaleX = containerWidth / element.width;
 	var scaleY = containerHeight / element.height;
 	var scale = Math.min(scaleX, scaleY);
-	var offsetX = scaleX > scaleY ? (containerWidth - element.width * scale) * 0.5 : 0;
-	var offsetY = scaleX > scaleY ? 0 : (containerHeight - element.height * scale) * 0.5;
 
+	// "Pixel perfect" mode
+	scale = Math.floor(scale);
+
+	var offsetX = (containerWidth - element.width * scale) * 0.5;
+	var offsetY = (containerHeight - element.height * scale) * 0.5;
 
 	// Safari doesn't have nearest neighbor rendering when using CSS3 scaling
 	if (isSafari()){
