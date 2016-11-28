@@ -33,6 +33,7 @@ var mode = modes[0];
 var selectedSprite = 1; // Because zero is "empty sprite"
 var currentSoundEffect = 0;
 var spritePage = 0;
+var currentWaveform = 4;
 var color = 8;
 var dirty = true;
 var lastmx = 0;
@@ -105,6 +106,21 @@ var flagsY = paletteY + paletteScaleY * 4 + 1;
 
 var buttonsX = width() - 56;
 var buttonsY = height() - 4 * cellheight() - 7;
+var buttons = {
+	x: buttonsX,
+	y: buttonsY,
+	num: 4,
+	current: 0,
+	padding: 4
+};
+
+var waveformButtons = {
+	x: 1,
+	y: 8,
+	num: 6,
+	current: 0,
+	padding: 2
+};
 
 var pitchesX = 0;
 var pitchesY = 14;
@@ -148,7 +164,7 @@ function mousemovehandler(forceMouseDown){
 			mapPanX += dx;
 			mapPanY += dy;
 			dirty = true;
-		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), buttonsY-9)){
+		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), buttons.y-9)){
 			// Draw on map
 			mset(
 				flr((mousex() - mapPanX) / cellwidth()),
@@ -168,7 +184,7 @@ function mousemovehandler(forceMouseDown){
 			// Within editing area?
 			if(clamp(n,0,32) === n && clamp(pitch,0,255) === pitch){
 				afset(currentSoundEffect, n, pitch);
-				awset(currentSoundEffect, n, 4); // TODO: waveform select
+				awset(currentSoundEffect, n, currentWaveform);
 				dirty = true;
 			} else if(clamp(n,0,32) === n && clamp(vol,0,255) === vol){
 				avset(currentSoundEffect, n, vol);
@@ -207,9 +223,17 @@ function clickhandler(){
 			var spriteY = spritePage * 4 + flr((my-spritesHeight) / cellheight());
 			selectedSprite = spriteX + spriteY * 16;
 			dirty = true;
-		} else if(inrect(mx,my,buttonsX,buttonsY,4*14,10)){
-			var button = flr((mx-buttonsX) / 14);
+		} else if(inrect(mx,my,buttons.x,buttons.y,4*14,10)){
+			var button = flr((mx-buttons.x) / 14);
 			spritePage = button;
+			dirty = true;
+		}
+	}
+
+	if(mode === 'sfx'){
+		if(inrect(mx,my,waveformButtons.x,waveformButtons.y,waveformButtons.num * 14,10)){
+			var button = flr((mx-waveformButtons.x) / 14);
+			currentWaveform = button;
 			dirty = true;
 		}
 	}
@@ -241,6 +265,10 @@ function _draw(){
 	dirty = false;
 
 	rectfill(0, 0, width(), height(), 7);
+
+	buttons.current = spritePage;
+	waveformButtons.current = currentWaveform;
+
 	switch(mode){
 	case 'code':
 		code.draw();
@@ -249,18 +277,19 @@ function _draw(){
 		viewport.draw();
 		drawsprites(0,height() - cellheight() * 4);
 		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
-		drawbuttons(buttonsX, buttonsY);
+		drawbuttons(buttons);
 		drawflags(flagsX,flagsY,fget(selectedSprite));
 		break;
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		drawsprites(0,height() - cellheight() * 4);
-		drawbuttons(buttonsX, buttonsY);
+		drawbuttons(buttons);
 		break;
 	case 'sfx':
 		drawpitches(pitchesX, pitchesY, pitchesW, pitchesH, 0);
-		drawpitches(volumesX, volumesY, volumesW, volumesH, 1);
+		drawpitches(volumesX, volumesY, volumesW, volumesH, 1, 0);
+		drawbuttons(waveformButtons);
 		break;
 	}
 
@@ -276,15 +305,15 @@ function drawtop(){
 	print(mode.toUpperCase(), 1, 1, 15);
 }
 
-function drawbuttons(x,y){
+function drawbuttons(settings){
 	var padding = 4;
-	for(var i=0; i<4; i++){
+	for(var i=0; i<settings.num; i++){
 		rectfill(
-			x + i * (6 + padding*2), y,
-			x+5+padding*2 + i * (6+padding*2)-1, y+6,
-			spritePage === i ? 0 : 6
+			settings.x + i * (6 + padding*2), settings.y,
+			settings.x+5+padding*2 + i * (6+padding*2)-1, settings.y+6,
+			settings.current === i ? 0 : 6
 		);
-		print('' + (i+1), x+1+padding + i * (6+padding*2), y+1, spritePage === i ? 6 : 0);
+		print('' + (i+1), settings.x+1+padding + i * (6+padding*2), settings.y+1, settings.current === i ? 6 : 0);
 	}
 }
 
@@ -346,14 +375,14 @@ function drawpalette(x, y, sx, sy){
 	}
 }
 
-function drawpitches(x, y, w, h, source){
+function drawpitches(x, y, w, h, source, col){
 	var pitchWidth = flr(w / 32);
 	for(var i=0; i<32; i++){
 		var x0 = x + i * pitchWidth + 1;
 		var y0 = y + h - 1;
 		var value = source === 1 ? (avget(currentSoundEffect,i) / 255) : (afget(currentSoundEffect,i) / 255);
 		var pitch = flr(value * h);
-		rectfill(x0, y0 - pitch, x0 + pitchWidth - 2, y0, 1);
+		rectfill(x0, y0 - pitch, x0 + pitchWidth - 2, y0, col !== undefined ? col : awget(currentSoundEffect, i));
 	}
 }
 
