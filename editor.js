@@ -183,6 +183,10 @@ function mousemovehandler(forceMouseDown){
 
 			// Within editing area?
 			if(clamp(n,0,32) === n && clamp(pitch,0,255) === pitch){
+				if(avget(currentSoundEffect, n) === 0){
+					// User probably want full volumes
+					avset(currentSoundEffect, n, 255);
+				}
 				afset(currentSoundEffect, n, pitch);
 				awset(currentSoundEffect, n, currentWaveform);
 				dirty = true;
