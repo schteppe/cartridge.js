@@ -160,16 +160,15 @@ function updateMouseCoords(evt, canvases){
 
 	var rect = evt.target.getBoundingClientRect(); // cache this?
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
-	var size = Math.min(rect.width, rect.height);
 	var subx = 0;
 	var suby = 0;
-	if(rect.width / rect.height > parentRect.width / parentRect.height){
+	/*if(rect.width / rect.height > parentRect.width / parentRect.height){
 		subx = (parentRect.width - rect.width) * 0.5;
 	} else {
 		suby = (parentRect.height - rect.height) * 0.5;
-	}
-	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
-	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
+	}*/
+	_mousex = (evt.clientX - rect.left - subx) / rect.width;
+	_mousey = (evt.clientY - rect.top - suby) / rect.height;
 }
 
 function updateGamepads() {
