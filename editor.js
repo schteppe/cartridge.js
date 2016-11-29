@@ -1,10 +1,10 @@
 cartridge({
 	containerId: 'container',
 	layers: 2,
-	width: 256,
-	height: 240,
-	cellwidth: 16,
-	cellheight: 16,
+	width: 128,
+	height: 128,
+	cellwidth: 8,
+	cellheight: 8,
 	palette: [
 		0x000000, // 0
 		0x0829fc, // 1
@@ -122,6 +122,17 @@ var waveformButtons = {
 	padding: 2
 };
 
+var topButtons = {
+	x: 0,
+	y: 0,
+	options: modes,
+	current: 0,
+	padding: 1,
+	bgColor: 7,
+	textColor: 0,
+	padding: 5
+};
+
 var pitchesX = 0;
 var pitchesY = 14;
 var pitchesW = width();
@@ -235,16 +246,17 @@ function clickhandler(){
 	}
 
 	if(mode === 'sfx'){
-		if(inrect(mx,my,waveformButtons.x,waveformButtons.y,waveformButtons.num * 14,10)){
-			var button = flr((mx-waveformButtons.x) / 14);
+		if(inrect(mx,my,waveformButtons.x,waveformButtons.y,waveformButtons.num * (waveformButtons.padding * 2 + 6),7)){
+			var button = flr((mx-waveformButtons.x) / (waveformButtons.padding * 2 + 6));
 			currentWaveform = button;
 			dirty = true;
 		}
 	}
 
-	// Click the upper left corner - switch mode
-	if(inrect(mx,my,0,0,32,8)){
-		mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+	// mode switcher
+	if(inrect(mx,my,topButtons.x,topButtons.y,topButtons.options.length * (topButtons.padding * 2 + 6),7)){
+		var button = flr((mx-topButtons.x) / (topButtons.padding * 2 + 6));
+		mode = modes[button];
 		dirty = true;
 	}
 }
@@ -272,6 +284,7 @@ function _draw(){
 
 	buttons.current = spritePage;
 	waveformButtons.current = currentWaveform;
+	topButtons.current = modes.indexOf(mode);
 
 	switch(mode){
 	case 'code':
@@ -306,18 +319,29 @@ function _draw(){
 
 function drawtop(){
 	rectfill(0, 0, width(), 6, 0);
-	print(mode.toUpperCase(), 1, 1, 15);
+	//print(mode.toUpperCase(), 1, 1, 15);
+	drawbuttons(topButtons);
 }
 
 function drawbuttons(settings){
-	var padding = 4;
-	for(var i=0; i<settings.num; i++){
+	var padding = settings.padding !== undefined ? settings.padding : 4;
+	var num = settings.num || settings.options.length;
+	var bgColor = settings.bgColor !== undefined ? settings.bgColor : 0;
+	var textColor = settings.textColor !== undefined ? settings.textColor : 6;
+	for(var i=0; i<num; i++){
+		var x0 = settings.x + i * (6 + padding*2);
 		rectfill(
-			settings.x + i * (6 + padding*2), settings.y,
+			x0, settings.y,
 			settings.x+5+padding*2 + i * (6+padding*2)-1, settings.y+6,
-			settings.current === i ? 0 : 6
+			settings.current === i ? bgColor : textColor
 		);
-		print('' + (i+1), settings.x+1+padding + i * (6+padding*2), settings.y+1, settings.current === i ? 6 : 0);
+		var text = settings.options !== undefined ? settings.options[i].toUpperCase().substr(0,3) : ((i+1) + '');
+		var x1 = settings.x+1+padding + i * (6 + padding*2);
+		print(
+			text,
+			settings.options !== undefined ? (x0+1) : x1, settings.y+1,
+			settings.current === i ? textColor : bgColor
+		);
 	}
 }
 
