@@ -28,7 +28,7 @@ cartridge({
 // Todo: put in the lib
 document.body.onresize = document.body.mozfullscreenchange = fit;
 
-var modes = ['code', 'sprite', 'map', 'sfx'];
+var modes = ['sprite', 'map', 'sfx', 'code'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
@@ -156,6 +156,32 @@ function ssx(n){ return n % 16; }
 function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
 function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y < ry + rh; }
 
+function floodfill(x, y, target, replace, xmin, xmax, ymin, ymax){
+	if(target === replace) return;
+	if(sget(x,y) !== target) return;
+	var q = [];
+	q.push(x,y);
+	while(q.length){
+		var nx = q.shift();
+		var ny = q.shift();
+		if(sget(nx,ny) === target){
+			sset(nx,ny,replace);
+			if(nx > xmin && sget(nx-1,ny) === target){
+				q.push(nx-1,ny);
+			}
+			if(nx < xmax && sget(nx+1,ny) === target){
+				q.push(nx+1,ny);
+			}
+			if(ny < ymax && sget(nx,ny+1) === target){
+				q.push(nx,ny+1);
+			}
+			if(ny > ymin && sget(nx,ny-1) === target){
+				q.push(nx,ny-1);
+			}
+		}
+	}
+}
+
 function mousemovehandler(forceMouseDown){
 	switch(mode){
 	case 'sprite':
@@ -163,13 +189,32 @@ function mousemovehandler(forceMouseDown){
 			// Draw on sprite
 			var x = flr((mousex()-viewport.x) / viewport.sx);
 			var y = flr((mousey()-viewport.y) / viewport.sy);
+
 			if(inrect(x, y, 0, 0, cellwidth(), cellheight())){
-				sset(
-					ssx(selectedSprite) * cellwidth() + x,
-					ssy(selectedSprite) * cellheight() + y,
-					color
-				);
-				dirty = true;
+				if(toolButtons.current === 0){
+					// Draw!
+					sset(
+						ssx(selectedSprite) * cellwidth() + x,
+						ssy(selectedSprite) * cellheight() + y,
+						color
+					);
+					dirty = true;
+				} else if(toolButtons.current === 1){
+					// Fill!
+					var x0 = ssx(selectedSprite) * cellwidth();
+					var y0 = ssy(selectedSprite) * cellheight();
+					var fillx = x0 + x;
+					var filly = y0 + y;
+					floodfill(
+						fillx,
+						filly,
+						sget(fillx, filly),
+						color,
+						x0, x0 + cellwidth()-1,
+						y0, y0 + cellheight()-1
+					);
+					dirty = true;
+				}
 			}
 		}
 		break;
