@@ -1,10 +1,10 @@
 cartridge({
 	containerId: 'container',
 	layers: 2,
-	width: 128,
-	height: 128,
-	cellwidth: 8,
-	cellheight: 8,
+	width: 256,
+	height: 240,
+	cellwidth: 16,
+	cellheight: 16,
 	palette: [
 		0x000000, // 0
 		0x0829fc, // 1
