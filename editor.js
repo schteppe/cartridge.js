@@ -25,6 +25,7 @@ cartridge({
 	]
 });
 
+// Todo: put in the lib
 document.body.onresize = document.body.mozfullscreenchange = fit;
 
 var modes = ['code', 'sprite', 'map', 'sfx'];
@@ -127,10 +128,17 @@ var topButtons = {
 	y: 0,
 	options: modes,
 	current: 0,
-	padding: 1,
 	bgColor: 7,
 	textColor: 0,
-	padding: 5
+	padding: 7
+};
+
+var toolButtons = {
+	x: 1,
+	y: viewport.y + viewport.sy * cellheight() + 1,
+	options: ['draw','fill'],
+	current: 0,
+	padding: 6
 };
 
 var pitchesX = 0;
@@ -227,6 +235,10 @@ function clickhandler(){
 			var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
 			fset(selectedSprite, newFlags);
 			dirty = true;
+		} else if(inrect(mx,my,toolButtons.x,toolButtons.y,toolButtons.options.length * (toolButtons.padding * 2 + 6),7)){
+			// tool switcher
+			toolButtons.current = flr((mx-toolButtons.x) / (toolButtons.padding * 2 + 6));
+			dirty = true;
 		}
 	}
 
@@ -295,6 +307,7 @@ function _draw(){
 		drawsprites(0,height() - cellheight() * 4);
 		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
 		drawbuttons(buttons);
+		drawbuttons(toolButtons);
 		drawflags(flagsX,flagsY,fget(selectedSprite));
 		break;
 	case 'map':
@@ -319,7 +332,6 @@ function _draw(){
 
 function drawtop(){
 	rectfill(0, 0, width(), 6, 0);
-	//print(mode.toUpperCase(), 1, 1, 15);
 	drawbuttons(topButtons);
 }
 
@@ -335,7 +347,7 @@ function drawbuttons(settings){
 			settings.x+5+padding*2 + i * (6+padding*2)-1, settings.y+6,
 			settings.current === i ? bgColor : textColor
 		);
-		var text = settings.options !== undefined ? settings.options[i].toUpperCase().substr(0,3) : ((i+1) + '');
+		var text = settings.options !== undefined ? settings.options[i].toUpperCase().substr(0,4) : ((i+1) + '');
 		var x1 = settings.x+1+padding + i * (6 + padding*2);
 		print(
 			text,
