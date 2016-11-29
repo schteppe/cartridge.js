@@ -3120,6 +3120,10 @@ function addInputListeners(canvases){
 		mouseup: function(evt){
 			_mousebtns[evt.which] = false;
 			updateMouseCoords(evt, canvases);
+		},
+		mouseleave: function(evt){
+			_mousebtns[evt.which] = false;
+			updateMouseCoords(evt, canvases);
 		}
 	};
 	for(var key in canvasListeners){
