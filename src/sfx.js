@@ -109,9 +109,10 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	var endPosition = 0;
 	for(i=0; i<volumes.length; i++){
 		if(volumes[i]){
-			endPosition = i;
+			endPosition = i + 1;
 		}
 	}
+	if(endPosition === 0) return;
 
 	var len = (endPosition - offset) / speed;
 	var currentTime = context.currentTime;
