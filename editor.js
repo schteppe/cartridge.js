@@ -407,6 +407,7 @@ function _draw(){
 		drawbuttons(buttons);
 		break;
 	case 'sfx':
+		speedSelector.current = asget(currentSoundEffect);
 		drawpitches(pitchesX, pitchesY, pitchesW, pitchesH, 0);
 		drawpitches(volumesX, volumesY, volumesW, volumesH, 1, 0);
 		drawbuttons(waveformButtons);
