@@ -147,12 +147,26 @@ var speedSelector = {
 	current: 1,
 	padding: 6,
 	min: 1,
-	max: 64
+	max: 64,
+	prefix: '',
+	postfix: 'X'
 };
+
+var sfxSelector = {
+	x: 130,
+	y: 8,
+	current: 0,
+	padding: 6,
+	min: 0,
+	max: 63,
+	prefix: '',
+	postfix: ''
+};
+
 function intselDraw(intsel){
 	var padding = intsel.padding;
 	var numDigits = intsel.max.toString().length;
-	var chars = ['<', intsel.current + '', '>'];
+	var chars = ['<', intsel.prefix + intsel.current + intsel.postfix, '>'];
 	for(var i=0; i<3; i++){
 		var x0 = intsel.x + i * (6 + padding*2);
 		rectfill(
@@ -163,7 +177,7 @@ function intselDraw(intsel){
 		var x1 = intsel.x+1+padding + i * (6 + padding*2);
 		print(
 			chars[i],
-			(x0+1) + padding - (chars[i].length-1) * 3, intsel.y+1,
+			(x0+1) + padding - (chars[i].length-1) * 2, intsel.y+1,
 			0
 		);
 	}
@@ -183,7 +197,7 @@ function intselClick(intsel, x, y){
 }
 
 var pitchesX = 0;
-var pitchesY = 14;
+var pitchesY = 20;
 var pitchesW = width();
 var pitchesH = flr(height() / 2);
 
@@ -353,6 +367,10 @@ function clickhandler(){
 			asset(currentSoundEffect, speedSelector.current);
 			dirty = true;
 		}
+		if(intselClick(sfxSelector, mx, my)){
+			currentSoundEffect = sfxSelector.current;
+			dirty = true;
+		}
 	}
 
 	// mode switcher
@@ -363,11 +381,6 @@ function clickhandler(){
 	}
 }
 click(clickhandler);
-
-function _load(callback){
-	load();
-	callback();
-}
 
 function _draw(){
 	var mx = mousex();
@@ -407,11 +420,13 @@ function _draw(){
 		drawbuttons(buttons);
 		break;
 	case 'sfx':
-		speedSelector.current = asget(currentSoundEffect);
 		drawpitches(pitchesX, pitchesY, pitchesW, pitchesH, 0);
 		drawpitches(volumesX, volumesY, volumesW, volumesH, 1, 0);
 		drawbuttons(waveformButtons);
+		speedSelector.current = asget(currentSoundEffect);
 		intselDraw(speedSelector);
+		sfxSelector.current = currentSoundEffect;
+		intselDraw(sfxSelector);
 		break;
 	}
 
