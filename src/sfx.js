@@ -121,7 +121,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 
 		var startTime = currentTime + i / speed;
 
-		for(j=0; j<allTypes.length; j++){
+		for(j=0; j<allTypes.length; j++){ // todo: do one type at a time !
 			gain = channel.gains[allTypes[j]];
 
 			// Set other gains to zero
