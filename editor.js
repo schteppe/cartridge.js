@@ -141,6 +141,47 @@ var toolButtons = {
 	padding: 6
 };
 
+var speedSelector = {
+	x: 70,
+	y: 8,
+	current: 1,
+	padding: 6,
+	min: 1,
+	max: 64
+};
+function intselDraw(intsel){
+	var padding = intsel.padding;
+	var numDigits = intsel.max.toString().length;
+	var chars = ['<', intsel.current + '', '>'];
+	for(var i=0; i<3; i++){
+		var x0 = intsel.x + i * (6 + padding*2);
+		rectfill(
+			x0, intsel.y,
+			intsel.x+5+padding*2 + i * (6+padding*2)-1, intsel.y+6,
+			6
+		);
+		var x1 = intsel.x+1+padding + i * (6 + padding*2);
+		print(
+			chars[i],
+			(x0+1) + padding - (chars[i].length-1) * 3, intsel.y+1,
+			0
+		);
+	}
+}
+function intselClick(intsel, x, y){
+	if(inrect(x,y,intsel.x,intsel.y, 3 * (intsel.padding * 2 + 6),7)){
+		var button = flr((x-intsel.x) / (intsel.padding * 2 + 6));
+		if(button === 0){
+			intsel.current--;
+		} else if(button === 2){
+			intsel.current++;
+		}
+		intsel.current = clamp(intsel.current, intsel.min, intsel.max);
+		return true;
+	}
+	return false;
+}
+
 var pitchesX = 0;
 var pitchesY = 14;
 var pitchesW = width();
@@ -308,6 +349,10 @@ function clickhandler(){
 			currentWaveform = button;
 			dirty = true;
 		}
+		if(intselClick(speedSelector, mx, my)){
+			asset(currentSoundEffect, speedSelector.current);
+			dirty = true;
+		}
 	}
 
 	// mode switcher
@@ -365,6 +410,7 @@ function _draw(){
 		drawpitches(pitchesX, pitchesY, pitchesW, pitchesH, 0);
 		drawpitches(volumesX, volumesY, volumesW, volumesH, 1, 0);
 		drawbuttons(waveformButtons);
+		intselDraw(speedSelector);
 		break;
 	}
 
