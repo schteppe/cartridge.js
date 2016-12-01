@@ -3333,11 +3333,11 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	var endPosition = 0;
 	for(i=0; i<volumes.length; i++){
 		if(volumes[i]){
-			endPosition = i;
+			endPosition = i + 1;
 		}
 	}
+	if(endPosition === 0) return;
 
-	var len = (endPosition - offset) / speed;
 	var currentTime = context.currentTime;
 	for(i=offset; i<endPosition; i++){
 		var type = allTypes[types[i]];
@@ -3345,22 +3345,25 @@ function play(channel, types, frequencies, volumes, speed, offset){
 
 		var startTime = currentTime + i / speed;
 
-		// Set other gains to zero
-		for(j=0; j<allTypes.length; j++){
+		for(j=0; j<allTypes.length; j++){ // todo: do one type at a time !
 			gain = channel.gains[allTypes[j]];
+
+			// Set other gains to zero
 			if(allTypes[j] !== type){
 				gain.gain.setValueAtTime(0, startTime);
 			} else {
-				if(osc.frequency){
+				if(osc.frequency){ // noise doesn't have frequency
 					osc.frequency.setValueAtTime(frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency, startTime);
 				}
-				gain.gain.setValueAtTime(volumes[i] / 255, startTime);
+				var vol = volumes[i] / 255;
+				gain.gain.setValueAtTime(vol, startTime);
 			}
 		}
 	}
 
 	// Set the volume at the end to zero
-	var endTime = currentTime + (endPosition-offset) / speed;
+	var len = (endPosition-offset) / speed;
+	var endTime = currentTime + len;
 	for(j=0; j<allTypes.length; j++){
 		gain = channel.gains[allTypes[j]];
 		gain.gain.setValueAtTime(0, endTime);
