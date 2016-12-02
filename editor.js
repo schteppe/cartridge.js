@@ -73,7 +73,7 @@ var code = {
 	crow: 0,
 	wcol: 0, // window position
 	wrow: 0,
-	code: ['HELLO WORLD!', 'LINE 2!'],
+	code: [''],
 	cursorVisible: true,
 	draw: function(){
 		// Draw code
@@ -540,6 +540,68 @@ function drawpitches(x, y, w, h, source, col){
 	}
 }
 
+function code_keydown(code, evt){
+	switch(evt.keyCode){
+	case 37: // left
+		code.ccol=max(code.ccol-1,0);
+		break;
+	case 39: // right
+		if(code.ccol === code.code[code.crow].length && code.crow !== code.code.length-1){
+			code.ccol=0;
+			code.crow=min(code.crow+1,code.code.length-1);
+		} else {
+			code.ccol=min(code.ccol+1,code.code[code.crow].length);
+		}
+		break;
+	case 38: // up
+		code.crow=max(code.crow-1,0);
+		code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
+		break;
+	case 40: // down
+		code.crow=min(code.crow+1,code.code.length-1);
+		code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
+		break;
+	case 8: // backspace
+		if(code.ccol !== 0){
+			var after = code.code[code.crow].substr(code.ccol);
+			var before = code.code[code.crow].substr(0,code.ccol-1);
+			code.code[code.crow] = before + after;
+			// Move cursor
+			code.ccol=max(0,code.ccol-1);
+		} else if(code.ccol === 0 && code.crow !== 0){
+			// append to previous row
+			var newCol = code.code[code.crow-1].length;
+			code.code[code.crow-1] += code.code[code.crow];
+			code.code.splice(code.crow, 1);
+			code.crow -= 1;
+			code.ccol = newCol;
+		}
+		break;
+	case 46: // delete
+		var after = code.code[code.crow].substr(code.ccol+1);
+		var before = code.code[code.crow].substr(0,code.ccol);
+		code.code[code.crow] = before + after;
+		break;
+	}
+	console.log(code.code)
+}
+
+function code_keypress(code, evt){
+	var char = String.fromCharCode(evt.keyCode).toUpperCase();
+	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_'.indexOf(char) !== -1){
+		code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char);
+		code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
+	} else if(evt.keyCode === 13){ // enter
+		var after = code.code[code.crow].substr(code.ccol);
+		var before = code.code[code.crow].substr(0,code.ccol);
+		code.code.splice(code.crow+1, 0, after);
+		code.code[code.crow] = before;
+		// Move cursor
+		code.ccol=0;
+		code.crow=min(code.crow+1,code.code.length-1);
+	}
+}
+
 window.onkeyup = function(evt){
 	keysdown[evt.keyCode] = false;
 };
@@ -549,39 +611,7 @@ function strInsertAt(str, index, character) {
 window.onkeydown = function(evt){
 	keysdown[evt.keyCode] = true;
 	if(mode === 'code'){
-		switch(evt.keyCode){
-		case 37: // left
-			code.ccol=max(code.ccol-1,0);
-			break;
-		case 39: // right
-			if(code.ccol === code.code[code.crow].length && code.crow !== code.code.length-1){
-				code.ccol=0;
-				code.crow=min(code.crow+1,code.code.length-1);
-			} else {
-				code.ccol=min(code.ccol+1,code.code[code.crow].length);
-			}
-			break;
-		case 38: // up
-			code.crow=max(code.crow-1,0);
-			code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
-			break;
-		case 40: // down
-			code.crow=min(code.crow+1,code.code.length-1);
-			code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
-			break;
-		case 8: // backspace
-			var after = code.code[code.crow].substr(code.ccol);
-			var before = code.code[code.crow].substr(0,code.ccol-1);
-			code.code[code.crow] = before + after;
-			// Move cursor
-			code.ccol=max(0,code.ccol-1);
-			break;
-		case 46: // delete
-			var after = code.code[code.crow].substr(code.ccol+1);
-			var before = code.code[code.crow].substr(0,code.ccol);
-			code.code[code.crow] = before + after;
-			break;
-		}
+		code_keydown(code, evt);
 	} else {
 		switch(evt.keyCode){
 			case 32: if(mode === 'sfx') sfx(currentSoundEffect); break;
@@ -593,19 +623,7 @@ window.onkeydown = function(evt){
 };
 window.onkeypress = function(evt){
 	if(mode === 'code'){
-		var char = String.fromCharCode(evt.keyCode).toUpperCase();
-		if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_'.indexOf(char) !== -1){
-			code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char);
-			code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
-		} else if(evt.keyCode === 13){ // enter
-			var after = code.code[code.crow].substr(code.ccol);
-			var before = code.code[code.crow].substr(0,code.ccol);
-			code.code.splice(code.crow+1, 0, after);
-			code.code[code.crow] = before;
-			// Move cursor
-			code.ccol=0;
-			code.crow=min(code.crow+1,code.code.length-1);
-		}
+		code_keypress(code, evt);
 	}
 }
 
