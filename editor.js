@@ -295,19 +295,26 @@ function mousemovehandler(forceMouseDown){
 		break;
 
 	case 'sfx':
-		if(mousebtn(1) || forceMouseDown){
+		if(mousebtn(1) || mousebtn(3) || forceMouseDown){
 			var n = flr(mousex() / width() * 32);
 			var pitch = flr((pitchesH - mousey() + pitchesY) / pitchesH * 255);
 			var vol = flr((volumesH - mousey() + volumesY) / volumesH * 255);
 
 			// Within editing area?
 			if(clamp(n,0,32) === n && clamp(pitch,0,255) === pitch){
-				if(avget(currentSoundEffect, n) === 0){
-					// User probably want full volumes
-					avset(currentSoundEffect, n, 255);
+				if(mousebtn(1)){
+					// Draw pitch
+					if(avget(currentSoundEffect, n) === 0){
+						// User probably want full volumes
+						avset(currentSoundEffect, n, 255);
+					}
+					afset(currentSoundEffect, n, pitch);
+					awset(currentSoundEffect, n, currentWaveform);
+				} else if(mousebtn(3)){
+					// Delete
+					afset(currentSoundEffect, n, 0);
+					avset(currentSoundEffect, n, 0);
 				}
-				afset(currentSoundEffect, n, pitch);
-				awset(currentSoundEffect, n, currentWaveform);
 				dirty = true;
 			} else if(clamp(n,0,32) === n && clamp(vol,0,255) === vol){
 				avset(currentSoundEffect, n, vol);
