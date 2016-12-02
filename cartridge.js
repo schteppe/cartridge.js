@@ -3110,7 +3110,10 @@ function addInputListeners(canvases){
 	canvasListeners = {
 		click: function(evt){
 			if(clickListener !== null){
+				updateMouseCoords(evt, canvases);
+				_mousebtns[evt.which] = true;
 				clickListener();
+				_mousebtns[evt.which] = false;
 			}
 		},
 		mousedown: function(evt){
