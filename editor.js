@@ -620,7 +620,7 @@ function code_keydown(code, evt){
 
 function code_keypress(code, evt){
 	var char = String.fromCharCode(evt.keyCode).toUpperCase();
-	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_'.indexOf(char) !== -1){
+	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_|&*~'.indexOf(char) !== -1){
 		code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char.toLowerCase());
 		code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
 	} else if(evt.keyCode === 13){ // enter
