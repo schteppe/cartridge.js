@@ -388,7 +388,7 @@ exports.print = function(text, x, y, col){
 	x = x !== undefined ? x : 0;
 	y = y !== undefined ? y : 0;
 	col = col !== undefined ? col : defaultColor;
-	font.draw(ctx, text, x, y, col);
+	font.draw(ctx, text.toUpperCase(), x, y, col);
 };
 
 exports.fit = function fit(){

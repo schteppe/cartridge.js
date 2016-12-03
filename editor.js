@@ -1,3 +1,7 @@
+(function(){
+
+var editorDraw;
+
 cartridge({
 	containerId: 'container',
 	layers: 2,
@@ -28,7 +32,7 @@ cartridge({
 // Todo: put in the lib
 document.body.onresize = document.body.mozfullscreenchange = fit;
 
-var modes = ['sprite', 'map', 'sfx', 'code'];
+var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'run'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
@@ -73,7 +77,18 @@ var code = {
 	crow: 0,
 	wcol: 0, // window position
 	wrow: 0,
-	code: [''],
+	code: [
+		'var x=10,y=10;',
+		'function _draw(){',
+		'  cls();',
+		'  map(0,0,0,0,16,15);',
+		'  spr(1,x,y);',
+		'  if(btn(0)) x--;',
+		'  if(btn(1)) x++;',
+		'  if(btn(2)) y--;',
+		'  if(btn(3)) y++;',
+		'  if(btn(4) && !btnp(4)) sfx(0);',
+		'}'],
 	cursorVisible: true,
 	draw: function(){
 		// Draw code
@@ -383,13 +398,19 @@ function clickhandler(){
 	// mode switcher
 	if(inrect(mx,my,topButtons.x,topButtons.y,topButtons.options.length * (topButtons.padding * 2 + 6),7)){
 		var button = flr((mx-topButtons.x) / (topButtons.padding * 2 + 6));
+
+		if(modes[button] === 'run'){
+			code.previousMode = mode;
+			code_run(code);
+		}
+
 		mode = modes[button];
 		dirty = true;
 	}
 }
 click(clickhandler);
 
-function _draw(){
+editorDraw = window._draw = function _draw(){
 	var mx = mousex();
 	var my = mousey();
 	if(!(lastmx === mx && lastmy === my)){
@@ -438,10 +459,7 @@ function _draw(){
 	}
 
 	drawtop();
-	canvas(1);
-	cls();
 	drawmouse(mousex(), mousey());
-	canvas(0);
 }
 
 function drawtop(){
@@ -540,6 +558,21 @@ function drawpitches(x, y, w, h, source, col){
 	}
 }
 
+function code_run(code){
+	// Run code in global scope
+	code.previousMode = mode;
+	eval.call(null, code.code.join('\n').toLowerCase());
+
+}
+
+function code_stop(code){
+	// reattach the global scope functions
+	delete window._update;
+	delete window._init;
+	mode = code.previousMode;
+	window._draw = editorDraw;
+}
+
 function code_keydown(code, evt){
 	switch(evt.keyCode){
 	case 37: // left
@@ -583,13 +616,12 @@ function code_keydown(code, evt){
 		code.code[code.crow] = before + after;
 		break;
 	}
-	console.log(code.code)
 }
 
 function code_keypress(code, evt){
 	var char = String.fromCharCode(evt.keyCode).toUpperCase();
 	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_'.indexOf(char) !== -1){
-		code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char);
+		code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char.toLowerCase());
 		code.ccol=min(code.ccol+1,code.code[code.crow].length-1);
 	} else if(evt.keyCode === 13){ // enter
 		var after = code.code[code.crow].substr(code.ccol);
@@ -612,6 +644,8 @@ window.onkeydown = function(evt){
 	keysdown[evt.keyCode] = true;
 	if(mode === 'code'){
 		code_keydown(code, evt);
+	} else if(mode === 'run' && evt.keyCode === 27){
+		code_stop(code, evt);
 	} else {
 		switch(evt.keyCode){
 			case 32: if(mode === 'sfx') sfx(currentSoundEffect); break;
@@ -651,3 +685,5 @@ function readSingleFile(e) {
   };
   reader.readAsText(file);
 }
+
+})();
