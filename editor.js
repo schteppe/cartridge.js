@@ -71,6 +71,8 @@ var viewport = {
 var code = {
 	x: 1,
 	y: 8,
+	width: width()-3,
+	height: height() - 9,
 	fontHeight: 6,
 	fontWidth: 4,
 	ccol: 0, // cursor
@@ -91,18 +93,34 @@ var code = {
 		'}'],
 	cursorVisible: true,
 	draw: function(){
+		var x = this.x;
+		var y = this.y;
+		var w = this.width;
+		var h = this.height;
+		var fontHeight = this.fontHeight;
+		var rows = flr(h / fontHeight);
+		var cols = flr(w / this.fontWidth);
+
+		// For testing
+		//rectfill(x, y, x + w, y + h, 14);
+
+		if(this.crow < this.wrow) this.wrow = this.crow;
+		if(this.crow > this.wrow + rows - 1) this.wrow = this.crow - rows + 1;
+		if(this.ccol < this.wcol) this.wcol = this.ccol;
+		if(this.ccol > this.wcol + cols - 1) this.wcol = this.ccol - cols + 1;
+
 		// Draw code
-		for(var i=0; i<this.code.length; i++){
-			print(this.code[i], this.x, this.y + i * this.fontHeight);
+		for(var i=0; i+this.wrow < this.code.length && h > (i+1) * fontHeight; i++){
+			print(this.code[i + this.wrow].substr(this.wcol, cols), x, y + i * fontHeight);
 		}
 
 		// Draw cursor
 		if(this.cursorVisible){
 			rectfill(
-				this.x + this.ccol * this.fontWidth,
-				this.y + this.crow * this.fontHeight,
-				this.x + (this.ccol+1) * this.fontWidth-2,
-				this.y + (this.crow+1) * this.fontHeight-2,
+				x + (this.ccol - this.wcol) * this.fontWidth,
+				y + (this.crow - this.wrow) * fontHeight,
+				x + (this.ccol+1-this.wcol) * this.fontWidth-2,
+				y + (this.crow+1-this.wrow) * fontHeight-2,
 				0
 			);
 		}
