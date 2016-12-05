@@ -92,41 +92,41 @@ var code = {
 		'  if(btn(3)) y++;',
 		'  if(btn(4) && !btnp(4)) sfx(0);',
 		'}'],
-	cursorVisible: true,
-	draw: function(){
-		var x = this.x;
-		var y = this.y;
-		var w = this.width;
-		var h = this.height;
-		var fontHeight = this.fontHeight;
-		var rows = flr(h / fontHeight);
-		var cols = flr(w / this.fontWidth);
-
-		// For testing
-		//rectfill(x, y, x + w, y + h, 14);
-
-		if(this.crow < this.wrow) this.wrow = this.crow;
-		if(this.crow > this.wrow + rows - 1) this.wrow = this.crow - rows + 1;
-		if(this.ccol < this.wcol) this.wcol = this.ccol;
-		if(this.ccol > this.wcol + cols - 1) this.wcol = this.ccol - cols + 1;
-
-		// Draw code
-		for(var i=0; i+this.wrow < this.code.length && h > (i+1) * fontHeight; i++){
-			print(this.code[i + this.wrow].substr(this.wcol, cols), x, y + i * fontHeight);
-		}
-
-		// Draw cursor
-		if(this.cursorVisible){
-			rectfill(
-				x + (this.ccol - this.wcol) * this.fontWidth,
-				y + (this.crow - this.wrow) * fontHeight,
-				x + (this.ccol+1-this.wcol) * this.fontWidth-2,
-				y + (this.crow+1-this.wrow) * fontHeight-2,
-				0
-			);
-		}
-	}
+	cursorVisible: true
 };
+
+function code_draw(code){
+	var x = code.x;
+	var y = code.y;
+	var w = code.width;
+	var h = code.height;
+
+	var fontHeight = code.fontHeight;
+	var fontWidth = code.fontWidth;
+	var rows = flr(h / fontHeight);
+	var cols = flr(w / fontWidth);
+
+	if(code.crow < code.wrow) code.wrow = code.crow;
+	if(code.crow > code.wrow + rows - 1) code.wrow = code.crow - rows + 1;
+	if(code.ccol < code.wcol) code.wcol = code.ccol;
+	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
+
+	// Draw code
+	for(var i=0; i+code.wrow < code.code.length && h > (i+1) * fontHeight; i++){
+		print(code.code[i + code.wrow].substr(code.wcol, cols), x, y + i * fontHeight);
+	}
+
+	// Draw cursor
+	if(code.cursorVisible){
+		rectfill(
+			x + (code.ccol - code.wcol) * fontWidth,
+			y + (code.crow - code.wrow) * fontHeight,
+			x + (code.ccol+1-code.wcol) * fontWidth-2,
+			y + (code.crow+1-code.wrow) * fontHeight-2,
+			0
+		);
+	}
+}
 
 var mapPanX = 0;
 var mapPanY = 0;
@@ -456,7 +456,7 @@ editorDraw = window._draw = function _draw(){
 
 	switch(mode){
 	case 'code':
-		code.draw();
+		code_draw(code);
 		break;
 	case 'sprite':
 		viewport.draw();
@@ -637,6 +637,13 @@ function code_click(code,x,y){
 }
 
 function code_keydown(code, evt){
+
+	// Prevent tab'ing
+	if(evt.which === 9) {
+		evt.preventDefault();
+		return;
+	}
+
 	switch(evt.keyCode){
 	case 37: // left
 		code.ccol=max(code.ccol-1,0);
@@ -706,7 +713,8 @@ function code_keypress(code, evt){
 
 window.onkeyup = function(evt){
 	keysdown[evt.keyCode] = false;
-};
+}
+
 function strInsertAt(str, index, character) {
     return str.substr(0, index) + character + str.substr(index+character.length-1);
 }
