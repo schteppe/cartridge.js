@@ -626,11 +626,11 @@ function code_keydown(code, evt){
 		break;
 	case 38: // up
 		code.crow=max(code.crow-1,0);
-		code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
+		code.ccol=clamp(code.ccol,0,code.code[code.crow].length);
 		break;
 	case 40: // down
 		code.crow=min(code.crow+1,code.code.length-1);
-		code.ccol=max(0,min(code.ccol,code.code[code.crow].length-1));
+		code.ccol=clamp(code.ccol,0,code.code[code.crow].length);
 		break;
 	case 8: // backspace
 		if(code.ccol !== 0){
