@@ -71,6 +71,7 @@ var viewport = {
 var code = {
 	x: 1,
 	y: 8,
+	initialized: false,
 	width: width()-3,
 	height: height() - 9,
 	fontHeight: 6,
@@ -418,11 +419,11 @@ function clickhandler(){
 		var button = flr((mx-topButtons.x) / (topButtons.padding * 2 + 6));
 
 		if(modes[button] === 'run'){
-			code.previousMode = mode;
 			code_run(code);
+		} else {
+			mode = modes[button];
 		}
 
-		mode = modes[button];
 		dirty = true;
 	}
 
@@ -585,14 +586,38 @@ function drawpitches(x, y, w, h, source, col){
 function code_run(code){
 	// Run code in global scope
 	code.previousMode = mode;
-	eval.call(null, code.code.join('\n').toLowerCase());
-
+	mode = 'run';
+	code.initialized = false;
+	try {
+		eval.call(null, code.code.join('\n').toLowerCase());
+		// Manually run the init
+		if(window._init){
+			window._init();
+		}
+		code.initialized = true;
+	} catch(err){
+		console.error(err);
+		// Stop and go back!
+		code_stop(code);
+		dirty = true;
+	}
 }
 
 function code_stop(code){
 	// reattach the global scope functions
+	if(code.initialized){
+		try {
+			if(window._kill){
+				window._kill();
+			}
+		} catch(err){
+			console.error(err);
+		}
+	}
 	delete window._update;
+	delete window._update60;
 	delete window._init;
+	delete window._kill;
 	mode = code.previousMode;
 	window._draw = editorDraw;
 }
@@ -690,7 +715,7 @@ window.onkeydown = function(evt){
 	if(mode === 'code'){
 		code_keydown(code, evt);
 	} else if(mode === 'run' && evt.keyCode === 27){
-		code_stop(code, evt);
+		code_stop(code);
 	} else {
 		switch(evt.keyCode){
 			case 32: if(mode === 'sfx') sfx(currentSoundEffect); break;
