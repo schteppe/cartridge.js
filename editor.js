@@ -536,7 +536,7 @@ editorDraw = window._draw = function _draw(){
 			"- MAP:  Map editor.",
 			"- SFX:  Sound effect editor.",
 			"- CODE: JavaScript editor.",
-			"- RUN:  Play game. Esc to go back.",
+			"- RUN:  Play game. Esc = go back.",
 			"",
 			"Good luck!",
 			"",
