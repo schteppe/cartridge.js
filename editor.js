@@ -149,6 +149,20 @@ var buttons = {
 	padding: 4
 };
 
+var slotButtons = {
+	x: 5,
+	y: 21,
+	num: 8,
+	padding: 4
+};
+
+var saveButtons = {
+	x: 5,
+	y: 42,
+	num: 8,
+	padding: 4
+};
+
 var waveformButtons = {
 	x: 1,
 	y: 8,
@@ -427,8 +441,25 @@ function clickhandler(){
 		dirty = true;
 	}
 
-	if(mode === 'code'){
-		if(code_click(code,mx,my)){
+	if(mode === 'code' && code_click(code,mx,my)){
+		dirty = true;
+	}
+
+	if(mode === 'game'){
+		if(inrect(mx,my,slotButtons.x,slotButtons.y,slotButtons.num * (slotButtons.padding * 2 + 6),7)){
+			var button = flr((mx-slotButtons.x) / (slotButtons.padding * 2 + 6));
+			if(load('slot' + button)){
+				alert('Loaded game from slot ' + (button + 1) + '.');
+			} else {
+				alert('Could not load game from slot ' + (button + 1) + '.');
+			}
+			dirty = true;
+		}
+
+		if(inrect(mx,my,saveButtons.x,saveButtons.y,saveButtons.num * (saveButtons.padding * 2 + 6),7)){
+			var button = flr((mx-saveButtons.x) / (saveButtons.padding * 2 + 6));
+			save('slot' + button);
+			alert('Saved game to slot ' + button + '.');
 			dirty = true;
 		}
 	}
@@ -480,6 +511,14 @@ editorDraw = window._draw = function _draw(){
 		intselDraw(speedSelector);
 		sfxSelector.current = currentSoundEffect;
 		intselDraw(sfxSelector);
+		break;
+	case 'game':
+		print("Load from localstorage slot:", 5,14);
+		drawbuttons(slotButtons);
+		print("Save to localstorage slot:", 5,35);
+		drawbuttons(saveButtons);
+		print('- Press "S" to download game as JSON.', 5,56);
+		print('- Press "O" to open JSON file from device.', 5,70);
 		break;
 	}
 
