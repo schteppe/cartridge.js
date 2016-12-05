@@ -425,6 +425,12 @@ function clickhandler(){
 		mode = modes[button];
 		dirty = true;
 	}
+
+	if(mode === 'code'){
+		if(code_click(code,mx,my)){
+			dirty = true;
+		}
+	}
 }
 click(clickhandler);
 
@@ -589,6 +595,20 @@ function code_stop(code){
 	delete window._init;
 	mode = code.previousMode;
 	window._draw = editorDraw;
+}
+
+function code_click(code,x,y){
+	if(!inrect(x,y,code.x,code.y,code.width,code.height)){
+		return false;
+	}
+
+	code.crow = flr((y - code.y) / code.fontHeight);
+	code.crow = clamp(code.crow, 0, code.code.length-1);
+
+	code.ccol = flr((x - code.x) / code.fontWidth);
+	code.ccol = clamp(code.ccol, 0, code.code[code.crow].length);
+
+	return true;
 }
 
 function code_keydown(code, evt){
