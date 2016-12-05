@@ -2570,9 +2570,13 @@ exports.cartridge = function(options){
 				_time = t0;
 				t0 += dt0;
 				accumulator0 -= dt0;
+				_alpha = accumulator0 / dt0;
 				if(loaded && typeof(_update) !== 'undefined'){
-					_alpha = accumulator0 / dt0;
-					_update();
+					try {
+						_update();
+					} catch(err){
+						console.error(err);
+					}
 				}
 			}
 			accumulator1 += frameTime;
@@ -2580,15 +2584,23 @@ exports.cartridge = function(options){
 				_time = t1;
 				t1 += dt1;
 				accumulator1 -= dt1;
+				_alpha = accumulator1 / dt1;
 				if(loaded && typeof(_update60) !== 'undefined'){
-					_alpha = accumulator1 / dt1;
-					_update60();
+					try {
+						_update60();
+					} catch(err){
+						console.error(err);
+					}
 				}
 			}
 		}
 		_time = newTime;
 		if(loaded && typeof(_draw) !== 'undefined'){
-			_draw();
+			try {
+				_draw();
+			} catch(err){
+				console.error(err);
+			}
 		}
 		currentTime = newTime;
 		input.update();
@@ -2601,17 +2613,26 @@ exports.cartridge = function(options){
 		font.init(image, palette);
 
 		if(typeof(_load) !== 'undefined'){
-			_load(postLoad);
+			try {
+				_load(postLoad);
+			} catch(err){
+				console.error(err);
+				postLoad(err);
+			}
 		} else {
 			postLoad();
 		}
 	});
 };
 
-function postLoad(){
+function postLoad(err){
 	loaded = true;
 	if(typeof(_init) !== 'undefined'){
-		_init();
+		try {
+			_init();
+		} catch(err){
+			console.error(err);
+		}
 	}
 }
 
@@ -2834,6 +2855,12 @@ exports.fullscreen = function fullscreen(){
 };
 
 exports.print = function(text, x, y, col){
+	if(Array.isArray(text)){
+		for(var i=0; i<text.length; i++){
+			exports.print(text[i], x, y + 8*i, col);
+		}
+		return;
+	}
 	x = x !== undefined ? x : 0;
 	y = y !== undefined ? y : 0;
 	col = col !== undefined ? col : defaultColor;
