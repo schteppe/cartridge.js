@@ -536,6 +536,7 @@ editorDraw = window._draw = function _draw(){
 			"- MAP:  Map editor.",
 			"- SFX:  Sound effect editor.",
 			"- CODE: JavaScript editor.",
+			"- RUN:  Play game. Esc to go back.",
 			"",
 			"Good luck!",
 			"",
@@ -772,15 +773,17 @@ function code_keypress(code, evt){
 	}
 }
 
-window.onkeyup = function(evt){
+window.addEventListener('keyup', function(evt){
 	keysdown[evt.keyCode] = false;
-}
+});
 
 function strInsertAt(str, index, character) {
     return str.substr(0, index) + character + str.substr(index+character.length-1);
 }
-window.onkeydown = function(evt){
+
+window.addEventListener('keydown', function(evt){
 	keysdown[evt.keyCode] = true;
+
 	if(mode === 'code'){
 		code_keydown(code, evt);
 	} else if(mode === 'run' && evt.keyCode === 27){
@@ -793,12 +796,19 @@ window.onkeydown = function(evt){
 		}
 	}
 	dirty = true;
-};
-window.onkeypress = function(evt){
+});
+
+document.addEventListener('keydown', function(e){
+	if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)){
+		e.preventDefault();
+	}
+}, false);
+
+window.addEventListener('keypress', function(evt){
 	if(mode === 'code'){
 		code_keypress(code, evt);
 	}
-}
+});
 
 function openfile(){
 	var input = document.createElement('input');
