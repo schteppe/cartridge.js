@@ -32,7 +32,7 @@ cartridge({
 // Todo: put in the lib
 document.body.onresize = document.body.mozfullscreenchange = fit;
 
-var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'run'];
+var modes = ['help', 'game', 'sprite', 'map', 'sfx', 'code', 'run'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
@@ -519,6 +519,28 @@ editorDraw = window._draw = function _draw(){
 		drawbuttons(saveButtons);
 		print('- Press "S" to download game as JSON.', 5,56);
 		print('- Press "O" to open JSON file from device.', 5,70);
+		break;
+	case 'help':
+		print([
+			"Welcome!",
+			"",
+			"Cartridge.js is an open source",
+			"retro game engine for the web.",
+			"Use it to make cool pixel-style",
+			"games!",
+			"",
+			"Use the tabs above to get started:",
+			"",
+			"- GAME: Save/load game.",
+			"- SPRI: Sprite editor.",
+			"- MAP:  Map editor.",
+			"- SFX:  Sound effect editor.",
+			"- CODE: JavaScript editor.",
+			"",
+			"Good luck!",
+			"",
+			"/Schteppe"
+		], 5,14);
 		break;
 	}
 

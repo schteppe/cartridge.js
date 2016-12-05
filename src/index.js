@@ -406,6 +406,12 @@ exports.fullscreen = function fullscreen(){
 };
 
 exports.print = function(text, x, y, col){
+	if(Array.isArray(text)){
+		for(var i=0; i<text.length; i++){
+			exports.print(text[i], x, y + 8*i, col);
+		}
+		return;
+	}
 	x = x !== undefined ? x : 0;
 	y = y !== undefined ? y : 0;
 	col = col !== undefined ? col : defaultColor;
