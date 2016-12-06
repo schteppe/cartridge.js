@@ -2494,6 +2494,7 @@ var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
+var code = '';
 
 exports.cartridge = function(options){
 	screensizeX = options.width !== undefined ? options.width : 128;
@@ -2612,6 +2613,12 @@ exports.cartridge = function(options){
 	font.load(function(image){
 		font.init(image, palette);
 
+		if(code){
+			// Run code. If there's an error, let it throw.
+			eval.call(null, code);
+		}
+
+		// Run the _load function
 		if(typeof(_load) !== 'undefined'){
 			try {
 				_load(postLoad);
@@ -2885,14 +2892,59 @@ exports.mset = function mset(x, y, i){
 	mapDataDirty[y * mapSizeX + x] = 1;
 };
 
+exports.save = function(key){
+	key = key || 'save';
+	var data = toJSON();
+
+	var idx = key.indexOf('.json');
+	if(idx !== -1){
+		download(key.substr(0,idx));
+	} else {
+		localStorage.setItem(key, JSON.stringify(data));
+	}
+};
+
+exports.load = function(key){
+	key = key || 'save';
+	try{
+		var data = JSON.parse(localStorage.getItem(key));
+		loadJSON(data);
+		return true;
+	} catch(err) {
+		return false;
+	}
+};
+
+exports.codeset = function(codeString){
+	code = codeString;
+};
+
+exports.codeget = function(){
+	return code;
+};
+
+function download(key){
+	key = key || 'export';
+	var data = toJSON();
+	var url = URL.createObjectURL(new Blob([JSON.stringify(data)]));
+	var a = document.createElement('a');
+	a.href = url;
+	a.download = key + '.json';
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
 function toJSON(){
 	var data = {
-		version: 1,
+		version: 2,
 		map: [],
 		sprites: [],
 		flags: [],
 		palette: palette.slice(0),
-		sfx: []
+		sfx: [],
+		code: codeget()
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
@@ -2925,43 +2977,8 @@ function toJSON(){
 	return data;
 }
 
-exports.save = function(key){
-	key = key || 'save';
-	var data = toJSON();
-
-	var idx = key.indexOf('.json');
-	if(idx !== -1){
-		download(key.substr(0,idx));
-	} else {
-		localStorage.setItem(key, JSON.stringify(data));
-	}
-};
-
-exports.load = function(key){
-	key = key || 'save';
-	try{
-		var data = JSON.parse(localStorage.getItem(key));
-		loadJSON(data);
-		return true;
-	} catch(err) {
-		return false;
-	}
-};
-
-function download(key){
-	key = key || 'export';
-	var data = toJSON();
-	var url = URL.createObjectURL(new Blob([JSON.stringify(data)]));
-	var a = document.createElement('a');
-	a.href = url;
-	a.download = key + '.json';
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
-}
-
 function loadJSON(data){
+	codeset(data.code || '');
 	for(var i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
