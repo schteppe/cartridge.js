@@ -1,2 +1,2 @@
 all:
-	npm run build && npm run editor;
+	npm run build;
