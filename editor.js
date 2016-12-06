@@ -80,18 +80,6 @@ var code = {
 	crow: 0,
 	wcol: 0, // window position
 	wrow: 0,
-	code: [
-		'var x=10,y=10;',
-		'function _draw(){',
-		'  cls();',
-		'  map(0,0,0,0,16,15);',
-		'  spr(1,x,y);',
-		'  if(btn(0)) x--;',
-		'  if(btn(1)) x++;',
-		'  if(btn(2)) y--;',
-		'  if(btn(3)) y++;',
-		'  if(btn(4) && !btnp(4)) sfx(0);',
-		'}'],
 	cursorVisible: true
 };
 
@@ -111,9 +99,11 @@ function code_draw(code){
 	if(code.ccol < code.wcol) code.wcol = code.ccol;
 	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
 
+	var codeArray = codeget().split('\n');
+
 	// Draw code
-	for(var i=0; i+code.wrow < code.code.length && h > (i+1) * fontHeight; i++){
-		print(code.code[i + code.wrow].substr(code.wcol, cols), x, y + i * fontHeight);
+	for(var i=0; i+code.wrow < codeArray.length && h > (i+1) * fontHeight; i++){
+		print(codeArray[i + code.wrow].substr(code.wcol, cols), x, y + i * fontHeight);
 	}
 
 	// Draw cursor
@@ -459,12 +449,30 @@ function clickhandler(){
 		if(inrect(mx,my,saveButtons.x,saveButtons.y,saveButtons.num * (saveButtons.padding * 2 + 6),7)){
 			var button = flr((mx-saveButtons.x) / (saveButtons.padding * 2 + 6));
 			save('slot' + button);
-			alert('Saved game to slot ' + button + '.');
+			alert('Saved game to slot ' + (button + 1) + '.');
 			dirty = true;
 		}
 	}
 }
 click(clickhandler);
+
+var editorLoad = window._load = function _load(callback){
+	codeset([
+		'var x=10,y=10;',
+		'function _draw(){',
+		'  cls();',
+		'  map(0,0,0,0,16,15);',
+		'  spr(1,x,y);',
+		'  if(btn(0)) x--;',
+		'  if(btn(1)) x++;',
+		'  if(btn(2)) y--;',
+		'  if(btn(3)) y++;',
+		'  if(btn(4) && !btnp(4)) sfx(0);',
+		'}'
+	].join('\n').toLowerCase());
+	dirty = true;
+	callback();
+};
 
 editorDraw = window._draw = function _draw(){
 	var mx = mousex();
@@ -651,7 +659,7 @@ function code_run(code){
 	mode = 'run';
 	code.initialized = false;
 	try {
-		eval.call(null, code.code.join('\n').toLowerCase());
+		eval.call(null, codeget());
 		// Manually run the init
 		if(window._init){
 			window._init();
@@ -689,11 +697,13 @@ function code_click(code,x,y){
 		return false;
 	}
 
+	var codeArray = codeget().split('\n');
+
 	code.crow = flr((y - code.y) / code.fontHeight);
-	code.crow = clamp(code.crow, 0, code.code.length-1);
+	code.crow = clamp(code.crow, 0, codeArray.length-1);
 
 	code.ccol = flr((x - code.x) / code.fontWidth);
-	code.ccol = clamp(code.ccol, 0, code.code[code.crow].length);
+	code.ccol = clamp(code.ccol, 0, codeArray[code.crow].length);
 
 	return true;
 }
@@ -706,71 +716,79 @@ function code_keydown(code, evt){
 		return;
 	}
 
+	var codeArray = codeget().split('\n');
+
 	switch(evt.keyCode){
 	case 37: // left
 		code.ccol=max(code.ccol-1,0);
 		break;
 	case 39: // right
-		if(code.ccol === code.code[code.crow].length && code.crow !== code.code.length-1){
+		if(code.ccol === codeArray[code.crow].length && code.crow !== codeArray.length-1){
 			code.ccol=0;
-			code.crow=min(code.crow+1,code.code.length-1);
+			code.crow=min(code.crow+1,codeArray.length-1);
 		} else {
-			code.ccol=min(code.ccol+1,code.code[code.crow].length);
+			code.ccol=min(code.ccol+1,codeArray[code.crow].length);
 		}
 		break;
 	case 38: // up
 		code.crow=max(code.crow-1,0);
-		code.ccol=clamp(code.ccol,0,code.code[code.crow].length);
+		code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
 		break;
 	case 40: // down
-		code.crow=min(code.crow+1,code.code.length-1);
-		code.ccol=clamp(code.ccol,0,code.code[code.crow].length);
+		code.crow=min(code.crow+1,codeArray.length-1);
+		code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
 		break;
 	case 8: // backspace
 		if(code.ccol !== 0){
-			var after = code.code[code.crow].substr(code.ccol);
-			var before = code.code[code.crow].substr(0,code.ccol-1);
-			code.code[code.crow] = before + after;
+			var after = codeArray[code.crow].substr(code.ccol);
+			var before = codeArray[code.crow].substr(0,code.ccol-1);
+			codeArray[code.crow] = before + after;
 			// Move cursor
 			code.ccol=max(0,code.ccol-1);
 		} else if(code.ccol === 0 && code.crow !== 0){
 			// append to previous row
-			var newCol = code.code[code.crow-1].length;
-			code.code[code.crow-1] += code.code[code.crow];
-			code.code.splice(code.crow, 1);
+			var newCol = codeArray[code.crow-1].length;
+			codeArray[code.crow-1] += codeArray[code.crow];
+			codeArray.splice(code.crow, 1);
 			code.crow -= 1;
 			code.ccol = newCol;
 		}
 		break;
 	case 46: // delete
-		var after = code.code[code.crow].substr(code.ccol+1);
-		var before = code.code[code.crow].substr(0,code.ccol);
-		code.code[code.crow] = before + after;
+		var after = codeArray[code.crow].substr(code.ccol+1);
+		var before = codeArray[code.crow].substr(0,code.ccol);
+		codeArray[code.crow] = before + after;
 		break;
 	}
+
+	codeset(codeArray.join('\n'));
 }
 
 function code_keypress(code, evt){
 	var char = String.fromCharCode(evt.keyCode).toUpperCase();
+	var codeArray = codeget().split('\n');
+
 	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_|&*~\''.indexOf(char) !== -1){
 		if(char === "'") char = '"'; // temp fix until ' is supported
 		char = char.toLowerCase();
-		if(code.code[code.crow] === ''){
-			code.code[code.crow] = char;
+		if(codeArray[code.crow] === ''){
+			codeArray[code.crow] = char;
 			code.ccol = 1;
 		} else {
-			code.code[code.crow] = strInsertAt(code.code[code.crow], code.ccol, char);
-			code.ccol=min(code.ccol+1,code.code[code.crow].length);
+			codeArray[code.crow] = strInsertAt(codeArray[code.crow], code.ccol, char);
+			code.ccol=min(code.ccol+1,codeArray[code.crow].length);
 		}
 	} else if(evt.keyCode === 13){ // enter
-		var after = code.code[code.crow].substr(code.ccol);
-		var before = code.code[code.crow].substr(0,code.ccol);
-		code.code.splice(code.crow+1, 0, after);
-		code.code[code.crow] = before;
+		var after = codeArray[code.crow].substr(code.ccol);
+		var before = codeArray[code.crow].substr(0,code.ccol);
+		codeArray.splice(code.crow+1, 0, after);
+		codeArray[code.crow] = before;
 		// Move cursor
 		code.ccol=0;
-		code.crow=min(code.crow+1,code.code.length-1);
+		code.crow=min(code.crow+1,codeArray.length-1);
 	}
+
+	codeset(codeArray.join('\n'));
 }
 
 window.addEventListener('keyup', function(evt){
