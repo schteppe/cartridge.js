@@ -48,8 +48,8 @@ var keysdown = {};
 var viewport = {
 	x: 1,
 	y: 8,
-	sx: flr((width() * 0.5) / cellwidth()),
-	sy: flr((height() * 0.5) / cellheight()),
+	sx: function(){ return flr((width() * 0.6) / cellwidth()); },
+	sy: function(){ return flr((height() * 0.6) / cellheight()); },
 	draw: function(){
 		for(var i=0; i<cellwidth(); i++){
 			for(var j=0; j<cellheight(); j++){
@@ -57,10 +57,10 @@ var viewport = {
 				var y = (ssy(selectedSprite) * cellheight() + j) % height();
 				var col = sget(x, y);
 				rectfill(
-					this.x + i * this.sx,
-					this.y + j * this.sy,
-					this.x + (i+1) * this.sx-1,
-					this.y + (j+1) * this.sy-1,
+					this.x + i * this.sx(),
+					this.y + j * this.sy(),
+					this.x + (i+1) * this.sx()-1,
+					this.y + (j+1) * this.sy()-1,
 					col
 				);
 			}
@@ -72,7 +72,7 @@ var code = {
 	x: 1,
 	y: 8,
 	initialized: false,
-	width: width()-3,
+	width: width() - 3,
 	height: height() - 9,
 	fontHeight: 6,
 	fontWidth: 4,
@@ -121,13 +121,13 @@ function code_draw(code){
 var mapPanX = 0;
 var mapPanY = 0;
 
-var paletteScaleX = flr((width() * 0.4) / 4);
-var paletteScaleY = flr((height() * 0.4) / 4);
-var paletteX = width() - paletteScaleX * 4 - 1;
-var paletteY = 8;
+var paletteScaleX = function(){ return flr((width() * 0.4) / 4); };
+var paletteScaleY = function(){ return flr((height() * 0.4) / 4); };
+var paletteX = function(){ return width() - paletteScaleX() * 4 - 1; };
+var paletteY = function(){ return 8; };
 
-var flagsX = paletteX;
-var flagsY = paletteY + paletteScaleY * 4 + 1;
+var flagsX = function(){ return paletteX(); };
+var flagsY = function(){ return paletteY() + paletteScaleY() * 4 + 1; };
 
 var buttonsX = width() - 56;
 var buttonsY = height() - 4 * cellheight() - 7;
@@ -173,7 +173,7 @@ var topButtons = {
 
 var toolButtons = {
 	x: 1,
-	y: viewport.y + viewport.sy * cellheight() + 1,
+	y: viewport.y + viewport.sy() * cellheight() + 1,
 	options: ['draw','fill'],
 	current: 0,
 	padding: 6
@@ -280,8 +280,8 @@ function mousemovehandler(forceMouseDown){
 	case 'sprite':
 		if(mousebtn(1) || forceMouseDown){
 			// Draw on sprite
-			var x = flr((mousex()-viewport.x) / viewport.sx);
-			var y = flr((mousey()-viewport.y) / viewport.sy);
+			var x = flr((mousex()-viewport.x) / viewport.sx());
+			var y = flr((mousey()-viewport.y) / viewport.sy());
 
 			if(inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				if(toolButtons.current === 0){
@@ -368,13 +368,13 @@ function clickhandler(){
 	var my = mousey();
 	mousemovehandler(true);
 	if(mode === 'sprite'){
-		if(inrect(mx,my,paletteX,paletteY,paletteScaleX*4,paletteScaleY*4)){
-			var x = flr((mx-paletteX) / paletteScaleX);
-			var y = flr((my-paletteY) / paletteScaleY);
+		if(inrect(mx,my,paletteX(),paletteY(),paletteScaleX()*4,paletteScaleY()*4)){
+			var x = flr((mx-paletteX()) / paletteScaleX());
+			var y = flr((my-paletteY()) / paletteScaleY());
 			color = x + 4 * y;
 			dirty = true;
-		} else if(inrect(mx,my,flagsX,flagsY,6*8,5)){
-			var flagIndex = flr((mx-flagsX) / 6);
+		} else if(inrect(mx,my,flagsX(),flagsY(),6*8,5)){
+			var flagIndex = flr((mx-flagsX()) / 6);
 			var oldFlags = fget(selectedSprite);
 			var clickedFlag = (1 << flagIndex);
 			var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
@@ -500,10 +500,10 @@ editorDraw = window._draw = function _draw(){
 	case 'sprite':
 		viewport.draw();
 		drawsprites(0,height() - cellheight() * 4);
-		drawpalette(paletteX, paletteY, paletteScaleX, paletteScaleY);
+		drawpalette(paletteX(), paletteY(), paletteScaleX(), paletteScaleY());
 		drawbuttons(buttons);
 		drawbuttons(toolButtons);
-		drawflags(flagsX,flagsY,fget(selectedSprite));
+		drawflags(flagsX(),flagsY(),fget(selectedSprite));
 		break;
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
