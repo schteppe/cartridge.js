@@ -200,9 +200,30 @@ function setPalette(p){
 	mapDirty = true;
 }
 
+function resizeCanvases(){
+	sgetData = null;
+	for(var i=0; i < canvases.length; i++){
+		canvases[i].width = screensizeX;
+		canvases[i].height = screensizeY;
+	}
+	fit();
+}
+
 exports.alpha = function(){ return _alpha; }; // for interpolation
-exports.width = function(){ return screensizeX; };
-exports.height = function(){ return screensizeY; };
+exports.width = function(newWidth){
+	if(newWidth !== undefined){
+		screensizeX = newWidth;
+		resizeCanvases();
+	}
+	return screensizeX;
+};
+exports.height = function(newHeight){
+	if(newHeight !== undefined){
+		screensizeY = newHeight;
+		resizeCanvases();
+	}
+	return screensizeY;
+};
 exports.cellwidth = function(){ return cellsizeX; };
 exports.cellheight = function(){ return cellsizeY; };
 
@@ -489,13 +510,15 @@ function download(key){
 
 function toJSON(){
 	var data = {
-		version: 2,
+		version: 3,
+		width: screensizeX, // added in v3
+		height: screensizeY, // added in v3
 		map: [],
 		sprites: [],
 		flags: [],
 		palette: palette.slice(0),
 		sfx: [],
-		code: codeget()
+		code: codeget() // added in v2
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
@@ -530,6 +553,12 @@ function toJSON(){
 
 function loadJSON(data){
 	codeset(data.code || '');
+	if(data.width !== undefined){
+		width(data.width);
+	}
+	if(data.height !== undefined){
+		height(data.height);
+	}
 	for(var i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
