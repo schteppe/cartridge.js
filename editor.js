@@ -29,8 +29,10 @@ cartridge({
 	]
 });
 
-// Todo: put in the lib
-document.body.onresize = document.body.mozfullscreenchange = fit;
+document.body.onresize = document.body.mozfullscreenchange = function(){
+	fit();
+	dirty = true;
+};
 
 var modes = ['help', 'game', 'sprite', 'map', 'sfx', 'code', 'run'];
 var mode = modes[0];
@@ -129,8 +131,8 @@ var paletteY = function(){ return 8; };
 var flagsX = function(){ return paletteX(); };
 var flagsY = function(){ return paletteY() + paletteScaleY() * 4 + 1; };
 
-var buttonsX = width() - 56;
-var buttonsY = height() - 4 * cellheight() - 7;
+var buttonsX = function(){ return width() - 56; };
+var buttonsY = function(){ return height() - 4 * cellheight() - 7; };
 var buttons = {
 	x: buttonsX,
 	y: buttonsY,
@@ -140,30 +142,30 @@ var buttons = {
 };
 
 var slotButtons = {
-	x: 5,
-	y: 21,
+	x: function(){ return 5; },
+	y: function(){ return 21; },
 	num: 8,
 	padding: 4
 };
 
 var saveButtons = {
-	x: 5,
-	y: 42,
+	x: function(){ return 5; },
+	y: function(){ return 42; },
 	num: 8,
 	padding: 4
 };
 
 var waveformButtons = {
-	x: 1,
-	y: 8,
+	x: function(){ return 1; },
+	y: function(){ return 8; },
 	num: 6,
 	current: 0,
 	padding: 2
 };
 
 var topButtons = {
-	x: 0,
-	y: 0,
+	x: function(){ return 0; },
+	y: function(){ return 0; },
 	options: modes,
 	current: 0,
 	bgColor: 7,
@@ -172,8 +174,8 @@ var topButtons = {
 };
 
 var toolButtons = {
-	x: 1,
-	y: viewport.y + viewport.sy() * cellheight() + 1,
+	x: function(){ return 1; },
+	y: function(){ return viewport.y + viewport.sy() * cellheight() + 1; },
 	options: ['draw','fill'],
 	current: 0,
 	padding: 6
@@ -321,7 +323,7 @@ function mousemovehandler(forceMouseDown){
 			mapPanX += dx;
 			mapPanY += dy;
 			dirty = true;
-		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), buttons.y-9)){
+		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), buttons.y()-9)){
 			// Draw on map
 			mset(
 				flr((mousex() - mapPanX) / cellwidth()),
@@ -380,9 +382,9 @@ function clickhandler(){
 			var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
 			fset(selectedSprite, newFlags);
 			dirty = true;
-		} else if(inrect(mx,my,toolButtons.x,toolButtons.y,toolButtons.options.length * (toolButtons.padding * 2 + 6),7)){
+		} else if(inrect(mx,my,toolButtons.x(),toolButtons.y(),toolButtons.options.length * (toolButtons.padding * 2 + 6),7)){
 			// tool switcher
-			toolButtons.current = flr((mx-toolButtons.x) / (toolButtons.padding * 2 + 6));
+			toolButtons.current = flr((mx-toolButtons.x()) / (toolButtons.padding * 2 + 6));
 			dirty = true;
 		}
 	}
@@ -395,16 +397,16 @@ function clickhandler(){
 			var spriteY = spritePage * 4 + flr((my-spritesHeight) / cellheight());
 			selectedSprite = spriteX + spriteY * 16;
 			dirty = true;
-		} else if(inrect(mx,my,buttons.x,buttons.y,4*14,10)){
-			var button = flr((mx-buttons.x) / 14);
+		} else if(inrect(mx,my,buttons.x(),buttons.y(),4*14,10)){
+			var button = flr((mx-buttons.x()) / 14);
 			spritePage = button;
 			dirty = true;
 		}
 	}
 
 	if(mode === 'sfx'){
-		if(inrect(mx,my,waveformButtons.x,waveformButtons.y,waveformButtons.num * (waveformButtons.padding * 2 + 6),7)){
-			var button = flr((mx-waveformButtons.x) / (waveformButtons.padding * 2 + 6));
+		if(inrect(mx,my,waveformButtons.x(),waveformButtons.y(),waveformButtons.num * (waveformButtons.padding * 2 + 6),7)){
+			var button = flr((mx-waveformButtons.x()) / (waveformButtons.padding * 2 + 6));
 			currentWaveform = button;
 			dirty = true;
 		}
@@ -419,8 +421,8 @@ function clickhandler(){
 	}
 
 	// mode switcher
-	if(inrect(mx,my,topButtons.x,topButtons.y,topButtons.options.length * (topButtons.padding * 2 + 6),7)){
-		var button = flr((mx-topButtons.x) / (topButtons.padding * 2 + 6));
+	if(inrect(mx,my,topButtons.x(),topButtons.y(),topButtons.options.length * (topButtons.padding * 2 + 6),7)){
+		var button = flr((mx-topButtons.x()) / (topButtons.padding * 2 + 6));
 
 		if(modes[button] === 'run'){
 			code_run(code);
@@ -436,8 +438,8 @@ function clickhandler(){
 	}
 
 	if(mode === 'game'){
-		if(inrect(mx,my,slotButtons.x,slotButtons.y,slotButtons.num * (slotButtons.padding * 2 + 6),7)){
-			var button = flr((mx-slotButtons.x) / (slotButtons.padding * 2 + 6));
+		if(inrect(mx,my,slotButtons.x(),slotButtons.y(),slotButtons.num * (slotButtons.padding * 2 + 6),7)){
+			var button = flr((mx-slotButtons.x()) / (slotButtons.padding * 2 + 6));
 			if(load('slot' + button)){
 				alert('Loaded game from slot ' + (button + 1) + '.');
 			} else {
@@ -446,8 +448,8 @@ function clickhandler(){
 			dirty = true;
 		}
 
-		if(inrect(mx,my,saveButtons.x,saveButtons.y,saveButtons.num * (saveButtons.padding * 2 + 6),7)){
-			var button = flr((mx-saveButtons.x) / (saveButtons.padding * 2 + 6));
+		if(inrect(mx,my,saveButtons.x(),saveButtons.y(),saveButtons.num * (saveButtons.padding * 2 + 6),7)){
+			var button = flr((mx-saveButtons.x()) / (saveButtons.padding * 2 + 6));
 			save('slot' + button);
 			alert('Saved game to slot ' + (button + 1) + '.');
 			dirty = true;
@@ -568,17 +570,17 @@ function drawbuttons(settings){
 	var bgColor = settings.bgColor !== undefined ? settings.bgColor : 0;
 	var textColor = settings.textColor !== undefined ? settings.textColor : 6;
 	for(var i=0; i<num; i++){
-		var x0 = settings.x + i * (6 + padding*2);
+		var x0 = settings.x() + i * (6 + padding*2);
 		rectfill(
-			x0, settings.y,
-			settings.x+5+padding*2 + i * (6+padding*2)-1, settings.y+6,
+			x0, settings.y(),
+			settings.x() + 5+padding*2 + i * (6+padding*2)-1, settings.y() + 6,
 			settings.current === i ? bgColor : textColor
 		);
 		var text = settings.options !== undefined ? settings.options[i].toUpperCase().substr(0,4) : ((i+1) + '');
-		var x1 = settings.x+1+padding + i * (6 + padding*2);
+		var x1 = settings.x()+1+padding + i * (6 + padding*2);
 		print(
 			text,
-			settings.options !== undefined ? (x0+1) : x1, settings.y+1,
+			settings.options !== undefined ? (x0+1) : x1, settings.y()+1,
 			settings.current === i ? textColor : bgColor
 		);
 	}
