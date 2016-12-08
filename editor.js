@@ -4,7 +4,6 @@ var editorDraw;
 
 cartridge({
 	containerId: 'container',
-	layers: 2,
 	width: 256,
 	height: 240,
 	cellwidth: 16,
@@ -84,41 +83,6 @@ var code = {
 	wrow: 0,
 	cursorVisible: true
 };
-
-function code_draw(code){
-	var x = code.x;
-	var y = code.y;
-	var w = code.width();
-	var h = code.height();
-
-	var fontHeight = code.fontHeight;
-	var fontWidth = code.fontWidth;
-	var rows = flr(h / fontHeight);
-	var cols = flr(w / fontWidth);
-
-	if(code.crow < code.wrow) code.wrow = code.crow;
-	if(code.crow > code.wrow + rows - 1) code.wrow = code.crow - rows + 1;
-	if(code.ccol < code.wcol) code.wcol = code.ccol;
-	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
-
-	var codeArray = codeget().split('\n');
-
-	// Draw code
-	for(var i=0; i+code.wrow < codeArray.length && h > (i+1) * fontHeight; i++){
-		print(codeArray[i + code.wrow].substr(code.wcol, cols), x, y + i * fontHeight);
-	}
-
-	// Draw cursor
-	if(code.cursorVisible){
-		rectfill(
-			x + (code.ccol - code.wcol) * fontWidth,
-			y + (code.crow - code.wrow) * fontHeight,
-			x + (code.ccol+1-code.wcol) * fontWidth-2,
-			y + (code.crow+1-code.wrow) * fontHeight-2,
-			0
-		);
-	}
-}
 
 var mapPanX = 0;
 var mapPanY = 0;
@@ -222,6 +186,7 @@ function intselDraw(intsel){
 		);
 	}
 }
+
 function intselClick(intsel, x, y){
 	if(inrect(x,y,intsel.x,intsel.y, 3 * (intsel.padding * 2 + 6),7)){
 		var button = flr((x-intsel.x) / (intsel.padding * 2 + 6));
@@ -236,15 +201,19 @@ function intselClick(intsel, x, y){
 	return false;
 }
 
-var pitchesX = 0;
-var pitchesY = 20;
-var pitchesW = width();
-var pitchesH = flr(height() / 2);
+var pitches = {
+	x: function(){ return 0; },
+	y: function(){ return 20; },
+	w: function(){ return width(); },
+	h: function(){ return flr(height() / 2); }
+};
 
-var volumesX = pitchesX;
-var volumesY = pitchesY + pitchesH + 2;
-var volumesW = pitchesW;
-var volumesH = flr(height() / 6);
+var volumes = {
+	x: function(){ return pitches.x(); },
+	y: function(){ return pitches.y() + pitches.h() + 2; },
+	w: function(){ return pitches.w(); },
+	h: function(){ return flr(height() / 6); }
+};
 
 // Helpers
 function ssx(n){ return n % 16; }
@@ -337,8 +306,8 @@ function mousemovehandler(forceMouseDown){
 	case 'sfx':
 		if(mousebtn(1) || mousebtn(3) || forceMouseDown){
 			var n = flr(mousex() / width() * 32);
-			var pitch = flr((pitchesH - mousey() + pitchesY) / pitchesH * 255);
-			var vol = flr((volumesH - mousey() + volumesY) / volumesH * 255);
+			var pitch = flr((pitches.h() - mousey() + pitches.y()) / pitches.h() * 255);
+			var vol = flr((volumes.h() - mousey() + volumes.y()) / volumes.h() * 255);
 
 			// Within editing area?
 			if(clamp(n,0,32) === n && clamp(pitch,0,255) === pitch){
@@ -514,8 +483,8 @@ editorDraw = window._draw = function _draw(){
 		drawbuttons(buttons);
 		break;
 	case 'sfx':
-		drawpitches(pitchesX, pitchesY, pitchesW, pitchesH, 0);
-		drawpitches(volumesX, volumesY, volumesW, volumesH, 1, 0);
+		drawpitches(pitches, 0);
+		drawpitches(volumes, 1, 0);
 		drawbuttons(waveformButtons);
 		speedSelector.current = asget(currentSoundEffect);
 		intselDraw(speedSelector);
@@ -644,7 +613,11 @@ function drawpalette(x, y, sx, sy){
 	}
 }
 
-function drawpitches(x, y, w, h, source, col){
+function drawpitches(pitches, source, col){
+	var x = pitches.x();
+	var y = pitches.y();
+	var w = pitches.w();
+	var h = pitches.h();
 	var pitchWidth = flr(w / 32);
 	for(var i=0; i<32; i++){
 		var x0 = x + i * pitchWidth + 1;
@@ -652,6 +625,41 @@ function drawpitches(x, y, w, h, source, col){
 		var value = source === 1 ? (avget(currentSoundEffect,i) / 255) : (afget(currentSoundEffect,i) / 255);
 		var pitch = flr(value * h);
 		rectfill(x0, y0 - pitch, x0 + pitchWidth - 2, y0, col !== undefined ? col : awget(currentSoundEffect, i));
+	}
+}
+
+function code_draw(code){
+	var x = code.x;
+	var y = code.y;
+	var w = code.width();
+	var h = code.height();
+
+	var fontHeight = code.fontHeight;
+	var fontWidth = code.fontWidth;
+	var rows = flr(h / fontHeight);
+	var cols = flr(w / fontWidth);
+
+	if(code.crow < code.wrow) code.wrow = code.crow;
+	if(code.crow > code.wrow + rows - 1) code.wrow = code.crow - rows + 1;
+	if(code.ccol < code.wcol) code.wcol = code.ccol;
+	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
+
+	var codeArray = codeget().split('\n');
+
+	// Draw code
+	for(var i=0; i+code.wrow < codeArray.length && h > (i+1) * fontHeight; i++){
+		print(codeArray[i + code.wrow].substr(code.wcol, cols), x, y + i * fontHeight);
+	}
+
+	// Draw cursor
+	if(code.cursorVisible){
+		rectfill(
+			x + (code.ccol - code.wcol) * fontWidth,
+			y + (code.crow - code.wrow) * fontHeight,
+			x + (code.ccol+1-code.wcol) * fontWidth-2,
+			y + (code.crow+1-code.wrow) * fontHeight-2,
+			0
+		);
 	}
 }
 
