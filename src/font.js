@@ -64,7 +64,7 @@ exports.load = function(callback){
 	im.onload = function(){
 		callback(im);
 	};
-	// To decode, use e.g. http://codebeautify.org/base64-to-image-converter
+	// To decode, paste the URL below in a browser
 	// To encode, use e.g. https://www.base64-image.de/
 	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAFAgMAAAD3b9ImAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAAAAAQAAIRqQRwAAAABdFJOUwBA5thmAAAAsklEQVQY0zWQsREEMQgDFRB8SOACHH4ZBCqAQAVdeKVcmS8892CPwR7QGkirvSmx1EupJY5JvqdKEpDK7IUoMJ2tdoT9vXGDLFYVM93gVFaeI5gRfgoSYJQ9My2TyLHAvvbnA3Wxu0ahRpetaWBJDowUQ4A1DVzpUMqTYO/n2S8BD8HINyPnP2GoCjPY4bo/ASZ5Ce59XeDIGF5tdXYtdi6T6ljMiqwp8QxGF+8MUvvxDH5Q4jvxySaSSgAAAABJRU5ErkJggg==";
 };
