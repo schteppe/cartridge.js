@@ -90,13 +90,7 @@ exports.cartridge = function(options){
 	].join('\n');
 	document.getElementsByTagName('head')[0].appendChild(style);
 
-	// Init spritesheet canvas
-	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
-	spriteSheetContext = spriteSheetCanvas.getContext('2d');
-
-	// Init map cache
-	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
-	mapCacheContext = mapCacheCanvas.getContext('2d');
+	setCellSize(cellsizeX, cellsizeY);
 
 	// Set main canvas
 	canvas(0);
@@ -194,6 +188,21 @@ function postLoad(err){
 	}
 }
 
+function setCellSize(w,h){
+	cellsizeX = w;
+	cellsizeY = h;
+
+	// Init spritesheet canvas
+	// TODO: copy over?
+	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
+	spriteSheetContext = spriteSheetCanvas.getContext('2d');
+
+	// Init map cache
+	// TODO: copy over?
+	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
+	mapCacheContext = mapCacheCanvas.getContext('2d');
+}
+
 function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
@@ -234,8 +243,20 @@ exports.height = function(newHeight){
 	}
 	return screensizeY;
 };
-exports.cellwidth = function(){ return cellsizeX; };
-exports.cellheight = function(){ return cellsizeY; };
+exports.cellwidth = function(newCellWidth){
+	if(newCellWidth !== undefined){
+		setCellSize(newCellWidth, cellsizeY);
+	} else {
+		return cellsizeX;
+	}
+};
+exports.cellheight = function(newCellHeight){
+	if(newCellHeight !== undefined){
+		setCellSize(cellsizeX, newCellHeight);
+	} else {
+		return cellsizeY;
+	}
+};
 
 exports.cls = function(){
 	ctx.clearRect(-camX,-camY,screensizeX,screensizeY);
