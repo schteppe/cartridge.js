@@ -46,13 +46,44 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 # API documentation
 
-Jump to: 
-
-* [abs(x)](#abs) -- absolute value
+* [abs(x)](#abs) - absolute value
 * [atan2(x,y)](#atan2)
-* [btn(n)](#btn) -- get button state
+* [btn(n)](#btn) - get button state
 * [camera(x,y)](#camera)
 * [cartridge(options)](#cartridge)
+* [click(func)](#click) - add a click listener
+* [cls()](#cls) - clear screen
+* [clip()](#clip) -
+* [color()](#color) -
+* [cos(x)](#cos)
+* [fget()](#fget) -
+* [fit()](#fit) -
+* [flr()](#flr) -
+* [fset()](#fset) -
+* [fullscreen()](#fullscreen) -
+* [map()](#map) -
+* [max()](#max) -
+* [mget()](#mget) -
+* [min()](#min) -
+* [mousebtn()](#mousebtn) -
+* [mousex()](#mousex) -
+* [mousey()](#mousey) -
+* [mset()](#mset) -
+* [palt()](#palt) -
+* [pget()](#pget) -
+* [print(text,x,y)](#print) - draw text
+* [pset(x,y,col)](#pset) - set pixel color
+* [rect()](#rect) - draw rectangle
+* [rectfill()](#rectfill) -
+* [rnd()](#rnd) -
+* [sfx()](#sfx) -
+* [sget()](#sget) -
+* [sgn()](#sgn) -
+* [sin()](#sin) -
+* [spr()](#spr) -
+* [sqrt()](#sqrt) -
+* [sset(x,y,col)](#sset) - set pixel color in spritesheet
+* [time()](#time) -
 
 ### abs
 
