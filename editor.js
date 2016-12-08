@@ -130,11 +130,11 @@ var waveformButtons = {
 var topButtons = {
 	x: function(){ return 0; },
 	y: function(){ return 0; },
-	options: modes,
+	options: ['HLP', 'CRT', 'SPR', 'MAP', 'SFX', 'JS', 'RUN'],
 	current: 0,
 	bgColor: 7,
 	textColor: 0,
-	padding: 7
+	padding: 6
 };
 
 var toolButtons = {
@@ -496,31 +496,26 @@ editorDraw = window._draw = function _draw(){
 		drawbuttons(slotButtons);
 		print("Save to localstorage slot:", 5,35);
 		drawbuttons(saveButtons);
-		print('- Press "S" to download game as JSON.', 5,56);
-		print('- Press "O" to open JSON file from device.', 5,70);
+		print('- Press "S" to download JSON.', 5,56);
+		print('- Press "O" to open JSON.', 5,70);
 		break;
 	case 'help':
 		print([
-			"Welcome!",
-			"",
 			"Cartridge.js is an open source",
 			"retro game engine for the web.",
-			"Use it to make cool pixel-style",
-			"games!",
+			"Use it to make cool pixel-",
+			"style games!",
+			"Use tabs above to get started:",
 			"",
-			"Use the tabs above to get started:",
+			"- CRT: Save/load game.",
+			"- SPR: Sprite editor.",
+			"- MAP: Map editor.",
+			"- SFX: Sound effect editor.",
+			"- JS:  JavaScript editor.",
+			"- RUN: Run game (Esc=quit).",
 			"",
-			"- GAME: Save/load game.",
-			"- SPRI: Sprite editor.",
-			"- MAP:  Map editor.",
-			"- SFX:  Sound effect editor.",
-			"- CODE: JavaScript editor.",
-			"- RUN:  Play game. Esc = go back.",
-			"",
-			"Good luck!",
-			"",
-			"/Schteppe"
-		], 5,14);
+			"Good luck! /Schteppe"
+		], 4,13);
 		break;
 	}
 
