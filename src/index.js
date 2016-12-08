@@ -200,6 +200,16 @@ function setPalette(p){
 	mapDirty = true;
 }
 
+exports.palset = function(n, hexColor){
+	var newPalette = palette.slice(0);
+	newPalette[n] = hexColor;
+	setPalette(newPalette);
+};
+
+exports.palget = function(n){
+	return palette[n];
+};
+
 function resizeCanvases(){
 	sgetData = null;
 	for(var i=0; i < canvases.length; i++){
