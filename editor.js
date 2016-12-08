@@ -770,7 +770,7 @@ function code_keypress(code, evt){
 	var char = String.fromCharCode(evt.keyCode).toUpperCase();
 	var codeArray = codeget().split('\n');
 
-	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_|&*~\''.indexOf(char) !== -1){
+	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_|&*~\'%'.indexOf(char) !== -1){
 		if(char === "'") char = '"'; // temp fix until ' is supported
 		char = char.toLowerCase();
 		if(codeArray[code.crow] === ''){
