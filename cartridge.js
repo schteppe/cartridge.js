@@ -2363,7 +2363,7 @@ var fontImages = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
-var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~';
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
 
 exports.init = function(fontImage, palette){
 	for(var i=0; i<palette.length; i++){
@@ -2423,9 +2423,9 @@ exports.load = function(callback){
 	im.onload = function(){
 		callback(im);
 	};
-	// To decode, use e.g. http://codebeautify.org/base64-to-image-converter
+	// To decode, paste the URL below in a browser
 	// To encode, use e.g. https://www.base64-image.de/
-	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAFAgMAAAD3b9ImAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAAAAAQAAIRqQRwAAAABdFJOUwBA5thmAAAAsUlEQVQY0zWQsRUEIQhECQgunMACDK8MgimAYAra8ErZMm/w7YI+RYX5EtJqT0os9RK0xDHJ51RJioCAXpEVhKPV3sX+/iKCLFYVARc4mYWzJJHpqyT9KssOwDIIjGXsa38i1MXuGoUaXbamgCU5MFIOQawp4ExvJZwg9r7vl4CHYOSbiflPGqrSDPZw3ksQEzwEv325wMgYXm11di02lkl1LGckalLcg9GNpwfQvt2DP44jOjkDqW8fAAAAAElFTkSuQmCC";
+	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAFAgMAAAD3b9ImAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAAAAAQAAIRqQRwAAAABdFJOUwBA5thmAAAAsklEQVQY0zWQsREEMQgDFRB8SOACHH4ZBCqAQAVdeKVcmS8892CPwR7QGkirvSmx1EupJY5JvqdKEpDK7IUoMJ2tdoT9vXGDLFYVM93gVFaeI5gRfgoSYJQ9My2TyLHAvvbnA3Wxu0ahRpetaWBJDowUQ4A1DVzpUMqTYO/n2S8BD8HINyPnP2GoCjPY4bo/ASZ5Ce59XeDIGF5tdXYtdi6T6ljMiqwp8QxGF+8MUvvxDH5Q4jvxySaSSgAAAABJRU5ErkJggg==";
 };
 },{"./utils":9}],4:[function(require,module,exports){
 exports.hello = function(){
@@ -2497,10 +2497,10 @@ var _alpha = 0;
 var code = '';
 
 exports.cartridge = function(options){
-	screensizeX = options.width !== undefined ? options.width : 128;
-	screensizeY = options.height !== undefined ? options.height : 128;
-	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8;
-	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8;
+	screensizeX = options.width !== undefined ? options.width : 128; // deprecated
+	screensizeY = options.height !== undefined ? options.height : 128; // deprecated
+	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8; // deprecated
+	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8; // deprecated
 
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
@@ -2539,13 +2539,7 @@ exports.cartridge = function(options){
 	].join('\n');
 	document.getElementsByTagName('head')[0].appendChild(style);
 
-	// Init spritesheet canvas
-	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
-	spriteSheetContext = spriteSheetCanvas.getContext('2d');
-
-	// Init map cache
-	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
-	mapCacheContext = mapCacheCanvas.getContext('2d');
+	setCellSize(cellsizeX, cellsizeY);
 
 	// Set main canvas
 	canvas(0);
@@ -2643,11 +2637,36 @@ function postLoad(err){
 	}
 }
 
+function setCellSize(w,h){
+	cellsizeX = w;
+	cellsizeY = h;
+
+	// (re)init spritesheet canvas
+	// TODO: copy over?
+	var oldSprites = spriteSheetCanvas;
+	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
+	spriteSheetContext = spriteSheetCanvas.getContext('2d');
+
+	// (re)init map cache
+	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
+	mapCacheContext = mapCacheCanvas.getContext('2d');
+}
+
 function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
 }
+
+exports.palset = function(n, hexColor){
+	var newPalette = palette.slice(0);
+	newPalette[n] = hexColor;
+	setPalette(newPalette);
+};
+
+exports.palget = function(n){
+	return palette[n];
+};
 
 function resizeCanvases(){
 	sgetData = null;
@@ -2659,6 +2678,8 @@ function resizeCanvases(){
 }
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
+
+// TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
 		screensizeX = newWidth;
@@ -2666,6 +2687,8 @@ exports.width = function(newWidth){
 	}
 	return screensizeX;
 };
+
+// TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
 		screensizeY = newHeight;
@@ -2673,8 +2696,24 @@ exports.height = function(newHeight){
 	}
 	return screensizeY;
 };
-exports.cellwidth = function(){ return cellsizeX; };
-exports.cellheight = function(){ return cellsizeY; };
+
+// TODO: rename to cwget/set() ?
+exports.cellwidth = function(newCellWidth){
+	if(newCellWidth !== undefined){
+		setCellSize(newCellWidth, cellsizeY);
+	} else {
+		return cellsizeX;
+	}
+};
+
+// TODO: rename to chget/set() ?
+exports.cellheight = function(newCellHeight){
+	if(newCellHeight !== undefined){
+		setCellSize(cellsizeX, newCellHeight);
+	} else {
+		return cellsizeY;
+	}
+};
 
 exports.cls = function(){
 	ctx.clearRect(-camX,-camY,screensizeX,screensizeY);
