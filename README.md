@@ -46,6 +46,14 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 # API documentation
 
+Jump to: 
+
+* [abs(x)](#abs) -- absolute value
+* [atan2(x,y)](#atan2)
+* [btn(n)](#btn) -- get button state
+* [camera(x,y)](#camera)
+* [cartridge(options)](#cartridge)
+
 ### abs
 
 ```js
