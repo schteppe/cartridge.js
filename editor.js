@@ -74,8 +74,8 @@ var code = {
 	x: 1,
 	y: 8,
 	initialized: false,
-	width: width() - 3,
-	height: height() - 9,
+	width: function(){ return width() - 3; },
+	height: function(){ return height() - 9; },
 	fontHeight: 6,
 	fontWidth: 4,
 	ccol: 0, // cursor
@@ -88,8 +88,8 @@ var code = {
 function code_draw(code){
 	var x = code.x;
 	var y = code.y;
-	var w = code.width;
-	var h = code.height;
+	var w = code.width();
+	var h = code.height();
 
 	var fontHeight = code.fontHeight;
 	var fontWidth = code.fontWidth;
@@ -695,16 +695,16 @@ function code_stop(code){
 }
 
 function code_click(code,x,y){
-	if(!inrect(x,y,code.x,code.y,code.width,code.height)){
+	if(!inrect(x,y,code.x,code.y,code.width(),code.height())){
 		return false;
 	}
 
 	var codeArray = codeget().split('\n');
 
-	code.crow = flr((y - code.y) / code.fontHeight);
+	code.crow = flr((y - code.y + code.wrow * code.fontHeight) / code.fontHeight);
 	code.crow = clamp(code.crow, 0, codeArray.length-1);
 
-	code.ccol = flr((x - code.x) / code.fontWidth);
+	code.ccol = flr((x - code.x + code.wcol * code.fontWidth) / code.fontWidth);
 	code.ccol = clamp(code.ccol, 0, codeArray[code.crow].length);
 
 	return true;
