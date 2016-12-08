@@ -48,10 +48,10 @@ var _alpha = 0;
 var code = '';
 
 exports.cartridge = function(options){
-	screensizeX = options.width !== undefined ? options.width : 128;
-	screensizeY = options.height !== undefined ? options.height : 128;
-	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8;
-	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8;
+	screensizeX = options.width !== undefined ? options.width : 128; // deprecated
+	screensizeY = options.height !== undefined ? options.height : 128; // deprecated
+	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8; // deprecated
+	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8; // deprecated
 
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
@@ -192,13 +192,12 @@ function setCellSize(w,h){
 	cellsizeX = w;
 	cellsizeY = h;
 
-	// Init spritesheet canvas
-	// TODO: copy over?
+	// (re)init spritesheet canvas
+	// TODO: copy over somehow?
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
 	spriteSheetContext = spriteSheetCanvas.getContext('2d');
 
-	// Init map cache
-	// TODO: copy over?
+	// (re)init map cache
 	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 }
@@ -229,6 +228,8 @@ function resizeCanvases(){
 }
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
+
+// TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
 		screensizeX = newWidth;
@@ -236,6 +237,8 @@ exports.width = function(newWidth){
 	}
 	return screensizeX;
 };
+
+// TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
 		screensizeY = newHeight;
@@ -243,6 +246,8 @@ exports.height = function(newHeight){
 	}
 	return screensizeY;
 };
+
+// TODO: rename to cwget/set() ?
 exports.cellwidth = function(newCellWidth){
 	if(newCellWidth !== undefined){
 		setCellSize(newCellWidth, cellsizeY);
@@ -250,6 +255,8 @@ exports.cellwidth = function(newCellWidth){
 		return cellsizeX;
 	}
 };
+
+// TODO: rename to chget/set() ?
 exports.cellheight = function(newCellHeight){
 	if(newCellHeight !== undefined){
 		setCellSize(cellsizeX, newCellHeight);
