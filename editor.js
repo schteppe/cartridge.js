@@ -86,7 +86,7 @@ var mapPanY = 0;
 
 var palette = {
 	sx: function(){ return flr((width() * 0.4) / 4); },
-	sy: function(){ return flr((height() * 0.4) / 4); },
+	sy: function(){ return flr((height() * 0.3) / 4); },
 	x: function(){ return width() - palette.sx() * 4 - 1; },
 	y: function(){ return 8; },
 	current: 1
@@ -840,10 +840,13 @@ window.addEventListener('keydown', function(evt){
 		code_stop(code);
 	} else {
 		switch(evt.keyCode){
+			case 81: if(mode === 'sprite') selectedSprite--; break;
+			case 87: if(mode === 'sprite') selectedSprite++; break;
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 			case 83: save('game.json'); break;
 			case 79: openfile(); break;
 		}
+		selectedSprite = clamp(selectedSprite,0,16*16);
 	}
 	dirty = true;
 });
