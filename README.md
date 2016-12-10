@@ -36,8 +36,8 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 #### Math
 
-* [abs(x)](#abs) - absolute value
-* [atan2(x,y)](#atan2)
+* [abs(x)](#abs--x-) - absolute value
+* [atan2(x,y)](#atan2--x--y-)
 * [ceil(x)](#ceil) - round up
 * [clamp(x,min,max)](#clamp) - clamp a number
 * [cos(x)](#cos) - cosine
