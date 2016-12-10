@@ -189,6 +189,9 @@ function postLoad(err){
 }
 
 function setCellSize(w,h){
+	w = w | 0;
+	h = h | 0;
+
 	cellsizeX = w;
 	cellsizeY = h;
 
@@ -232,7 +235,7 @@ exports.alpha = function(){ return _alpha; }; // for interpolation
 // TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
-		screensizeX = newWidth;
+		screensizeX = newWidth | 0;
 		resizeCanvases();
 	}
 	return screensizeX;
@@ -241,7 +244,7 @@ exports.width = function(newWidth){
 // TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
-		screensizeY = newHeight;
+		screensizeY = newHeight | 0;
 		resizeCanvases();
 	}
 	return screensizeY;
@@ -339,6 +342,13 @@ exports.camera = function camera(x, y){
 exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	layer = layer === undefined ? 0 : layer;
 
+	cel_x = cel_x | 0;
+	cel_y = cel_y | 0;
+	sx = sx | 0;
+	sy = sy | 0;
+	cel_w = cel_w | 0;
+	cel_h = cel_h | 0;
+
 	var i,j;
 
 	if(layer === 0){
@@ -398,6 +408,12 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
 	flip_y = flip_y !== undefined ? flip_y : false;
+
+	x = x | 0;
+	y = y | 0;
+	w = w | 0;
+	h = h | 0;
+
 	var sizex = cellsizeX * w;
 	var sizey = cellsizeY * h;
 	ctx.save();
@@ -428,6 +444,8 @@ exports.fset = function(n, flags){
 
 // Get pixel color
 exports.pget = function(x, y){
+	x = x | 0;
+	y = y | 0;
 	var data = ctx.getImageData(x, y, x+1, y+1).data;
 	var col = utils.rgbToDec(data[0], data[1], data[2]);
 	return palette.indexOf(col);
@@ -436,12 +454,16 @@ exports.pget = function(x, y){
 // Set pixel color
 // TODO: draw to a separate canvas and "flush" it when another command is executed
 exports.pset = function(x, y, col){
+	x = x | 0;
+	y = y | 0;
 	rectfill(x,y,x+1,y+1,col);
 };
 
 // Get spritesheet pixel color
 var sgetData = null;
 exports.sget = function(x, y){
+	x = x | 0;
+	y = y | 0;
 	if(!sgetData){
 		sgetData = spriteSheetContext.getImageData(0, 0, screensizeX, screensizeY).data;
 	}
@@ -456,6 +478,8 @@ exports.sget = function(x, y){
 
 // Set spritesheet pixel color
 exports.sset = function(x, y, col){
+	x = x | 0;
+	y = y | 0;
 	col = col !== undefined ? col : defaultColor;
 	if(transparentColors[col]){
 		spriteSheetContext.clearRect(x, y, 1, 1);
@@ -481,6 +505,10 @@ exports.print = function(text, x, y, col){
 	x = x !== undefined ? x : 0;
 	y = y !== undefined ? y : 0;
 	col = col !== undefined ? col : defaultColor;
+
+	x = x | 0;
+	y = y | 0;
+
 	font.draw(ctx, text.toUpperCase(), x, y, col);
 };
 
@@ -492,11 +520,16 @@ exports.fit = function fit(){
 };
 
 exports.mget = function mget(x, y){
+	x = x | 0;
+	y = y | 0;
 	return mapData[y * mapSizeX + x];
 };
 
 exports.mset = function mset(x, y, i){
 	if(mget(x,y) === i) return;
+
+	x = x | 0;
+	y = y | 0;
 
 	mapData[y * mapSizeX + x] = i;
 	mapDataDirty[y * mapSizeX + x] = 1;
