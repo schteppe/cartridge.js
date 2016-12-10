@@ -49,41 +49,42 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 * [abs(x)](#abs) - absolute value
 * [atan2(x,y)](#atan2)
 * [btn(n)](#btn) - get button state
+* [btnp(n)](#btn) - get previous button state
 * [camera(x,y)](#camera)
 * [cartridge(options)](#cartridge)
 * [click(func)](#click) - add a click listener
+* [clip(x,y,w,h)](#clip) - only allow rendering within a rectangle
 * [cls()](#cls) - clear screen
-* [clip()](#clip) -
-* [color()](#color) -
+* [color()](#color) - set default color
 * [cos(x)](#cos)
-* [fget()](#fget) -
-* [fit()](#fit) -
-* [flr()](#flr) -
-* [fset()](#fset) -
-* [fullscreen()](#fullscreen) -
-* [map()](#map) -
-* [max()](#max) -
-* [mget()](#mget) -
-* [min()](#min) -
-* [mousebtn()](#mousebtn) -
-* [mousex()](#mousex) -
-* [mousey()](#mousey) -
-* [mset()](#mset) -
-* [palt()](#palt) -
-* [pget()](#pget) -
-* [print(text,x,y)](#print) - draw text
+* [fget(n)](#fget) - get flags for a map cell
+* [fit()](#fit) - fit canvas to the container
+* [flr()](#flr) - floor
+* [fset(n,flags)](#fset) - set flags for a map cell
+* [fullscreen()](#fullscreen) - enter fullscreen mode
+* [map(cel_x,cel_y,sx,sy,cel_w,cel_h,layer)](#map) - draw map
+* [max(x,y)](#max)
+* [mget(x,y)](#mget) - get sprite from the map
+* [min(x,y)](#min)
+* [mousebtn(n)](#mousebtn) - get mousebutton state
+* [mousex()](#mousex)
+* [mousey()](#mousey)
+* [mset(x,y,n)](#mset) - set sprite to be rendered in a map cell
+* [palt(col,t)](#palt) - set transparency color
+* [pget(n)](#pget) - get palette color in decimal form
+* [print(text,x,y,[col])](#print) - draw text
 * [pset(x,y,col)](#pset) - set pixel color
-* [rect()](#rect) - draw rectangle
-* [rectfill()](#rectfill) -
-* [rnd()](#rnd) -
-* [sfx()](#sfx) -
-* [sget()](#sget) -
-* [sgn()](#sgn) -
-* [sin()](#sin) -
-* [spr()](#spr) -
-* [sqrt()](#sqrt) -
+* [rect(x0,y0,x1,y1,[col])](#rect) - draw rectangle
+* [rectfill(x0,y0,x1,y1,[col])](#rectfill) - draw filled rectangle
+* [rnd(n)](#rnd) - generate floating point random number between 0 and n
+* [sfx(n,[channel],[offset])](#sfx) - play sound effect
+* [sget(x,y)](#sget) - get spritesheet pixel color
+* [sgn(x)](#sgn) - sign
+* [sin(x)](#sin) - sine
+* [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr) - draw sprite
+* [sqrt()](#sqrt) - square root
 * [sset(x,y,col)](#sset) - set pixel color in spritesheet
-* [time()](#time) -
+* [time()](#time) - current time in seconds
 
 ### abs
 
