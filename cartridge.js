@@ -2963,7 +2963,7 @@ exports.print = function(text, x, y, col){
 exports.fit = function fit(){
 	var i = canvases.length;
 	while(i--){
-		utils.scaleToFit(canvases[i], container);
+		utils.scaleToFit(canvases[i], container, true);
 	}
 };
 
@@ -3214,6 +3214,7 @@ exports.btn = function btn(i, player){
 	}
 };
 
+// TODO: need to support multiple "prev" button states, so it can work in _update, _draw, etc
 exports.btnp = function btnp(i, player){
 	player = player !== undefined ? player : 1;
 	var keyCode = 0;
@@ -3666,7 +3667,7 @@ exports.makeGlobal = function(obj){
 	}
 };
 
-exports.scaleToFit = function scaleToFit(element, containerElement){
+exports.scaleToFit = function scaleToFit(element, containerElement, pixelPerfectMode){
 	var containerWidth = window.innerWidth;
 	var containerHeight = window.innerHeight;
 	if(containerElement){
@@ -3678,16 +3679,19 @@ exports.scaleToFit = function scaleToFit(element, containerElement){
 	var scaleY = containerHeight / element.height;
 	var scale = Math.min(scaleX, scaleY);
 
-	// "Pixel perfect" mode
-	scale = Math.floor(scale);
+	if(pixelPerfectMode){
+		scale = Math.floor(scale) || 1;
+	}
 
 	var offsetX = (containerWidth - element.width * scale) * 0.5;
 	var offsetY = (containerHeight - element.height * scale) * 0.5;
 
 	// Safari doesn't have nearest neighbor rendering when using CSS3 scaling
 	if (isSafari()){
-		element.style.width = element.style.height = Math.min(containerWidth, containerHeight) + "px";
+		element.style.width = (element.width * scale) + "px";
+		element.style.height = (element.height * scale) + "px";
 		element.style.marginLeft = offsetX + 'px';
+		element.style.marginTop = offsetY + 'px';
 	} else {
 		element.style.transformOrigin = "0 0"; //scale from top left
 		element.style.transform = "translate(" + offsetX + "px, " + offsetY + "px) scale(" + scale + ")";
