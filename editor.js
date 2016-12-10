@@ -50,24 +50,25 @@ var viewport = {
 	x: 1,
 	y: 8,
 	sx: function(){ return flr((width() * 0.6) / cellwidth()); },
-	sy: function(){ return flr((height() * 0.6) / cellheight()); },
-	draw: function(){
-		for(var i=0; i<cellwidth(); i++){
-			for(var j=0; j<cellheight(); j++){
-				var x = (ssx(selectedSprite) * cellwidth() + i) % width();
-				var y = (ssy(selectedSprite) * cellheight() + j) % height();
-				var col = sget(x, y);
-				rectfill(
-					this.x + i * this.sx(),
-					this.y + j * this.sy(),
-					this.x + (i+1) * this.sx()-1,
-					this.y + (j+1) * this.sy()-1,
-					col
-				);
-			}
+	sy: function(){ return flr((height() * 0.6) / cellheight()); }
+};
+
+function viewportdraw(viewport){
+	for(var i=0; i<cellwidth(); i++){
+		for(var j=0; j<cellheight(); j++){
+			var x = (ssx(selectedSprite) * cellwidth() + i) % width();
+			var y = (ssy(selectedSprite) * cellheight() + j) % height();
+			var col = sget(x, y);
+			rectfill(
+				viewport.x + i * viewport.sx(),
+				viewport.y + j * viewport.sy(),
+				viewport.x + (i+1) * viewport.sx()-1,
+				viewport.y + (j+1) * viewport.sy()-1,
+				col
+			);
 		}
 	}
-};
+}
 
 var code = {
 	x: 1,
@@ -115,6 +116,7 @@ var slotButtons = {
 var saveButtons = {
 	x: function(){ return 5; },
 	y: function(){ return 42; },
+	current: 0,
 	num: 8,
 	padding: 4
 };
@@ -351,9 +353,8 @@ function clickhandler(){
 			var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
 			fset(selectedSprite, newFlags);
 			dirty = true;
-		} else if(inrect(mx,my,toolButtons.x(),toolButtons.y(),toolButtons.options.length * (toolButtons.padding * 2 + 6),7)){
+		} else if(buttons_click(toolButtons,mx,my)){
 			// tool switcher
-			toolButtons.current = flr((mx-toolButtons.x()) / (toolButtons.padding * 2 + 6));
 			dirty = true;
 		}
 	}
@@ -469,23 +470,23 @@ editorDraw = window._draw = function _draw(){
 		code_draw(code);
 		break;
 	case 'sprite':
-		viewport.draw();
+		viewportdraw(viewport);
 		drawsprites(0,height() - cellheight() * 4);
 		drawpalette(paletteX(), paletteY(), paletteScaleX(), paletteScaleY());
-		drawbuttons(buttons);
-		drawbuttons(toolButtons);
+		buttons_draw(buttons);
+		buttons_draw(toolButtons);
 		drawflags(flagsX(),flagsY(),fget(selectedSprite));
 		break;
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		drawsprites(0,height() - cellheight() * 4);
-		drawbuttons(buttons);
+		buttons_draw(buttons);
 		break;
 	case 'sfx':
 		drawpitches(pitches, 0);
 		drawpitches(volumes, 1, 0);
-		drawbuttons(waveformButtons);
+		buttons_draw(waveformButtons);
 		speedSelector.current = asget(currentSoundEffect);
 		intselDraw(speedSelector);
 		sfxSelector.current = currentSoundEffect;
@@ -493,9 +494,9 @@ editorDraw = window._draw = function _draw(){
 		break;
 	case 'game':
 		print("Load from localstorage slot:", 5,14);
-		drawbuttons(slotButtons);
+		buttons_draw(slotButtons);
 		print("Save to localstorage slot:", 5,35);
-		drawbuttons(saveButtons);
+		buttons_draw(saveButtons);
 		print('- Press "S" to download JSON.', 5,56);
 		print('- Press "O" to open JSON.', 5,70);
 		break;
@@ -525,10 +526,10 @@ editorDraw = window._draw = function _draw(){
 
 function drawtop(){
 	rectfill(0, 0, width(), 6, 0);
-	drawbuttons(topButtons);
+	buttons_draw(topButtons);
 }
 
-function drawbuttons(settings){
+function buttons_draw(settings){
 	var padding = settings.padding !== undefined ? settings.padding : 4;
 	var num = settings.num || settings.options.length;
 	var bgColor = settings.bgColor !== undefined ? settings.bgColor : 0;
@@ -548,6 +549,20 @@ function drawbuttons(settings){
 			settings.current === i ? textColor : bgColor
 		);
 	}
+}
+
+function buttons_click(buttons,x,y){
+	var num = buttons.num !== undefined ? buttons.num : buttons.options.length;
+	if(inrect(x,y,buttons.x(),buttons.y(), num * (buttons.padding * 2 + 6),7)){
+		var button = flr((x-buttons.x()) / (buttons.padding * 2 + 6));
+		if(buttons.current === button){
+			return false;
+		} else {
+			buttons.current = button;
+			return true;
+		}
+	}
+	return false;
 }
 
 function drawflags(x,y,flags){
