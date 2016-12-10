@@ -100,11 +100,22 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 ### abs
 
-```js
-var y = abs(x);
+```
+abs(x)
 ```
 
-Returns the absolute value of x.
+<dl>
+  <dt>x</dt>
+  <dd>A real number</dd>
+  <dt>Return value</dt>
+  <dd>The absolute value of x</dd>
+</dl>
+
+```js
+// Examples
+var a = abs(-2.3); // 2.3
+var b = abs(5.6); // 5.6
+```
 
 ### atan2
 
