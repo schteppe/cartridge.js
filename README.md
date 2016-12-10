@@ -98,11 +98,7 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 * [time()](#time) - get current time in seconds
 * [width([newWidth])](#width) - get or set width
 
-### abs
-
-```
-abs(x)
-```
+### abs ( x )
 
 <dl>
   <dt>x</dt>
