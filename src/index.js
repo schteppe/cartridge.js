@@ -6,7 +6,6 @@ var math = require('./math');
 var colors = require('./colors');
 var sfx = require('./sfx');
 
-// Constants
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
 var screensizeX = 128; // pixels
