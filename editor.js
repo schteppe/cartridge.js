@@ -130,7 +130,7 @@ var waveformButtons = {
 var topButtons = {
 	x: function(){ return 0; },
 	y: function(){ return 0; },
-	options: ['HLP', 'CRT', 'SPR', 'MAP', 'SFX', 'JS', 'RUN'],
+	options: ['HLP', 'CRT', 'SPR', 'MAP', 'SFX', '.JS', 'RUN'],
 	current: 0,
 	bgColor: 7,
 	textColor: 0,
@@ -511,7 +511,7 @@ editorDraw = window._draw = function _draw(){
 			"- SPR: Sprite editor.",
 			"- MAP: Map editor.",
 			"- SFX: Sound effect editor.",
-			"- JS:  JavaScript editor.",
+			"- .JS: JavaScript editor.",
 			"- RUN: Run game (Esc=quit).",
 			"",
 			"Good luck! /Schteppe"
