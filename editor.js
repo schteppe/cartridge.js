@@ -37,8 +37,6 @@ var modes = ['help', 'game', 'sprite', 'map', 'sfx', 'code', 'run'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
-var currentSoundEffect = 0;
-var currentWaveform = 4;
 var color = 8;
 var dirty = true;
 var lastmx = 0;
@@ -95,11 +93,9 @@ var paletteY = function(){ return 8; };
 var flagsX = function(){ return paletteX(); };
 var flagsY = function(){ return paletteY() + paletteScaleY() * 4 + 1; };
 
-var buttonsX = function(){ return width() - 56; };
-var buttonsY = function(){ return height() - 4 * cellheight() - 7; };
 var buttons = {
-	x: buttonsX,
-	y: buttonsY,
+	x: function(){ return width() - 56; },
+	y: function(){ return height() - 4 * cellheight() - 7; },
 	num: 4,
 	current: 0,
 	padding: 4
@@ -115,7 +111,6 @@ var slotButtons = {
 var saveButtons = {
 	x: function(){ return 5; },
 	y: function(){ return 42; },
-	current: 0,
 	num: 8,
 	padding: 4
 };
@@ -124,7 +119,7 @@ var waveformButtons = {
 	x: function(){ return 1; },
 	y: function(){ return 8; },
 	num: 6,
-	current: 0,
+	current: 4,
 	padding: 2
 };
 
@@ -314,20 +309,20 @@ function mousemovehandler(forceMouseDown){
 			if(clamp(n,0,32) === n && clamp(pitch,0,255) === pitch){
 				if(mousebtn(1)){
 					// Draw pitch
-					if(avget(currentSoundEffect, n) === 0){
+					if(avget(sfxSelector.current, n) === 0){
 						// User probably want full volumes
-						avset(currentSoundEffect, n, 255);
+						avset(sfxSelector.current, n, 255);
 					}
-					afset(currentSoundEffect, n, pitch);
-					awset(currentSoundEffect, n, currentWaveform);
+					afset(sfxSelector.current, n, pitch);
+					awset(sfxSelector.current, n, waveformButtons.current);
 				} else if(mousebtn(3)){
 					// Delete
-					afset(currentSoundEffect, n, 0);
-					avset(currentSoundEffect, n, 0);
+					afset(sfxSelector.current, n, 0);
+					avset(sfxSelector.current, n, 0);
 				}
 				dirty = true;
 			} else if(clamp(n,0,32) === n && clamp(vol,0,255) === vol){
-				avset(currentSoundEffect, n, vol);
+				avset(sfxSelector.current, n, vol);
 				dirty = true;
 			}
 		}
@@ -366,37 +361,31 @@ function clickhandler(){
 			var spriteY = buttons.current * 4 + flr((my-spritesHeight) / cellheight());
 			selectedSprite = spriteX + spriteY * 16;
 			dirty = true;
-		} else if(buttons_click(buttons, mx, my)/*inrect(mx,my,buttons.x(),buttons.y(),4*14,10)*/){
+		} else if(buttons_click(buttons, mx, my)){
 			dirty = true;
 		}
 	}
 
 	if(mode === 'sfx'){
-		if(inrect(mx,my,waveformButtons.x(),waveformButtons.y(),waveformButtons.num * (waveformButtons.padding * 2 + 6),7)){
-			var button = flr((mx-waveformButtons.x()) / (waveformButtons.padding * 2 + 6));
-			currentWaveform = button;
+		if(buttons_click(waveformButtons,mx,my)){
 			dirty = true;
 		}
 		if(intselClick(speedSelector, mx, my)){
-			asset(currentSoundEffect, speedSelector.current);
+			asset(sfxSelector.current, speedSelector.current);
 			dirty = true;
 		}
 		if(intselClick(sfxSelector, mx, my)){
-			currentSoundEffect = sfxSelector.current;
 			dirty = true;
 		}
 	}
 
 	// mode switcher
-	if(inrect(mx,my,topButtons.x(),topButtons.y(),topButtons.options.length * (topButtons.padding * 2 + 6),7)){
-		var button = flr((mx-topButtons.x()) / (topButtons.padding * 2 + 6));
-
-		if(modes[button] === 'run'){
+	if(buttons_click(topButtons,mx,my)){
+		if(modes[topButtons.current] === 'run'){
 			code_run(code);
 		} else {
-			mode = modes[button];
+			mode = modes[topButtons.current];
 		}
-
 		dirty = true;
 	}
 
@@ -405,21 +394,21 @@ function clickhandler(){
 	}
 
 	if(mode === 'game'){
-		if(inrect(mx,my,slotButtons.x(),slotButtons.y(),slotButtons.num * (slotButtons.padding * 2 + 6),7)){
-			var button = flr((mx-slotButtons.x()) / (slotButtons.padding * 2 + 6));
-			if(load('slot' + button)){
-				alert('Loaded game from slot ' + (button + 1) + '.');
+		if(buttons_click(slotButtons,mx,my)){
+			if(load('slot' + slotButtons.current)){
+				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
 			} else {
-				alert('Could not load game from slot ' + (button + 1) + '.');
+				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
 			}
 			dirty = true;
+			slotButtons.current = -1;
 		}
 
-		if(inrect(mx,my,saveButtons.x(),saveButtons.y(),saveButtons.num * (saveButtons.padding * 2 + 6),7)){
-			var button = flr((mx-saveButtons.x()) / (saveButtons.padding * 2 + 6));
-			save('slot' + button);
-			alert('Saved game to slot ' + (button + 1) + '.');
+		if(buttons_click(saveButtons,mx,my)){
+			save('slot' + saveButtons.current);
+			alert('Saved game to slot ' + (saveButtons.current + 1) + '.');
 			dirty = true;
+			saveButtons.current = -1;
 		}
 	}
 }
@@ -458,7 +447,6 @@ editorDraw = window._draw = function _draw(){
 
 	rectfill(0, 0, width(), height(), 7);
 
-	waveformButtons.current = currentWaveform;
 	topButtons.current = modes.indexOf(mode);
 
 	switch(mode){
@@ -483,9 +471,8 @@ editorDraw = window._draw = function _draw(){
 		drawpitches(pitches, 0);
 		drawpitches(volumes, 1, 0);
 		buttons_draw(waveformButtons);
-		speedSelector.current = asget(currentSoundEffect);
+		speedSelector.current = asget(sfxSelector.current);
 		intselDraw(speedSelector);
-		sfxSelector.current = currentSoundEffect;
 		intselDraw(sfxSelector);
 		break;
 	case 'game':
@@ -628,9 +615,9 @@ function drawpitches(pitches, source, col){
 	for(var i=0; i<32; i++){
 		var x0 = x + i * pitchWidth + 1;
 		var y0 = y + h - 1;
-		var value = source === 1 ? (avget(currentSoundEffect,i) / 255) : (afget(currentSoundEffect,i) / 255);
+		var value = source === 1 ? (avget(sfxSelector.current,i) / 255) : (afget(sfxSelector.current,i) / 255);
 		var pitch = flr(value * h);
-		rectfill(x0, y0 - pitch, x0 + pitchWidth - 2, y0, col !== undefined ? col : awget(currentSoundEffect, i));
+		rectfill(x0, y0 - pitch, x0 + pitchWidth - 2, y0, col !== undefined ? col : awget(sfxSelector.current, i));
 	}
 }
 
@@ -824,7 +811,7 @@ window.addEventListener('keydown', function(evt){
 		code_stop(code);
 	} else {
 		switch(evt.keyCode){
-			case 32: if(mode === 'sfx') sfx(currentSoundEffect); break;
+			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 			case 83: save('game.json'); break;
 			case 79: openfile(); break;
 		}
