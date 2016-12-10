@@ -187,11 +187,12 @@ function intsel_draw(intsel){
 
 function intsel_click(intsel, x, y){
 	if(inrect(x,y,intsel.x,intsel.y, 3 * (intsel.padding * 2 + 6),7)){
+		var speed = keysdown[16] ? 10 : 1;
 		var button = flr((x-intsel.x) / (intsel.padding * 2 + 6));
 		if(button === 0){
-			intsel.current--;
+			intsel.current -= speed;
 		} else if(button === 2){
-			intsel.current++;
+			intsel.current += speed;
 		}
 		intsel.current = clamp(intsel.current, intsel.min, intsel.max);
 		return true;
