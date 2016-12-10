@@ -858,4 +858,95 @@ function readSingleFile(e) {
   reader.readAsText(file);
 }
 
+function decToR(c){
+	return Math.floor(c / (256*256));
+}
+
+function decToG(c){
+	return Math.floor(c / 256) % 256;
+}
+
+function decToB(c){
+	return c % 256;
+}
+
+
+function handlepaste (e) {
+    var types, pastedData, savedContent;
+
+	if(mode !== 'sprite') return;
+
+    // Browsers that support the 'text/html' type in the Clipboard API (Chrome, Firefox 22+)
+    if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
+        types = e.clipboardData.types;
+
+        if (((types instanceof DOMStringList) && types.contains("Files")) || (types.indexOf && types.indexOf('Files') !== -1)) {
+			var data = e.clipboardData.items[0];
+			if(data.kind == 'file' && data.type.match('^image/')) {
+
+				// Extract data and pass it to callback
+				var file = data.getAsFile();
+
+				var urlCreator = window.URL || window.webkitURL;
+				var img = new Image();
+				img.onload = function(){
+					// paste pixels into current sprite
+					var tmpCanvas = document.createElement('canvas');
+					tmpCanvas.width = img.width;
+					tmpCanvas.height = img.height;
+					tmpCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+					var imgData = tmpCanvas.getContext('2d').getImageData(0, 0, img.width, img.height);
+					var pixels = imgData.data;
+
+					for(var i=0; i<img.width && i < 16 * cellwidth(); i++){
+						for(var j=0; j<img.height && j < 16 * cellheight(); j++){
+							// Get best matching color
+							var p = 4 * (i + j*img.width);
+							var r = pixels[p + 0];
+							var g = pixels[p + 1];
+							var b = pixels[p + 2];
+
+							var bestColor = 0;
+							var distance = 1e10;
+							for(var k=0; k<16; k++){
+								var dec = palget(k);
+								var dr = decToR(dec);
+								var dg = decToG(dec);
+								var db = decToB(dec);
+								var newDistance = (r-dr)*(r-dr) + (g-dg)*(g-dg) + (b-db)*(b-db);
+								if(newDistance < distance){
+									bestColor = k;
+									distance = newDistance;
+								}
+							}
+
+							// write to spritesheet at current position
+							var x = (ssx(selectedSprite) * cellwidth() + i);
+							var y = (ssy(selectedSprite) * cellheight() + j);
+							sset(x, y, bestColor);
+							dirty = true;
+						}
+					}
+
+					urlCreator.revokeObjectURL(file);
+				};
+				img.src = urlCreator.createObjectURL(file);
+
+				// Stop the data from actually being pasted
+				e.stopPropagation();
+				e.preventDefault();
+			}
+            return false;
+        }
+    }
+    return true;
+}
+
+window.addEventListener('paste', handlepaste, false);
+
+
+
+
+
+
 })();
