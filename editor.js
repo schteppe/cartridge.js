@@ -38,7 +38,6 @@ var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
 var currentSoundEffect = 0;
-var spritePage = 0;
 var currentWaveform = 4;
 var color = 8;
 var dirty = true;
@@ -364,12 +363,10 @@ function clickhandler(){
 		var spritesHeight = height() - cellheight() * 4;
 		if(my >= height() - cellheight() * 4){
 			var spriteX = flr(mx / cellwidth());
-			var spriteY = spritePage * 4 + flr((my-spritesHeight) / cellheight());
+			var spriteY = buttons.current * 4 + flr((my-spritesHeight) / cellheight());
 			selectedSprite = spriteX + spriteY * 16;
 			dirty = true;
-		} else if(inrect(mx,my,buttons.x(),buttons.y(),4*14,10)){
-			var button = flr((mx-buttons.x()) / 14);
-			spritePage = button;
+		} else if(buttons_click(buttons, mx, my)/*inrect(mx,my,buttons.x(),buttons.y(),4*14,10)*/){
 			dirty = true;
 		}
 	}
@@ -461,7 +458,6 @@ editorDraw = window._draw = function _draw(){
 
 	rectfill(0, 0, width(), height(), 7);
 
-	buttons.current = spritePage;
 	waveformButtons.current = currentWaveform;
 	topButtons.current = modes.indexOf(mode);
 
@@ -587,7 +583,7 @@ function drawmouse(x,y){
 
 function drawsprites(offsetX, offsetY){
 	rectfill(offsetX, offsetY, width(), height(), 0);
-	var n=spritePage*4*16;
+	var n=buttons.current*4*16;
 	for(var j=0; j<4; j++){
 		for(var i=0; i<16; i++){
 			spr(n, i*cellwidth()+offsetX, j*cellheight()+offsetY);
@@ -595,9 +591,9 @@ function drawsprites(offsetX, offsetY){
 		}
 	}
 	// Rectangle around the current editing sprite
-	if(ssy(selectedSprite)/4 >= spritePage && ssy(selectedSprite)/4 < spritePage+1){
+	if(ssy(selectedSprite)/4 >= buttons.current && ssy(selectedSprite)/4 < buttons.current+1){
 		var x = offsetX + ssx(selectedSprite) * cellwidth();
-		var y = offsetY + ssy(selectedSprite) * cellheight() - spritePage * 4 * cellheight();
+		var y = offsetY + ssy(selectedSprite) * cellheight() - buttons.current * 4 * cellheight();
 		rect(
 			x-1, y-1,
 			x+cellwidth(), y+cellheight(),
