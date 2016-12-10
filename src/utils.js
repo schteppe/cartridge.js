@@ -66,8 +66,10 @@ exports.scaleToFit = function scaleToFit(element, containerElement){
 
 	// Safari doesn't have nearest neighbor rendering when using CSS3 scaling
 	if (isSafari()){
-		element.style.width = element.style.height = Math.min(containerWidth, containerHeight) + "px";
+		element.style.width = (element.width * scale) + "px";
+		element.style.height = (element.height * scale) + "px";
 		element.style.marginLeft = offsetX + 'px';
+		element.style.marginTop = offsetY + 'px';
 	} else {
 		element.style.transformOrigin = "0 0"; //scale from top left
 		element.style.transform = "translate(" + offsetX + "px, " + offsetY + "px) scale(" + scale + ")";
