@@ -37,7 +37,6 @@ var modes = ['help', 'game', 'sprite', 'map', 'sfx', 'code', 'run'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
-var color = 8;
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
@@ -50,7 +49,7 @@ var viewport = {
 	sy: function(){ return flr((height() * 0.6) / cellheight()); }
 };
 
-function viewportdraw(viewport){
+function viewport_draw(viewport){
 	for(var i=0; i<cellwidth(); i++){
 		for(var j=0; j<cellheight(); j++){
 			var x = (ssx(selectedSprite) * cellwidth() + i) % width();
@@ -85,13 +84,16 @@ var code = {
 var mapPanX = 0;
 var mapPanY = 0;
 
-var paletteScaleX = function(){ return flr((width() * 0.4) / 4); };
-var paletteScaleY = function(){ return flr((height() * 0.4) / 4); };
-var paletteX = function(){ return width() - paletteScaleX() * 4 - 1; };
-var paletteY = function(){ return 8; };
+var palette = {
+	sx: function(){ return flr((width() * 0.4) / 4); },
+	sy: function(){ return flr((height() * 0.4) / 4); },
+	x: function(){ return width() - palette.sx() * 4 - 1; },
+	y: function(){ return 8; },
+	current: 1
+};
 
-var flagsX = function(){ return paletteX(); };
-var flagsY = function(){ return paletteY() + paletteScaleY() * 4 + 1; };
+var flagsX = function(){ return palette.x(); };
+var flagsY = function(){ return palette.y() + palette.sy() * 4 + 1; };
 
 var buttons = {
 	x: function(){ return width() - 56; },
@@ -256,7 +258,7 @@ function mousemovehandler(forceMouseDown){
 					sset(
 						ssx(selectedSprite) * cellwidth() + x,
 						ssy(selectedSprite) * cellheight() + y,
-						color
+						palette.current
 					);
 					dirty = true;
 				} else if(toolButtons.current === 1){
@@ -269,7 +271,7 @@ function mousemovehandler(forceMouseDown){
 						fillx,
 						filly,
 						sget(fillx, filly),
-						color,
+						palette.current,
 						x0, x0 + cellwidth()-1,
 						y0, y0 + cellheight()-1
 					);
@@ -335,10 +337,7 @@ function clickhandler(){
 	var my = mousey();
 	mousemovehandler(true);
 	if(mode === 'sprite'){
-		if(inrect(mx,my,paletteX(),paletteY(),paletteScaleX()*4,paletteScaleY()*4)){
-			var x = flr((mx-paletteX()) / paletteScaleX());
-			var y = flr((my-paletteY()) / paletteScaleY());
-			color = x + 4 * y;
+		if(palette_click(palette,mx,my)){
 			dirty = true;
 		} else if(inrect(mx,my,flagsX(),flagsY(),6*8,5)){
 			var flagIndex = flr((mx-flagsX()) / 6);
@@ -454,9 +453,9 @@ editorDraw = window._draw = function _draw(){
 		code_draw(code);
 		break;
 	case 'sprite':
-		viewportdraw(viewport);
+		viewport_draw(viewport);
 		drawsprites(0,height() - cellheight() * 4);
-		drawpalette(paletteX(), paletteY(), paletteScaleX(), paletteScaleY());
+		palette_draw(palette);
 		buttons_draw(buttons);
 		buttons_draw(toolButtons);
 		drawflags(flagsX(),flagsY(),fget(selectedSprite));
@@ -589,7 +588,12 @@ function drawsprites(offsetX, offsetY){
 	}
 }
 
-function drawpalette(x, y, sx, sy){
+function palette_draw(palette){
+	var x = palette.x();
+	var y = palette.y();
+	var sx = palette.sx();
+	var sy = palette.sy();
+	var current = palette.current;
 	var n=0;
 	for(var j=0; j<4; j++){
 		for(var i=0; i<4; i++){
@@ -598,12 +602,22 @@ function drawpalette(x, y, sx, sy){
 			var rw = x+(i+1)*sx-1;
 			var rh = y+(j+1)*sy-1;
 			rectfill(rx, ry, rw, rh, n);
-			if(color === n){
-				rect(rx, ry, rw, rh, color === 0 ? 7 : 0);
+			if(current === n){
+				rect(rx, ry, rw, rh, current === 0 ? 7 : 0);
 			}
 			n++;
 		}
 	}
+}
+
+function palette_click(palette,x,y){
+	if(inrect(x,y,palette.x(),palette.y(),palette.sx()*4,palette.sy()*4)){
+		var px = flr((x-palette.x()) / palette.sx());
+		var py = flr((y-palette.y()) / palette.sy());
+		palette.current = px + 4 * py;
+		return true;
+	}
+	return false;
 }
 
 function drawpitches(pitches, source, col){
