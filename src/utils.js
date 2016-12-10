@@ -46,7 +46,7 @@ exports.makeGlobal = function(obj){
 	}
 };
 
-exports.scaleToFit = function scaleToFit(element, containerElement){
+exports.scaleToFit = function scaleToFit(element, containerElement, pixelPerfectMode){
 	var containerWidth = window.innerWidth;
 	var containerHeight = window.innerHeight;
 	if(containerElement){
@@ -58,8 +58,9 @@ exports.scaleToFit = function scaleToFit(element, containerElement){
 	var scaleY = containerHeight / element.height;
 	var scale = Math.min(scaleX, scaleY);
 
-	// "Pixel perfect" mode
-	scale = Math.floor(scale);
+	if(pixelPerfectMode){
+		scale = Math.floor(scale) || 1;
+	}
 
 	var offsetX = (containerWidth - element.width * scale) * 0.5;
 	var offsetY = (containerHeight - element.height * scale) * 0.5;

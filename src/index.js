@@ -514,7 +514,7 @@ exports.print = function(text, x, y, col){
 exports.fit = function fit(){
 	var i = canvases.length;
 	while(i--){
-		utils.scaleToFit(canvases[i], container);
+		utils.scaleToFit(canvases[i], container, true);
 	}
 };
 
