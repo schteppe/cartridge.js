@@ -581,9 +581,11 @@ function download(key){
 
 function toJSON(){
 	var data = {
-		version: 3,
+		version: 4,
 		width: screensizeX, // added in v3
 		height: screensizeY, // added in v3
+		cellwidth: cellwidth(), // added in v4
+		cellheight: cellheight(), // added in v4
 		map: [],
 		sprites: [],
 		flags: [],
@@ -624,12 +626,21 @@ function toJSON(){
 
 function loadJSON(data){
 	codeset(data.code || '');
+
 	if(data.width !== undefined){
 		width(data.width);
 	}
 	if(data.height !== undefined){
 		height(data.height);
 	}
+
+	if(data.cellwidth !== undefined){
+		cellwidth(data.cellwidth);
+	}
+	if(data.cellheight !== undefined){
+		cellheight(data.cellheight);
+	}
+
 	for(var i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
