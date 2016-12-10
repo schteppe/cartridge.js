@@ -7,17 +7,8 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 ```html
 <html>
-<head>
-	<style>
-	#container {
-		width: 512px;
-		height: 512px;
-		background-color: black;
-	}
-	</style>
-</head>
 <body>
-	<div id="container"></div>
+	<div id="container" style="width: 100%; height: 100%; background-color: black"></div>
 	<script src="cartridge.js"></script>
 	<script>
 		var x = 50, y = 50;
@@ -25,18 +16,15 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 		// Initialize
 		cartridge({ containerId: 'container' });
 
-		// Called at 60Hz
-		function _update60(){
-			if (btn(0,1)) x--;
-			if (btn(1,1)) x++;
-			if (btn(2,1)) y--;
-			if (btn(3,1)) y++;
-		}
-
-		// Called each render frame
 		function _draw(){
+			// Process input
+			if (btn(0)) x--;
+			if (btn(1)) x++;
+			if (btn(2)) y--;
+			if (btn(3)) y++;
+
 			cls(); // Clear screen
-			print('HELLO WORLD', 10, 10); // draw a string at 10,10
+			print('HELLO WORLD', 10, 10); // draw a text
 			spr(1, x, y); // draw sprite 1 from spritesheet
 		}
 	</script>
