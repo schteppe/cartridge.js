@@ -1,7 +1,7 @@
 cartridge.js
 ============
 
-Minimalistic retro game engine inspired by Pico-8. You can use it as a library and/or create content for your game using the editor.
+HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.php). You can use it as a library and/or create content for your game using the editor.
 
 # Usage
 
@@ -52,7 +52,7 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 #### Input
 
-* [btn(n)](#btn) - get button state
+* [btn(n)](#btn--n--player) - get button state
 * [btnp(n)](#btn) - get previous button state
 * [click(func)](#click) - add a click listener
 * [mousebtn(n)](#mousebtn) - get mousebutton state
@@ -112,6 +112,8 @@ var a = abs(-2.3); // 2.3
 var b = abs(5.6); // 5.6
 ```
 
+===
+
 ### atan2 ( x , y )
 
 <dl>
@@ -127,11 +129,26 @@ var b = abs(5.6); // 5.6
 var angle = atan2(x,y);
 ```
 
-### btn
+===
+
+### btn ( n , [player] )
+
+<dl>
+  <dt>n</dt>
+  <dd>A button number: 0 = left, 1 = right, 2 = up, 3 = down, 4 = A, 5 = B</dd>
+  <dt>player</dt>
+  <dd>The gamepad/player number, starting from 1. Default is 1.</dd>
+  <dt>Return value</dt>
+  <dd>A boolean indicating if the button is pressed or not.</dd>
+</dl>
 
 ```js
-var isdown = btn(i, player);
+if(btn(0)){
+  player.x--;
+}
 ```
+
+===
 
 ### camera
 
@@ -139,11 +156,15 @@ var isdown = btn(i, player);
 camera(x, y);
 ```
 
+===
+
 ### cartridge
 
 ```js
 cartridge(options);
 ```
+
+===
 
 ### click
 
@@ -151,11 +172,15 @@ cartridge(options);
 click(callback);
 ```
 
+===
+
 ### cls
 
 ```js
 cls();
 ```
+
+===
 
 ### clip
 
@@ -163,11 +188,15 @@ cls();
 clip(x,y,w,h);
 ```
 
+===
+
 ### color
 
 ```js
 color(col);
 ```
+
+===
 
 ### cos
 
@@ -175,17 +204,23 @@ color(col);
 var y = cos(x);
 ```
 
+===
+
 ### fget
 
 ```js
 var flags = fget(n);
 ```
 
+===
+
 ### fit
 
 ```js
 fit();
 ```
+
+===
 
 ### flr
 
