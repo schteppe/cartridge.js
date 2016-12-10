@@ -353,10 +353,16 @@ function clickhandler(){
 	if(mode === 'sprite' || mode === 'map'){
 		var spritesHeight = height() - cellheight() * 4;
 		if(my >= height() - cellheight() * 4){
-			var spriteX = flr(mx / cellwidth());
-			var spriteY = buttons.current * 4 + flr((my-spritesHeight) / cellheight());
-			selectedSprite = spriteX + spriteY * 16;
-			dirty = true;
+
+			var cw = min(flr(width() / 16), cellwidth());
+			var ch = min(flr(height() / 16), cellheight());
+
+			var spriteX = flr(mx / cw);
+			var spriteY = buttons.current * 4 + flr((my-spritesHeight) / ch);
+			if(spriteX < 16 && spriteY < 16){
+				selectedSprite = spriteX + spriteY * 16;
+				dirty = true;
+			}
 		} else if(buttons_click(buttons, mx, my)){
 			dirty = true;
 		}
@@ -453,7 +459,7 @@ editorDraw = window._draw = function _draw(){
 		break;
 	case 'sprite':
 		viewport_draw(viewport);
-		sprites_draw(0,height() - cellheight() * 4);
+		sprites_draw();
 		palette_draw(palette);
 		buttons_draw(buttons);
 		buttons_draw(toolButtons);
@@ -462,7 +468,7 @@ editorDraw = window._draw = function _draw(){
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
-		sprites_draw(0,height() - cellheight() * 4);
+		sprites_draw();
 		buttons_draw(buttons);
 		break;
 	case 'sfx':
@@ -566,22 +572,29 @@ function mouse_draw(x,y){
 	rectfill(x, y, x, y, 4);
 }
 
-function sprites_draw(offsetX, offsetY){
-	rectfill(offsetX, offsetY, width(), height(), 0);
-	var n=buttons.current*4*16;
+function sprites_draw(){
+	var offsetX = 0;
+	var offsetY = height() - cellheight() * 4;
+
+	var cw = min(flr(width() / 16), cellwidth());
+	var ch = min(flr(height() / 16), cellheight());
+
+	rectfill(offsetX, offsetY, cw * 16, height(), 0);
+
+	var n = buttons.current*4*16;
 	for(var j=0; j<4; j++){
 		for(var i=0; i<16; i++){
-			spr(n, i*cellwidth()+offsetX, j*cellheight()+offsetY);
+			spr(n, i*cw+offsetX, j*ch+offsetY);
 			n++;
 		}
 	}
 	// Rectangle around the current editing sprite
 	if(ssy(selectedSprite)/4 >= buttons.current && ssy(selectedSprite)/4 < buttons.current+1){
-		var x = offsetX + ssx(selectedSprite) * cellwidth();
-		var y = offsetY + ssy(selectedSprite) * cellheight() - buttons.current * 4 * cellheight();
+		var x = offsetX + ssx(selectedSprite) * cw;
+		var y = offsetY + ssy(selectedSprite) * ch - buttons.current * 4 * ch;
 		rect(
 			x-1, y-1,
-			x+cellwidth(), y+cellheight(),
+			x+cw, y+ch,
 			6
 		);
 	}
