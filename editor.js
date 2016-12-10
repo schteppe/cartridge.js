@@ -217,29 +217,23 @@ var volumes = {
 function ssx(n){ return n % 16; }
 function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
 function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y < ry + rh; }
-
-function floodfill(x, y, target, replace, xmin, xmax, ymin, ymax){
+function decToR(c){ return Math.floor(c / (256*256)); }
+function decToG(c){ return Math.floor(c / 256) % 256; }
+function decToB(c){ return c % 256; }
+function floodfill(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){
 	if(target === replace) return;
-	if(sget(x,y) !== target) return;
+	if(get(x,y) !== target) return;
 	var q = [];
 	q.push(x,y);
 	while(q.length){
 		var nx = q.shift();
 		var ny = q.shift();
-		if(sget(nx,ny) === target){
-			sset(nx,ny,replace);
-			if(nx > xmin && sget(nx-1,ny) === target){
-				q.push(nx-1,ny);
-			}
-			if(nx < xmax && sget(nx+1,ny) === target){
-				q.push(nx+1,ny);
-			}
-			if(ny < ymax && sget(nx,ny+1) === target){
-				q.push(nx,ny+1);
-			}
-			if(ny > ymin && sget(nx,ny-1) === target){
-				q.push(nx,ny-1);
-			}
+		if(get(nx,ny) === target){
+			set(nx,ny,replace);
+			if(nx > xmin && get(nx-1,ny) === target) q.push(nx-1,ny);
+			if(nx < xmax && get(nx+1,ny) === target) q.push(nx+1,ny);
+			if(ny < ymax && get(nx,ny+1) === target) q.push(nx,ny+1);
+			if(ny > ymin && get(nx,ny-1) === target) q.push(nx,ny-1);
 		}
 	}
 }
@@ -268,6 +262,8 @@ function mousemovehandler(forceMouseDown){
 					var fillx = x0 + x;
 					var filly = y0 + y;
 					floodfill(
+						sget,
+						sset,
 						fillx,
 						filly,
 						sget(fillx, filly),
@@ -381,7 +377,9 @@ function clickhandler(){
 	// mode switcher
 	if(buttons_click(topButtons,mx,my)){
 		if(modes[topButtons.current] === 'run'){
-			code_run(code);
+			if(code_run(code)){
+				dirty = true;
+			}
 		} else {
 			mode = modes[topButtons.current];
 		}
@@ -686,8 +684,9 @@ function code_run(code){
 		console.error(err);
 		// Stop and go back!
 		code_stop(code);
-		dirty = true;
+		return true;
 	}
+	return false;
 }
 
 function code_stop(code){
@@ -833,6 +832,7 @@ window.addEventListener('keydown', function(evt){
 	dirty = true;
 });
 
+// Prevent ctrl + s
 document.addEventListener('keydown', function(e){
 	if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)){
 		e.preventDefault();
@@ -869,19 +869,6 @@ function readSingleFile(e) {
   };
   reader.readAsText(file);
 }
-
-function decToR(c){
-	return Math.floor(c / (256*256));
-}
-
-function decToG(c){
-	return Math.floor(c / 256) % 256;
-}
-
-function decToB(c){
-	return c % 256;
-}
-
 
 function handlepaste (e) {
     var types, pastedData, savedContent;
