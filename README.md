@@ -52,7 +52,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 #### Input
 
-* [btn(n)](#btn--n--player) - get button state
+* [btn(n)](#btn--n--player-) - get button state
 * [btnp(n)](#btn) - get previous button state
 * [click(func)](#click) - add a click listener
 * [mousebtn(n)](#mousebtn) - get mousebutton state
