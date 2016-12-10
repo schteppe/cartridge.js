@@ -64,6 +64,7 @@ exports.btn = function btn(i, player){
 	}
 };
 
+// TODO: need to support multiple "prev" button states, so it can work in _update, _draw, etc
 exports.btnp = function btnp(i, player){
 	player = player !== undefined ? player : 1;
 	var keyCode = 0;

@@ -165,7 +165,7 @@ var sfxSelector = {
 	postfix: ''
 };
 
-function intselDraw(intsel){
+function intsel_draw(intsel){
 	var padding = intsel.padding;
 	var numDigits = intsel.max.toString().length;
 	var chars = ['<', intsel.prefix + intsel.current + intsel.postfix, '>'];
@@ -185,7 +185,7 @@ function intselDraw(intsel){
 	}
 }
 
-function intselClick(intsel, x, y){
+function intsel_click(intsel, x, y){
 	if(inrect(x,y,intsel.x,intsel.y, 3 * (intsel.padding * 2 + 6),7)){
 		var button = flr((x-intsel.x) / (intsel.padding * 2 + 6));
 		if(button === 0){
@@ -369,11 +369,11 @@ function clickhandler(){
 		if(buttons_click(waveformButtons,mx,my)){
 			dirty = true;
 		}
-		if(intselClick(speedSelector, mx, my)){
+		if(intsel_click(speedSelector, mx, my)){
 			asset(sfxSelector.current, speedSelector.current);
 			dirty = true;
 		}
-		if(intselClick(sfxSelector, mx, my)){
+		if(intsel_click(sfxSelector, mx, my)){
 			dirty = true;
 		}
 	}
@@ -454,25 +454,25 @@ editorDraw = window._draw = function _draw(){
 		break;
 	case 'sprite':
 		viewport_draw(viewport);
-		drawsprites(0,height() - cellheight() * 4);
+		sprites_draw(0,height() - cellheight() * 4);
 		palette_draw(palette);
 		buttons_draw(buttons);
 		buttons_draw(toolButtons);
-		drawflags(flagsX(),flagsY(),fget(selectedSprite));
+		flags_draw(flagsX(),flagsY(),fget(selectedSprite));
 		break;
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
-		drawsprites(0,height() - cellheight() * 4);
+		sprites_draw(0,height() - cellheight() * 4);
 		buttons_draw(buttons);
 		break;
 	case 'sfx':
-		drawpitches(pitches, 0);
-		drawpitches(volumes, 1, 0);
+		pitches_draw(pitches, 0);
+		pitches_draw(volumes, 1, 0);
 		buttons_draw(waveformButtons);
 		speedSelector.current = asget(sfxSelector.current);
-		intselDraw(speedSelector);
-		intselDraw(sfxSelector);
+		intsel_draw(speedSelector);
+		intsel_draw(sfxSelector);
 		break;
 	case 'game':
 		print("Load from localstorage slot:", 5,14);
@@ -503,7 +503,7 @@ editorDraw = window._draw = function _draw(){
 	}
 
 	drawtop();
-	drawmouse(mousex(), mousey());
+	mouse_draw(mousex(), mousey());
 }
 
 function drawtop(){
@@ -547,7 +547,7 @@ function buttons_click(buttons,x,y){
 	return false;
 }
 
-function drawflags(x,y,flags){
+function flags_draw(x,y,flags){
 	var size = 3;
 	for(var i=0; i<8; i++){
 		var rx = x + i * (size+3);
@@ -561,13 +561,13 @@ function drawflags(x,y,flags){
 	}
 }
 
-function drawmouse(x,y){
+function mouse_draw(x,y){
 	rectfill(x-4, y, x+4, y);
 	rectfill(x, y-4, x, y+4);
 	rectfill(x, y, x, y, 4);
 }
 
-function drawsprites(offsetX, offsetY){
+function sprites_draw(offsetX, offsetY){
 	rectfill(offsetX, offsetY, width(), height(), 0);
 	var n=buttons.current*4*16;
 	for(var j=0; j<4; j++){
@@ -620,7 +620,7 @@ function palette_click(palette,x,y){
 	return false;
 }
 
-function drawpitches(pitches, source, col){
+function pitches_draw(pitches, source, col){
 	var x = pitches.x();
 	var y = pitches.y();
 	var w = pitches.w();
