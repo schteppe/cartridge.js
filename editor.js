@@ -726,55 +726,57 @@ function code_click(code,x,y){
 
 function code_keydown(code, evt){
 
-	// Prevent tab'ing
-	if(evt.which === 9) {
-		evt.preventDefault();
-		return;
-	}
-
 	var codeArray = codeget().split('\n');
 
-	switch(evt.keyCode){
-	case 37: // left
-		code.ccol=max(code.ccol-1,0);
-		break;
-	case 39: // right
-		if(code.ccol === codeArray[code.crow].length && code.crow !== codeArray.length-1){
-			code.ccol=0;
+	// Prevent tab'ing
+	if(evt.which === 9) {
+		codeArray[code.crow] = strInsertAt(codeArray[code.crow], code.ccol, ' ');
+		codeArray[code.crow] = strInsertAt(codeArray[code.crow], code.ccol, ' ');
+		code.ccol=min(code.ccol+2,codeArray[code.crow].length);
+		evt.preventDefault();
+	} else {
+		switch(evt.keyCode){
+		case 37: // left
+			code.ccol=max(code.ccol-1,0);
+			break;
+		case 39: // right
+			if(code.ccol === codeArray[code.crow].length && code.crow !== codeArray.length-1){
+				code.ccol=0;
+				code.crow=min(code.crow+1,codeArray.length-1);
+			} else {
+				code.ccol=min(code.ccol+1,codeArray[code.crow].length);
+			}
+			break;
+		case 38: // up
+			code.crow=max(code.crow-1,0);
+			code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
+			break;
+		case 40: // down
 			code.crow=min(code.crow+1,codeArray.length-1);
-		} else {
-			code.ccol=min(code.ccol+1,codeArray[code.crow].length);
-		}
-		break;
-	case 38: // up
-		code.crow=max(code.crow-1,0);
-		code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
-		break;
-	case 40: // down
-		code.crow=min(code.crow+1,codeArray.length-1);
-		code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
-		break;
-	case 8: // backspace
-		if(code.ccol !== 0){
-			var after = codeArray[code.crow].substr(code.ccol);
-			var before = codeArray[code.crow].substr(0,code.ccol-1);
+			code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
+			break;
+		case 8: // backspace
+			if(code.ccol !== 0){
+				var after = codeArray[code.crow].substr(code.ccol);
+				var before = codeArray[code.crow].substr(0,code.ccol-1);
+				codeArray[code.crow] = before + after;
+				// Move cursor
+				code.ccol=max(0,code.ccol-1);
+			} else if(code.ccol === 0 && code.crow !== 0){
+				// append to previous row
+				var newCol = codeArray[code.crow-1].length;
+				codeArray[code.crow-1] += codeArray[code.crow];
+				codeArray.splice(code.crow, 1);
+				code.crow -= 1;
+				code.ccol = newCol;
+			}
+			break;
+		case 46: // delete
+			var after = codeArray[code.crow].substr(code.ccol+1);
+			var before = codeArray[code.crow].substr(0,code.ccol);
 			codeArray[code.crow] = before + after;
-			// Move cursor
-			code.ccol=max(0,code.ccol-1);
-		} else if(code.ccol === 0 && code.crow !== 0){
-			// append to previous row
-			var newCol = codeArray[code.crow-1].length;
-			codeArray[code.crow-1] += codeArray[code.crow];
-			codeArray.splice(code.crow, 1);
-			code.crow -= 1;
-			code.ccol = newCol;
+			break;
 		}
-		break;
-	case 46: // delete
-		var after = codeArray[code.crow].substr(code.ccol+1);
-		var before = codeArray[code.crow].substr(0,code.ccol);
-		codeArray[code.crow] = before + after;
-		break;
 	}
 
 	codeset(codeArray.join('\n'));
