@@ -57,38 +57,29 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [rnd(n)](#rnd) - generate floating point random number between 0 and n
 * [sgn(x)](#sgn) - sign
 * [sin(x)](#sin) - sine
+* [sqrt(x)](#sqrt) - square root
 
 #### Input
 
-* [btn(n)](#btn--n--player-) - get button state
-* [btnp(n)](#btn) - get previous button state
-* [click(func)](#click) - add a click listener
+* [btn(n,[p])](#btn--n--player-) - get button state
+* [btnp(n,[p])](#btn) - get previous button state
+* [_click](#_click-) - called upon click
 * [mousebtn(n)](#mousebtn) - get mousebutton state
 * [mousex()](#mousex) - get mouse x position
 * [mousey()](#mousey) - get mouse x position
 
-#### Misc
+#### Audio
 
-* [alpha()](#alpha) - interpolation value
+* [sfx(n,[channel],[offset])](#sfx) - play sound effect
+
+#### Graphics
+
 * [camera(x,y)](#camera)
-* [canvas(n)](#canvas) - swap to another rendering canvas layer
-* [cartridge(options)](#cartridge)
-* [cellheight([newCellHeight])](#cellheight) - get or set cell height
-* [cellwidth([newCellWidth])](#cellwidth) - get or set cell width
 * [clip(x,y,w,h)](#clip) - only allow rendering within a rectangle
 * [cls()](#cls) - clear screen
-* [codeget()](#codeget) - get code
-* [codeset(codeString)](#codeset) - set code
 * [color(col)](#color) - set default color
 * [fget(n)](#fget) - get flags for a map cell
-* [fit()](#fit) - fit canvas to the container
 * [fset(n,flags)](#fset) - set flags for a map cell
-* [fullscreen()](#fullscreen) - enter fullscreen mode
-* [height([newHeight])](#height) - get or set height
-* [load(str)](#load) - load cartridge
-* [map(cel_x,cel_y,sx,sy,cel_w,cel_h,layer)](#map) - draw map
-* [mget(x,y)](#mget) - get sprite from the map
-* [mset(x,y,n)](#mset) - set sprite to be rendered in a map cell
 * [palget(n)](#palget) - get palette color in decimal form
 * [palset(n,col)](#palset) - set palette color
 * [palt(col,t)](#palt) - set transparency color
@@ -97,12 +88,30 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [pset(x,y,col)](#pset) - set pixel color
 * [rect(x0,y0,x1,y1,[col])](#rect) - draw rectangle
 * [rectfill(x0,y0,x1,y1,[col])](#rectfill) - draw filled rectangle
-* [save(str)](#save) - save cartridge
-* [sfx(n,[channel],[offset])](#sfx) - play sound effect
 * [sget(x,y)](#sget) - get spritesheet pixel color
 * [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr) - draw sprite
-* [sqrt(x)](#sqrt) - square root
 * [sset(x,y,col)](#sset) - set pixel color in spritesheet
+
+#### Map
+
+* [map(cel_x,cel_y,sx,sy,cel_w,cel_h,[layer])](#map) - draw map
+* [mget(x,y)](#mget) - get sprite from the map
+* [mset(x,y,n)](#mset) - set sprite to be rendered in a map cell
+
+#### Misc
+
+* [alpha()](#alpha) - interpolation value
+* [canvas(n)](#canvas) - swap to another rendering canvas layer
+* [cartridge(options)](#cartridge)
+* [cellheight([newCellHeight])](#cellheight) - get or set cell height
+* [cellwidth([newCellWidth])](#cellwidth) - get or set cell width
+* [codeget()](#codeget) - get code
+* [codeset(codeString)](#codeset) - set code
+* [fit()](#fit) - fit canvas to the container
+* [fullscreen()](#fullscreen) - enter fullscreen mode
+* [height([newHeight])](#height) - get or set height
+* [load(str)](#load) - load cartridge
+* [save(str)](#save) - save cartridge
 * [time()](#time) - get current time in seconds
 * [width([newWidth])](#width) - get or set width
 
