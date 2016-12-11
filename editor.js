@@ -828,7 +828,24 @@ window.addEventListener('keyup', function(evt){
 });
 
 function strInsertAt(str, index, character) {
-    return str.substr(0, index) + character + str.substr(index+character.length-1);
+	return str.substr(0, index) + character + str.substr(index+character.length-1);
+}
+
+function rotateSprite(spriteNumber){
+	var pixels = [];
+	var i,j;
+	for(i=0; i<cellwidth(); i++){
+		for(j=0; j<cellheight(); j++){
+			var x = ssx(spriteNumber)*cellwidth() + i;
+			var y = ssy(spriteNumber)*cellheight() + j;
+			var newX = ssx(spriteNumber)*cellwidth() + cellwidth() - 1 - j;
+			var newY = ssy(spriteNumber)*cellheight() + i;
+			pixels.push(newX, newY, sget(x,y));
+		}
+	}
+	for(i=0; i<pixels.length; i+=3){
+		sset(pixels[i+0],pixels[i+1],pixels[i+2]);
+	}
 }
 
 window.addEventListener('keydown', function(evt){
@@ -840,6 +857,7 @@ window.addEventListener('keydown', function(evt){
 		code_stop(code);
 	} else {
 		switch(evt.keyCode){
+			case 82: if(mode === 'sprite') rotateSprite(selectedSprite); break;
 			case 81: if(mode === 'sprite') selectedSprite--; break;
 			case 87: if(mode === 'sprite') selectedSprite++; break;
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
