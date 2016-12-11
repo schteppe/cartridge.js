@@ -1,7 +1,7 @@
 cartridge.js
 ============
 
-Minimalistic retro game engine inspired by Pico-8. You can use it as a library and/or create content for your game using the editor.
+HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.php). You can use it as a library and/or create content for your game using the [editor](https://schteppe.github.io/cartridge.js/editor.html).
 
 # Usage
 
@@ -34,10 +34,18 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 # API documentation
 
+#### Game loop
+
+* [_init()](#_init-) - called on game start
+* [_update()](#_update-) - called at 30fps
+* [_update60()](#_update60-) - called at 60fps
+* [_draw()](#_draw-) - called every render frame
+* [_kill()](#_kill-) - called on game end
+
 #### Math
 
-* [abs(x)](#abs) - absolute value
-* [atan2(x,y)](#atan2)
+* [abs(x)](#abs--x-) - absolute value
+* [atan2(x,y)](#atan2--x--y-)
 * [ceil(x)](#ceil) - round up
 * [clamp(x,min,max)](#clamp) - clamp a number
 * [cos(x)](#cos) - cosine
@@ -52,7 +60,7 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 
 #### Input
 
-* [btn(n)](#btn) - get button state
+* [btn(n)](#btn--n--player-) - get button state
 * [btnp(n)](#btn) - get previous button state
 * [click(func)](#click) - add a click listener
 * [mousebtn(n)](#mousebtn) - get mousebutton state
@@ -77,7 +85,7 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 * [fset(n,flags)](#fset) - set flags for a map cell
 * [fullscreen()](#fullscreen) - enter fullscreen mode
 * [height([newHeight])](#height) - get or set height
-* [load(str)][#load] - load cartridge
+* [load(str)](#load) - load cartridge
 * [map(cel_x,cel_y,sx,sy,cel_w,cel_h,layer)](#map) - draw map
 * [mget(x,y)](#mget) - get sprite from the map
 * [mset(x,y,n)](#mset) - set sprite to be rendered in a map cell
@@ -98,25 +106,107 @@ Minimalistic retro game engine inspired by Pico-8. You can use it as a library a
 * [time()](#time) - get current time in seconds
 * [width([newWidth])](#width) - get or set width
 
-### abs
+### _init ()
 
 ```js
-var y = abs(x);
+function _init(){
+  // game start logic
+}
 ```
 
-Returns the absolute value of x.
+===
 
-### atan2
+### _update ()
+
+```js
+function _update(){
+  // game update logic
+}
+```
+
+===
+
+### _update60 ()
+
+```js
+function _update60(){
+  // game update logic
+}
+```
+
+===
+
+### _draw ()
+
+```js
+function _draw(){
+  // draw game here
+}
+```
+
+===
+
+### _kill ()
+
+```js
+function _kill(){
+  // destroy game here
+}
+```
+
+===
+
+### abs ( x )
+
+<dl>
+  <dt>x</dt>
+  <dd>A real number</dd>
+  <dt>Return value</dt>
+  <dd>The absolute value of x</dd>
+</dl>
+
+```js
+var a = abs(-2.3); // 2.3
+var b = abs(5.6); // 5.6
+```
+
+===
+
+### atan2 ( x , y )
+
+<dl>
+  <dt>x</dt>
+  <dd>A real number</dd>
+  <dt>y</dt>
+  <dd>A real number</dd>
+  <dt>Return value</dt>
+  <dd>An angle</dd>
+</dl>
 
 ```js
 var angle = atan2(x,y);
 ```
 
-### btn
+===
+
+### btn ( n , [player] )
+
+<dl>
+  <dt>n</dt>
+  <dd>A button number: 0 = left, 1 = right, 2 = up, 3 = down, 4 = A, 5 = B</dd>
+  <dt>player</dt>
+  <dd>The gamepad/player number, starting from 1. Default is 1.</dd>
+  <dt>Return value</dt>
+  <dd>A boolean indicating if the button is pressed or not.</dd>
+</dl>
 
 ```js
-var isdown = btn(i, player);
+if(btn(0)){
+  player.x--;
+}
 ```
+
+===
 
 ### camera
 
@@ -124,11 +214,15 @@ var isdown = btn(i, player);
 camera(x, y);
 ```
 
+===
+
 ### cartridge
 
 ```js
 cartridge(options);
 ```
+
+===
 
 ### click
 
@@ -136,11 +230,15 @@ cartridge(options);
 click(callback);
 ```
 
+===
+
 ### cls
 
 ```js
 cls();
 ```
+
+===
 
 ### clip
 
@@ -148,11 +246,15 @@ cls();
 clip(x,y,w,h);
 ```
 
+===
+
 ### color
 
 ```js
 color(col);
 ```
+
+===
 
 ### cos
 
@@ -160,17 +262,23 @@ color(col);
 var y = cos(x);
 ```
 
+===
+
 ### fget
 
 ```js
 var flags = fget(n);
 ```
 
+===
+
 ### fit
 
 ```js
 fit();
 ```
+
+===
 
 ### flr
 
