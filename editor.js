@@ -118,7 +118,7 @@ var saveButtons = {
 };
 
 var waveformButtons = {
-	x: function(){ return 1; },
+	x: function(){ return width() - 60; },
 	y: function(){ return 8; },
 	num: 6,
 	current: 4,
@@ -144,8 +144,8 @@ var toolButtons = {
 };
 
 var speedSelector = {
-	x: 70,
-	y: 8,
+	x: 1,
+	y: 16,
 	current: 1,
 	padding: 6,
 	min: 1,
@@ -155,7 +155,7 @@ var speedSelector = {
 };
 
 var sfxSelector = {
-	x: 130,
+	x: 1,
 	y: 8,
 	current: 0,
 	padding: 6,
@@ -202,7 +202,7 @@ function intsel_click(intsel, x, y){
 
 var pitches = {
 	x: function(){ return 0; },
-	y: function(){ return 20; },
+	y: function(){ return 40; },
 	w: function(){ return width(); },
 	h: function(){ return flr(height() / 2); }
 };
