@@ -5,6 +5,7 @@ var font = require('./font');
 var math = require('./math');
 var colors = require('./colors');
 var sfx = require('./sfx');
+var pixelops = require('./pixelops');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -95,6 +96,8 @@ exports.cartridge = function(options){
 	canvas(0);
 
 	input.init(canvases);
+	pixelops.init(canvases[0]); // todo: support multiple
+
 	fit();
 
 	// Start render loop
@@ -147,6 +150,10 @@ exports.cartridge = function(options){
 				console.error(err);
 			}
 		}
+
+		// Flush any remaining pixelops
+		pixelops.flush();
+
 		currentTime = newTime;
 		input.update();
 		requestAnimationFrame(render);
@@ -227,6 +234,7 @@ function resizeCanvases(){
 		canvases[i].height = screensizeY;
 	}
 	fit();
+	pixelops.resize(canvases[0]);
 }
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
@@ -268,6 +276,7 @@ exports.cellheight = function(newCellHeight){
 };
 
 exports.cls = function(){
+	pixelops.beforeChange();
 	ctx.clearRect(-camX,-camY,screensizeX,screensizeY);
 };
 
@@ -284,6 +293,7 @@ exports.palt = function(col, t){
 };
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
+	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
@@ -298,6 +308,7 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
+	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
@@ -339,6 +350,7 @@ exports.camera = function camera(x, y){
 };
 
 exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
+	pixelops.beforeChange();
 	layer = layer === undefined ? 0 : layer;
 
 	cel_x = cel_x | 0;
@@ -403,6 +415,7 @@ function ssy(n){
 }
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
+	pixelops.beforeChange();
 	w = w !== undefined ? w : 1;
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
@@ -442,20 +455,29 @@ exports.fset = function(n, flags){
 };
 
 // Get pixel color
-exports.pget = function(x, y){
-	x = x | 0;
-	y = y | 0;
-	var data = ctx.getImageData(x, y, x+1, y+1).data;
-	var col = utils.rgbToDec(data[0], data[1], data[2]);
-	return palette.indexOf(col);
-};
+exports.pget = (function(){
+	var data = new Uint8Array(3);
+	return function(x, y){
+		x = x | 0;
+		y = y | 0;
+		pixelops.pget(x,y,data);
+		var col = utils.rgbToDec(data[0], data[1], data[2]);
+		return palette.indexOf(col);
+	};
+})();
 
 // Set pixel color
-// TODO: draw to a separate canvas and "flush" it when another command is executed
 exports.pset = function(x, y, col){
 	x = x | 0;
 	y = y | 0;
-	rectfill(x,y,x+1,y+1,col);
+	col = col | 0;
+
+	// new style
+	var dec = palette[col];
+	var r = utils.decToR(dec);
+	var g = utils.decToG(dec);
+	var b = utils.decToB(dec);
+	pixelops.pset(x,y,r,g,b);
 };
 
 // Get spritesheet pixel color
@@ -495,6 +517,7 @@ exports.fullscreen = function fullscreen(){
 };
 
 exports.print = function(text, x, y, col){
+	pixelops.beforeChange();
 	if(Array.isArray(text)){
 		for(var i=0; i<text.length; i++){
 			exports.print(text[i], x, y + 8*i, col);
