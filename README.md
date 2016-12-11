@@ -36,11 +36,11 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 #### Game loop
 
-* [_init()](#_init) - called on game start
-* [_update()](#_update) - called at 30fps
-* [_update60()](#_update60) - called at 60fps
-* [_draw()](#_draw) - called every render frame
-* [_kill()](#_kill) - called on game end
+* [_init()](#_init-) - called on game start
+* [_update()](#_update-) - called at 30fps
+* [_update60()](#_update60-) - called at 60fps
+* [_draw()](#_draw-) - called every render frame
+* [_kill()](#_kill-) - called on game end
 
 #### Math
 
