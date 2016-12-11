@@ -35,10 +35,10 @@ var gamepads = [];
 var stickSensitivity = 0.1;
 
 function buttonPressed(b) {
-  if (typeof(b) == "object") {
-    return b.pressed;
-  }
-  return b == 1.0;
+	if (typeof(b) == "object") {
+		return b.pressed;
+	}
+	return b == 1.0;
 }
 
 exports.btn = function btn(i, player){
@@ -106,6 +106,7 @@ exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
 };
 
+// TODO: should be a global _click function that the users can define
 var clickListener = null;
 exports.click = function(callback){
 	clickListener = callback || null;
@@ -155,10 +156,11 @@ function addInputListeners(canvases){
 }
 
 function removeInputListeners(canvases){
-	for(var key in canvasListeners){
+	var key;
+	for(key in canvasListeners){
 		canvases[0].removeEventListener(key, canvasListeners[key]);
 	}
-	for(var key in bodyListeners){
+	for(key in bodyListeners){
 		document.body.removeEventListener(key, bodyListeners[key]);
 	}
 }
@@ -170,17 +172,12 @@ function updateMouseCoords(evt, canvases){
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var subx = 0;
 	var suby = 0;
-	/*if(rect.width / rect.height > parentRect.width / parentRect.height){
-		subx = (parentRect.width - rect.width) * 0.5;
-	} else {
-		suby = (parentRect.height - rect.height) * 0.5;
-	}*/
 	_mousex = (evt.clientX - rect.left - subx) / rect.width;
 	_mousey = (evt.clientY - rect.top - suby) / rect.height;
 }
 
 function updateGamepads() {
-  gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+	gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
 }
 
 exports.mousexNormalized = function(){
