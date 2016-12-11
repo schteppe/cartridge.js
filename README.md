@@ -36,11 +36,11 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 #### Game loop
 
-* [_init()]() - called on game start
-* [_update()]() - called at 30fps
-* [_update60()]() - called at 60fps
-* [_draw()]() - called every render frame
-* [_kill()]() - called on game end
+* [_init()](#_init) - called on game start
+* [_update()](#_update) - called at 30fps
+* [_update60()](#_update60) - called at 60fps
+* [_draw()](#_draw) - called every render frame
+* [_kill()](#_kill) - called on game end
 
 #### Math
 
@@ -105,6 +105,56 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [sset(x,y,col)](#sset) - set pixel color in spritesheet
 * [time()](#time) - get current time in seconds
 * [width([newWidth])](#width) - get or set width
+
+### _init ()
+
+```js
+function _init(){
+  // game start logic
+}
+```
+
+===
+
+### _update ()
+
+```js
+function _update(){
+  // game update logic
+}
+```
+
+===
+
+### _update60 ()
+
+```js
+function _update60(){
+  // game update logic
+}
+```
+
+===
+
+### _draw ()
+
+```js
+function _draw(){
+  // draw game here
+}
+```
+
+===
+
+### _kill ()
+
+```js
+function _kill(){
+  // destroy game here
+}
+```
+
+===
 
 ### abs ( x )
 
