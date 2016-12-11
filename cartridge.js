@@ -2427,7 +2427,7 @@ exports.load = function(callback){
 	// To encode, use e.g. https://www.base64-image.de/
 	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAFAgMAAAD3b9ImAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAAAAAQAAIRqQRwAAAABdFJOUwBA5thmAAAAsklEQVQY0zWQsREEMQgDFRB8SOACHH4ZBCqAQAVdeKVcmS8892CPwR7QGkirvSmx1EupJY5JvqdKEpDK7IUoMJ2tdoT9vXGDLFYVM93gVFaeI5gRfgoSYJQ9My2TyLHAvvbnA3Wxu0ahRpetaWBJDowUQ4A1DVzpUMqTYO/n2S8BD8HINyPnP2GoCjPY4bo/ASZ5Ce59XeDIGF5tdXYtdi6T6ljMiqwp8QxGF+8MUvvxDH5Q4jvxySaSSgAAAABJRU5ErkJggg==";
 };
-},{"./utils":9}],4:[function(require,module,exports){
+},{"./utils":10}],4:[function(require,module,exports){
 exports.hello = function(){
 	console.log([
 		'CARTRIDGE.JS',
@@ -2454,6 +2454,7 @@ var font = require('./font');
 var math = require('./math');
 var colors = require('./colors');
 var sfx = require('./sfx');
+var pixelops = require('./pixelops');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -2544,6 +2545,8 @@ exports.cartridge = function(options){
 	canvas(0);
 
 	input.init(canvases);
+	pixelops.init(canvases[0]); // todo: support multiple
+
 	fit();
 
 	// Start render loop
@@ -2596,6 +2599,10 @@ exports.cartridge = function(options){
 				console.error(err);
 			}
 		}
+
+		// Flush any remaining pixelops
+		pixelops.flush();
+
 		currentTime = newTime;
 		input.update();
 		requestAnimationFrame(render);
@@ -2676,6 +2683,7 @@ function resizeCanvases(){
 		canvases[i].height = screensizeY;
 	}
 	fit();
+	pixelops.resize(canvases[0]);
 }
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
@@ -2717,6 +2725,7 @@ exports.cellheight = function(newCellHeight){
 };
 
 exports.cls = function(){
+	pixelops.beforeChange();
 	ctx.clearRect(-camX,-camY,screensizeX,screensizeY);
 };
 
@@ -2733,6 +2742,7 @@ exports.palt = function(col, t){
 };
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
+	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
@@ -2747,6 +2757,7 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
+	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
@@ -2788,6 +2799,7 @@ exports.camera = function camera(x, y){
 };
 
 exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
+	pixelops.beforeChange();
 	layer = layer === undefined ? 0 : layer;
 
 	cel_x = cel_x | 0;
@@ -2852,6 +2864,7 @@ function ssy(n){
 }
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
+	pixelops.beforeChange();
 	w = w !== undefined ? w : 1;
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
@@ -2891,20 +2904,32 @@ exports.fset = function(n, flags){
 };
 
 // Get pixel color
-exports.pget = function(x, y){
-	x = x | 0;
-	y = y | 0;
-	var data = ctx.getImageData(x, y, x+1, y+1).data;
-	var col = utils.rgbToDec(data[0], data[1], data[2]);
-	return palette.indexOf(col);
-};
+exports.pget = (function(){
+	var data = new Uint8Array(3);
+	return function(x, y){
+		x = x | 0;
+		y = y | 0;
+		//var data = ctx.getImageData(x, y, x+1, y+1).data;
+		pixelops.pget(x,y,data);
+		var col = utils.rgbToDec(data[0], data[1], data[2]);
+		return palette.indexOf(col);
+	};
+})();
 
 // Set pixel color
-// TODO: draw to a separate canvas and "flush" it when another command is executed
 exports.pset = function(x, y, col){
 	x = x | 0;
 	y = y | 0;
-	rectfill(x,y,x+1,y+1,col);
+	col = col | 0;
+
+	//rectfill(x,y,x+1,y+1,col);
+
+	// new style
+	var dec = palette[col];
+	var r = utils.decToR(dec);
+	var g = utils.decToG(dec);
+	var b = utils.decToB(dec);
+	pixelops.pset(x,y,r,g,b);
 };
 
 // Get spritesheet pixel color
@@ -2944,6 +2969,7 @@ exports.fullscreen = function fullscreen(){
 };
 
 exports.print = function(text, x, y, col){
+	pixelops.beforeChange();
 	if(Array.isArray(text)){
 		for(var i=0; i<text.length; i++){
 			exports.print(text[i], x, y + 8*i, col);
@@ -2997,14 +3023,38 @@ exports.save = function(key){
 
 exports.load = function(key){
 	key = key || 'save';
-	try{
-		var data = JSON.parse(localStorage.getItem(key));
-		loadJSON(data);
-		return true;
-	} catch(err) {
-		return false;
+	if(key.indexOf('.json') !== -1){
+		loadJsonFromUrl(key,function(err,json){
+			if(json){
+				loadJSON(json);
+			}
+		});
+	} else {
+		try {
+			var data = JSON.parse(localStorage.getItem(key));
+			loadJSON(data);
+			return true;
+		} catch(err) {
+			return false;
+		}
 	}
 };
+
+function loadJsonFromUrl(url, callback){
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function(){
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+                callback(null, JSON.parse(xhr.responseText));
+            } else {
+                callback(xhr);
+            }
+        }
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
 
 exports.codeset = function(codeString){
 	code = codeString;
@@ -3147,7 +3197,7 @@ utils.makeGlobal(input.global);
 
 help.hello();
 help.print();
-},{"./colors":2,"./font":3,"./help":4,"./input":6,"./math":7,"./sfx":8,"./utils":9}],6:[function(require,module,exports){
+},{"./colors":2,"./font":3,"./help":4,"./input":6,"./math":7,"./pixelops":8,"./sfx":9,"./utils":10}],6:[function(require,module,exports){
 var math = require('./math');
 
 function defaultKeyMap(player){
@@ -3185,10 +3235,10 @@ var gamepads = [];
 var stickSensitivity = 0.1;
 
 function buttonPressed(b) {
-  if (typeof(b) == "object") {
-    return b.pressed;
-  }
-  return b == 1.0;
+	if (typeof(b) == "object") {
+		return b.pressed;
+	}
+	return b == 1.0;
 }
 
 exports.btn = function btn(i, player){
@@ -3256,18 +3306,13 @@ exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
 };
 
-var clickListener = null;
-exports.click = function(callback){
-	clickListener = callback || null;
-};
-
 function addInputListeners(canvases){
 	canvasListeners = {
 		click: function(evt){
-			if(clickListener !== null){
+			if(typeof(_click) !== 'undefined'){
 				updateMouseCoords(evt, canvases);
 				_mousebtns[evt.which] = true;
-				clickListener();
+				_click();
 				_mousebtns[evt.which] = false;
 			}
 		},
@@ -3305,10 +3350,11 @@ function addInputListeners(canvases){
 }
 
 function removeInputListeners(canvases){
-	for(var key in canvasListeners){
+	var key;
+	for(key in canvasListeners){
 		canvases[0].removeEventListener(key, canvasListeners[key]);
 	}
-	for(var key in bodyListeners){
+	for(key in bodyListeners){
 		document.body.removeEventListener(key, bodyListeners[key]);
 	}
 }
@@ -3320,17 +3366,12 @@ function updateMouseCoords(evt, canvases){
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var subx = 0;
 	var suby = 0;
-	/*if(rect.width / rect.height > parentRect.width / parentRect.height){
-		subx = (parentRect.width - rect.width) * 0.5;
-	} else {
-		suby = (parentRect.height - rect.height) * 0.5;
-	}*/
 	_mousex = (evt.clientX - rect.left - subx) / rect.width;
 	_mousey = (evt.clientY - rect.top - suby) / rect.height;
 }
 
 function updateGamepads() {
-  gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+	gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
 }
 
 exports.mousexNormalized = function(){
@@ -3380,6 +3421,88 @@ module.exports = {
 	}
 };
 },{}],8:[function(require,module,exports){
+var ctx;
+var writeData = null;
+var readData = null;
+var width;
+var height;
+var pixelsQueued = 0;
+var tempCanvas = null;
+var tempCanvasContext = null;
+
+exports.init = function(canvas){
+	ctx = canvas.getContext('2d');
+	writeData = ctx.createImageData(canvas.width, canvas.height);
+	width = canvas.width;
+	height = canvas.height;
+
+	tempCanvas = document.createElement('canvas');
+	tempCanvas.width = width;
+	tempCanvas.height = height;
+	tempCanvasContext = tempCanvas.getContext('2d');
+};
+
+exports.resize = function(canvas){
+	exports.init(canvas);
+};
+
+// Call if you're going to write to the canvas.
+exports.beforeChange = function(){
+	readData = null;
+	if(pixelsQueued !== 0){
+		exports.flush();
+	}
+};
+
+exports.pset = function(x,y,r,g,b){
+	var p = (y * width + x) * 4;
+	writeData.data[p + 0] = r;
+	writeData.data[p + 1] = g;
+	writeData.data[p + 2] = b;
+	writeData.data[p + 3] = 255;
+	pixelsQueued++;
+};
+
+exports.pget = function(x,y,out){
+	var p = (y * width + x) * 4;
+	if(writeData.data[p + 3] === 255){
+		out[0] = writeData.data[p + 0];
+		out[1] = writeData.data[p + 1];
+		out[2] = writeData.data[p + 2];
+	} else {
+		if(!readData){
+			readData = ctx.getImageData(0, 0, width, height);
+		}
+		out[0] = readData.data[p + 0];
+		out[1] = readData.data[p + 1];
+		out[2] = readData.data[p + 2];
+	}
+};
+
+// call to flush all stored pixels to canvas
+exports.flush = function(){
+	if(pixelsQueued === 0) return;
+
+	// write all the writeData to canvas
+	var sourceX = 0;
+	var sourceY = 0;
+	var destX = 0;
+	var destY = 0;
+	tempCanvasContext.putImageData(writeData, sourceX, sourceY, destX, destY, width, height);
+	ctx.drawImage(tempCanvas,0,0);
+
+	pixelsQueued = 0;
+	exports.beforeChange();
+
+	// Reset the writeData until next time
+	var data = writeData.data;
+	for(var i=0; i<width; i++){
+		for(var j=0; j<height; j++){
+			data[(j*width + i)*4 + 3] = 0; // set alpha to zero
+		}
+	}
+};
+},{}],9:[function(require,module,exports){
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
 var minFrequency = 0;
@@ -3618,7 +3741,7 @@ function createPulse(destination){
 	return osc;
 }
 
-},{"./utils":9,"dsp.js/dsp":1}],9:[function(require,module,exports){
+},{"./utils":10,"dsp.js/dsp":1}],10:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
@@ -3679,12 +3802,19 @@ exports.scaleToFit = function scaleToFit(element, containerElement, pixelPerfect
 	var scaleY = containerHeight / element.height;
 	var scale = Math.min(scaleX, scaleY);
 
+	var dpr = window.devicePixelRatio || 1;
+
 	if(pixelPerfectMode){
-		scale = Math.floor(scale) || 1;
+		scale = (Math.floor(scale * dpr)/dpr) || (1/dpr);
 	}
 
-	var offsetX = Math.floor((containerWidth - element.width * scale) * 0.5);
-	var offsetY = Math.floor((containerHeight - element.height * scale) * 0.5);
+	var offsetX = (containerWidth - element.width * scale) * 0.5;
+	var offsetY = (containerHeight - element.height * scale) * 0.5;
+
+	if(pixelPerfectMode){
+		offsetX = Math.floor(offsetX * dpr) / dpr;
+		offsetY = Math.floor(offsetY * dpr) / dpr;
+	}
 
 	// Safari doesn't have nearest neighbor rendering when using CSS3 scaling
 	if (isSafari()){
