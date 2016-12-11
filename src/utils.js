@@ -58,12 +58,19 @@ exports.scaleToFit = function scaleToFit(element, containerElement, pixelPerfect
 	var scaleY = containerHeight / element.height;
 	var scale = Math.min(scaleX, scaleY);
 
+	var dpr = window.devicePixelRatio || 1;
+
 	if(pixelPerfectMode){
-		scale = Math.floor(scale) || 1;
+		scale = (Math.floor(scale * dpr)/dpr) || (1/dpr);
 	}
 
-	var offsetX = Math.floor((containerWidth - element.width * scale) * 0.5);
-	var offsetY = Math.floor((containerHeight - element.height * scale) * 0.5);
+	var offsetX = (containerWidth - element.width * scale) * 0.5;
+	var offsetY = (containerHeight - element.height * scale) * 0.5;
+
+	if(pixelPerfectMode){
+		offsetX = Math.floor(offsetX * dpr) / dpr;
+		offsetY = Math.floor(offsetY * dpr) / dpr;
+	}
 
 	// Safari doesn't have nearest neighbor rendering when using CSS3 scaling
 	if (isSafari()){
