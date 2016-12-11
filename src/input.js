@@ -106,19 +106,13 @@ exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
 };
 
-// TODO: should be a global _click function that the users can define
-var clickListener = null;
-exports.click = function(callback){
-	clickListener = callback || null;
-};
-
 function addInputListeners(canvases){
 	canvasListeners = {
 		click: function(evt){
-			if(clickListener !== null){
+			if(typeof(_click) !== 'undefined'){
 				updateMouseCoords(evt, canvases);
 				_mousebtns[evt.which] = true;
-				clickListener();
+				_click();
 				_mousebtns[evt.which] = false;
 			}
 		},

@@ -11,7 +11,7 @@ cellheight(16);
 width(256);
 height(240);
 
-palset(0,0x000000);
+palset(0, 0x000000);
 palset(1, 0x0829fc);
 palset(2, 0x7e2500);
 palset(3, 0x008000);
@@ -329,7 +329,7 @@ function mousemovehandler(forceMouseDown){
 	}
 }
 
-function clickhandler(){
+window._click = function _click(){
 	var mx = mousex();
 	var my = mousey();
 	mousemovehandler(true);
@@ -416,7 +416,6 @@ function clickhandler(){
 		}
 	}
 }
-click(clickhandler);
 
 var editorLoad = window._load = function _load(callback){
 	codeset([
