@@ -614,6 +614,7 @@ function palette_draw(palette){
 			var rw = x+(i+1)*sx-1;
 			var rh = y+(j+1)*sy-1;
 			rectfill(rx, ry, rw, rh, n);
+			print(n.toString(), rx+2, ry+2, n === 0 ? 7 : 0);
 			if(current === n){
 				rect(rx, ry, rw, rh, current === 0 ? 7 : 0);
 			}
