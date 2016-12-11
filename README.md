@@ -85,7 +85,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [fset(n,flags)](#fset) - set flags for a map cell
 * [fullscreen()](#fullscreen) - enter fullscreen mode
 * [height([newHeight])](#height) - get or set height
-* [load(str)][#load] - load cartridge
+* [load(str)](#load) - load cartridge
 * [map(cel_x,cel_y,sx,sy,cel_w,cel_h,layer)](#map) - draw map
 * [mget(x,y)](#mget) - get sprite from the map
 * [mset(x,y,n)](#mset) - set sprite to be rendered in a map cell
