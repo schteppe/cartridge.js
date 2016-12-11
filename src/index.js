@@ -548,14 +548,38 @@ exports.save = function(key){
 
 exports.load = function(key){
 	key = key || 'save';
-	try{
-		var data = JSON.parse(localStorage.getItem(key));
-		loadJSON(data);
-		return true;
-	} catch(err) {
-		return false;
+	if(key.indexOf('.json') !== -1){
+		loadJsonFromUrl(key,function(err,json){
+			if(json){
+				loadJSON(json);
+			}
+		});
+	} else {
+		try {
+			var data = JSON.parse(localStorage.getItem(key));
+			loadJSON(data);
+			return true;
+		} catch(err) {
+			return false;
+		}
 	}
 };
+
+function loadJsonFromUrl(url, callback){
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function(){
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+                callback(null, JSON.parse(xhr.responseText));
+            } else {
+                callback(xhr);
+            }
+        }
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
 
 exports.codeset = function(codeString){
 	code = codeString;
