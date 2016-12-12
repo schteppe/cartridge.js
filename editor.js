@@ -92,8 +92,17 @@ var palette = {
 	current: 1
 };
 
-var flagsX = function(){ return palette.x(); };
-var flagsY = function(){ return palette.y() + palette.sy() * 4 + 1; };
+var flags = {
+	x: function(){ return palette.x(); },
+	y: function(){ return palette.y() + palette.sy() * 4 + 1; },
+	current: function(newFlags){
+		if(newFlags === undefined){
+			return fget(selectedSprite);
+		} else {
+			fset(selectedSprite, newFlags);
+		}
+	}
+};
 
 var buttons = {
 	x: function(){ return width() - 56; },
@@ -336,12 +345,7 @@ window._click = function _click(){
 	if(mode === 'sprite'){
 		if(palette_click(palette,mx,my)){
 			dirty = true;
-		} else if(inrect(mx,my,flagsX(),flagsY(),6*8,5)){
-			var flagIndex = flr((mx-flagsX()) / 6);
-			var oldFlags = fget(selectedSprite);
-			var clickedFlag = (1 << flagIndex);
-			var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
-			fset(selectedSprite, newFlags);
+		} else if(flags_click(flags,mx,my)){
 			dirty = true;
 		} else if(buttons_click(toolButtons,mx,my)){
 			// tool switcher
@@ -462,7 +466,7 @@ editorDraw = window._draw = function _draw(){
 		palette_draw(palette);
 		buttons_draw(buttons);
 		buttons_draw(toolButtons);
-		flags_draw(flagsX(),flagsY(),fget(selectedSprite));
+		flags_draw(flags);
 		break;
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
@@ -551,17 +555,32 @@ function buttons_click(buttons,x,y){
 	return false;
 }
 
-function flags_draw(x,y,flags){
+function flags_draw(flags){
+	var x = flags.x();
+	var y = flags.y();
 	var size = 3;
 	for(var i=0; i<8; i++){
 		var rx = x + i * (size+3);
 		var ry = y;
 		var qx = x+(1+size) + i * (3+size);
 		var qy = y+1+size;
-		if((flags & (1 << i)) !== 0)
+		if((flags.current() & (1 << i)) !== 0)
 			rectfill(rx, ry, qx, qy, 0);
 		else
 			rect(rx, ry, qx, qy, 0);
+	}
+}
+
+function flags_click(flags, x, y){
+	if(inrect(x,y,flags.x(),flags.y(),6*8,5)){
+		var flagIndex = flr((x-flags.x()) / 6);
+		var oldFlags = flags.current();
+		var clickedFlag = (1 << flagIndex);
+		var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
+		flags.current(newFlags);
+		return true;
+	} else {
+		return false;
 	}
 }
 
