@@ -33,7 +33,7 @@ document.body.onresize = document.body.mozfullscreenchange = function(){
 	dirty = true;
 };
 
-var modes = ['help', 'game', 'sprite', 'map', 'sfx', 'code', 'run'];
+var modes = ['help', 'game', 'sprite', 'map', 'sfx', 'code', 'music', 'run'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
@@ -137,7 +137,7 @@ var waveformButtons = {
 var topButtons = {
 	x: function(){ return 0; },
 	y: function(){ return 0; },
-	options: ['HLP', 'CRT', 'SPR', 'MAP', 'SFX', '.JS', 'RUN'],
+	options: ['HLP', 'CRT', 'SPR', 'MAP', 'SFX', '.JS', 'MUS', 'RUN'],
 	current: 0,
 	bgColor: 7,
 	textColor: 0,
