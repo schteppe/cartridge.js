@@ -2909,7 +2909,6 @@ exports.pget = (function(){
 	return function(x, y){
 		x = x | 0;
 		y = y | 0;
-		//var data = ctx.getImageData(x, y, x+1, y+1).data;
 		pixelops.pget(x,y,data);
 		var col = utils.rgbToDec(data[0], data[1], data[2]);
 		return palette.indexOf(col);
@@ -2921,8 +2920,6 @@ exports.pset = function(x, y, col){
 	x = x | 0;
 	y = y | 0;
 	col = col | 0;
-
-	//rectfill(x,y,x+1,y+1,col);
 
 	// new style
 	var dec = palette[col];
