@@ -217,8 +217,7 @@ if(btn(0)){
 
 ===
 
-### camera
-
+### camera ( x , y )
 ```js
 camera(x, y);
 ```
@@ -233,94 +232,81 @@ cartridge(options);
 
 ===
 
-### click
-
+### _click ()
 ```js
 click(callback);
 ```
 
 ===
 
-### cls
-
+### cls ()
 ```js
 cls();
 ```
 
 ===
 
-### clip
-
+### clip ( x , y , w , h )
 ```js
 clip(x,y,w,h);
 ```
 
 ===
 
-### color
-
+### color ( col )
 ```js
 color(col);
 ```
 
 ===
 
-### cos
-
+### cos ( x )
 ```js
 var y = cos(x);
 ```
 
 ===
 
-### fget
-
+### fget ( n )
 ```js
 var flags = fget(n);
 ```
 
 ===
 
-### fit
-
+### fit ()
 ```js
 fit();
 ```
 
 ===
 
-### flr
-
+### flr ( x )
 ```js
 y = flr(x);
 ```
 
-### fset
-
+### fset ( n , flags )
 ```js
 fset(n, flags);
 ```
 
-### fullscreen
-
+### fullscreen ()
 ```js
 fullscreen();
 ```
 
-### map
-
+### map ( cel_x , cel_y , sx , sy , cel_w , cel_h , [layer] )
 ```js
 map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer);
 ```
 
-### max
-
+### max ( x , y )
 ```js
 var z = max(x, y);
 ```
 
-### mget
-
+### mget ( x , y )
 ```js
 var z = mget(x, y);
 ```
