@@ -2615,7 +2615,7 @@ exports.cartridge = function(options){
 
 		if(code){
 			// Run code. If there's an error, let it throw.
-			eval.call(null, code);
+			run();
 		}
 
 		// Run the _load function
@@ -2664,6 +2664,7 @@ function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
+	// TODO: redraw spritesheet using new palette
 }
 
 exports.palset = function(n, hexColor){
@@ -3024,6 +3025,7 @@ exports.load = function(key){
 		loadJsonFromUrl(key,function(err,json){
 			if(json){
 				loadJSON(json);
+				run();
 			}
 		});
 	} else {
@@ -3059,6 +3061,10 @@ exports.codeset = function(codeString){
 
 exports.codeget = function(){
 	return code;
+};
+
+exports.run = function run(){
+	eval.call(null, codeget());
 };
 
 function download(key){
@@ -3139,6 +3145,7 @@ function loadJSON(data){
 	for(var i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
+	setPalette(data.palette);
 	for(var i=0; i<spriteSheetSizeX*cellwidth(); i++){
 		for(var j=0; j<spriteSheetSizeY*cellheight(); j++){
 			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i]);
@@ -3149,7 +3156,6 @@ function loadJSON(data){
 			mset(i,j,data.map[j*mapSizeX+i]);
 		}
 	}
-	setPalette(data.palette);
 
 	for(var n=0; n<data.sfx.length; n++){
 		asset(n, data.sfx[n].speed);
