@@ -911,11 +911,11 @@ function openfile(){
 function readSingleFile(e) {
   var file = e.target.files[0];
   if (!file) {
-    return;
+	return;
   }
   var reader = new FileReader();
   reader.onload = function(e) {
-    try {
+	try {
 		var json = JSON.parse(e.target.result);
 		loadjson(json);
 		dirty = true;
@@ -927,15 +927,15 @@ function readSingleFile(e) {
 }
 
 function handlepaste (e) {
-    var types, pastedData, savedContent;
+	var types, pastedData, savedContent;
 
 	if(mode !== 'sprite') return;
 
-    // Browsers that support the 'text/html' type in the Clipboard API (Chrome, Firefox 22+)
-    if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
-        types = e.clipboardData.types;
+	// Browsers that support the 'text/html' type in the Clipboard API (Chrome, Firefox 22+)
+	if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
+		types = e.clipboardData.types;
 
-        if (((types instanceof DOMStringList) && types.contains("Files")) || (types.indexOf && types.indexOf('Files') !== -1)) {
+		if (((types instanceof DOMStringList) && types.contains("Files")) || (types.indexOf && types.indexOf('Files') !== -1)) {
 			var data = e.clipboardData.items[0];
 			if(data.kind == 'file' && data.type.match('^image/')) {
 
@@ -991,17 +991,12 @@ function handlepaste (e) {
 				e.stopPropagation();
 				e.preventDefault();
 			}
-            return false;
-        }
-    }
-    return true;
+			return false;
+		}
+	}
+	return true;
 }
 
 window.addEventListener('paste', handlepaste, false);
-
-
-
-
-
 
 })();
