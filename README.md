@@ -412,16 +412,41 @@ var z = max(x, y);
 ```
 
 ### mget ( x , y )
+
+Get a cell from the map, as a sprite index.
+
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>y</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd>A sprite index.</dd>
+</dl>
+
 ```js
-var z = mget(x, y);
+var sprite = mget(x, y);
 ```
 
 ### min ( x , y )
+
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>y</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd>The minimum of x and y</dd>
+</dl>
+
 ```js
 var z = min(x, y);
 ```
 
 ### mousebtn ( n )
+
+Get mouse button state.
+
 ```js
 var isdown = mousebtn(i);
 ```
