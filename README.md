@@ -233,13 +233,18 @@ camera(x, y);
 ===
 
 ### cartridge ( options )
+
+Initialize the library.
+
 ```js
-cartridge(options);
+cartridge({ containerId: 'myContainerElementId' });
 ```
 
 ===
 
 ### _click ()
+
+Click handler.
 
 ```js
 function _click(){
@@ -447,26 +452,57 @@ var z = min(x, y);
 
 Get mouse button state.
 
+<dl>
+	<dt>n</dt>
+	<dd>Mouse button number</dd>
+	<dt>Return value</dt>
+	<dd>True if the button is being pressed, else false</dd>
+</dl>
+
 ```js
 var isdown = mousebtn(i);
 ```
 
 ### mousex ()
+
+Returns the x position of the mouse.
+
 ```js
 var x = mousex();
 ```
 
 ### mousey ()
+
 ```js
 var y = mousey();
 ```
 
-### mset ( x , y , spriteNumber )
+### mset ( x , y , n )
+
+Set the sprite to be rendered at a cell position in the map.
+
+<dl>
+	<dt>x</dt>
+	<dd>Cell position in the map</dd>
+	<dt>y</dt>
+	<dd>Cell position in the map</dd>
+	<dt>n</dt>
+	<dd>A sprite index</dd>
+</dl>
+
 ```js
 mset(x, y, i);
 ```
 
-### palt ( n )
+### palt ( col , t )
+
+<dl>
+	<dt>col</dt>
+	<dd>Palette color</dd>
+	<dt>t</dt>
+	<dd>Boolean indicating if the color should be transparent.</dd>
+</dl>
+
 ```js
 palt(col, t);
 ```
