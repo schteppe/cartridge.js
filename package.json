@@ -7,10 +7,12 @@
     "dsp.js": "git+https://github.com/corbanbrook/dsp.js.git"
   },
   "devDependencies": {
-    "browserify": "^13.1.1"
+    "browserify": "^13.1.1",
+    "uglify-js": "^2.7.5"
   },
   "scripts": {
-    "build": "browserify --entry src/index.js --outfile cartridge.js",
+    "build": "browserify --entry src/index.js --outfile build/cartridge.js",
+    "minify": "uglifyjs --output build/cartridge.min.js -- build/cartridge.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
