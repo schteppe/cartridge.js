@@ -311,122 +311,102 @@ var z = max(x, y);
 var z = mget(x, y);
 ```
 
-### min
-
+### min ( x , y )
 ```js
 var z = min(x, y);
 ```
 
-### mousebtn
-
+### mousebtn ( n )
 ```js
 var isdown = mousebtn(i);
 ```
 
-### mousex
-
+### mousex ()
 ```js
 var x = mousex();
 ```
 
-### mousey
-
+### mousey ()
 ```js
 var y = mousey();
 ```
 
-### mset
-
+### mset ( x , y , spriteNumber )
 ```js
 mset(x, y, i);
 ```
 
-### palt
-
+### palt ( n )
 ```js
 palt(col, t);
 ```
 
-### pget
-
+### pget ( x , y )
 ```js
 var color = pget(x, y);
 ```
 
-### print
-
+### print ( text , x , y , [col] )
 ```js
 print(text, x, y, col);
 ```
 
-### pset
-
+### pset ( x , y , col )
 ```js
 pset(x, y, col);
 ```
 
-### rect
-
+### rect ( x0 , y0 , x1 , y1 , [col] )
 ```js
 rect(x0, y0, x1, y1, col);
 ```
 
-### rectfill
-
+### rectfill 
 ```js
 rectfill(x0, y0, x1, y1, col);
 ```
 
-### rnd
-
+### rnd ( [n] )
 ```js
 y = rnd(x);
 ```
 
-### sfx
-
+### sfx ( n , [channel] , [offset] )
 ```js
 sfx(n [, channelIndex [, offset]]);
 ```
 
-### sget
-
+### sget ( x , y )
 ```js
 color = sget(x, y);
 ```
 
-### sgn
-
+### sgn ( x )
 ```js
 y = sgn(x);
 ```
 
-### sin
-
+### sin ( x )
 ```js
 y = sin(x);
 ```
 
-### spr
-
+### spr ( n , x , y , w , h , flip_x , flip_y )
 ```js
 spr(n, x, y, w, h, flip_x, flip_y);
 ```
 
-### sqrt
-
+### sqrt ( x )
 ```js
 y = sqrt(x);
 ```
 
-### sset
-
+### sset ( x , y )
 ```js
 sset(x, y, col);
 ```
 
-### time
-
+### time ()
 ```js
 t = time();
 ```
