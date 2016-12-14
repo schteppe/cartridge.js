@@ -2359,30 +2359,33 @@ exports.int2hex = function(int){
 },{}],3:[function(require,module,exports){
 var utils = require('./utils');
 
-var fontImages = [];
+var fontImageAsCanvas;
+var coloredFontCanvases = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
 
-exports.init = function(fontImage, palette){
-	for(var i=0; i<palette.length; i++){
-		paletteHex[i] = palette[i].toString(16);
-		// left pad
-		while(paletteHex[i].length < 6){
-			paletteHex[i] = "0" + paletteHex[i];
-		}
-		paletteHex[i] = '#' + paletteHex[i];
-	}
+exports.init = function(fontImage, paletteHex){
 
 	// Make a canvas for each palette color for the font
-	var fontImageAsCanvas = document.createElement('canvas');
+	for(var i=0; i<paletteHex.length; i++){
+		var coloredFontCanvas = document.createElement('canvas');
+		coloredFontCanvases.push(coloredFontCanvas);
+	}
+
+	fontImageAsCanvas = document.createElement('canvas');
 	fontImageAsCanvas.width = fontImage.width;
 	fontImageAsCanvas.height = fontImage.height;
 	fontImageAsCanvas.getContext('2d').drawImage(fontImage, 0, 0, fontImage.width, fontImage.height);
-	var fontImageData = fontImageAsCanvas.getContext('2d').getImageData(0, 0, fontImage.width, fontImage.height);
+
+	exports.changePalette(paletteHex);
+};
+
+exports.changePalette = function(paletteHex){
+	if(!fontImageAsCanvas) return;
+	var fontImageData = fontImageAsCanvas.getContext('2d').getImageData(0, 0, fontImageAsCanvas.width, fontImageAsCanvas.height);
 	for(var i=0; i<paletteHex.length; i++){
-		var coloredFontCanvas = document.createElement('canvas');
 		// Replace color
 		var data = fontImageData.data;
 		for(var j=0; j<data.length/4; j++){
@@ -2398,8 +2401,7 @@ exports.init = function(fontImage, palette){
 				data[4 * j + 2] = rgb[2];
 			}
 		}
-		coloredFontCanvas.getContext('2d').putImageData(fontImageData, 0, 0);
-		fontImages.push(coloredFontCanvas);
+		coloredFontCanvases[i].getContext('2d').putImageData(fontImageData, 0, 0);
 	}
 };
 
@@ -2408,7 +2410,7 @@ exports.draw = function(ctx, text, x, y, col){
 		var index = chars.indexOf(text[i]);
 		if(index !== -1){
 			ctx.drawImage(
-				fontImages[col],
+				coloredFontCanvases[col],
 				index * (fontX), 0,
 				fontX, fontY,
 				x + (fontX) * i, y,
@@ -2483,6 +2485,7 @@ var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
 var spriteFlags = utils.zeros(maxSprites);
+var spriteSheetPixels;
 var ctx;
 var _time = 0;
 var camX = 0;
@@ -2522,11 +2525,8 @@ exports.cartridge = function(options){
 		utils.disableImageSmoothing(c.getContext('2d'));
 	}
 
-	if(options.palette){
-		setPalette(options.palette);
-	} else {
-		setPalette(colors.defaultPalette());
-	}
+	setCellSize(cellsizeX, cellsizeY);
+	setPalette(options.palette || colors.defaultPalette());
 
 	// Add style tag
 	var style = document.createElement('style');
@@ -2538,8 +2538,6 @@ exports.cartridge = function(options){
 		"}"
 	].join('\n');
 	document.getElementsByTagName('head')[0].appendChild(style);
-
-	setCellSize(cellsizeX, cellsizeY);
 
 	// Set main canvas
 	canvas(0);
@@ -2611,7 +2609,7 @@ exports.cartridge = function(options){
 
 	// Init font
 	font.load(function(image){
-		font.init(image, palette);
+		font.init(image, paletteHex);
 
 		if(code){
 			// Run code. If there's an error, let it throw.
@@ -2650,8 +2648,11 @@ function setCellSize(w,h){
 	cellsizeX = w;
 	cellsizeY = h;
 
+	// Reinit pixels
+	// TODO: copy over?
+ 	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY);
+
 	// (re)init spritesheet canvas
-	// TODO: copy over somehow?
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
 	spriteSheetContext = spriteSheetCanvas.getContext('2d');
 
@@ -2660,11 +2661,35 @@ function setCellSize(w,h){
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 }
 
+function redrawSpriteSheet(){
+	var w = spriteSheetSizeX*cellsizeX;
+	var h = spriteSheetSizeY*cellsizeY;
+	for(var i=0; i<w; i++){
+		for(var j=0; j<h; j++){
+			redrawSpriteSheetPixel(i,j);
+		}
+	}
+}
+
+function redrawSpriteSheetPixel(x,y){
+	var w = spriteSheetSizeX*cellsizeX;
+	var h = spriteSheetSizeY*cellsizeY;
+	var col = spriteSheetPixels[y * w + x];
+
+	if(transparentColors[col]){
+		spriteSheetContext.clearRect(x, y, 1, 1);
+	} else {
+		spriteSheetContext.fillStyle = paletteHex[col % palette.length];
+		spriteSheetContext.fillRect(x, y, 1, 1);
+	}
+}
+
 function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
-	// TODO: redraw spritesheet using new palette
+	redrawSpriteSheet();
+	font.changePalette(paletteHex);
 }
 
 exports.palset = function(n, hexColor){
@@ -2678,7 +2703,6 @@ exports.palget = function(n){
 };
 
 function resizeCanvases(){
-	sgetData = null;
 	for(var i=0; i < canvases.length; i++){
 		canvases[i].width = screensizeX;
 		canvases[i].height = screensizeY;
@@ -2931,20 +2955,11 @@ exports.pset = function(x, y, col){
 };
 
 // Get spritesheet pixel color
-var sgetData = null;
 exports.sget = function(x, y){
 	x = x | 0;
 	y = y | 0;
-	if(!sgetData){
-		sgetData = spriteSheetContext.getImageData(0, 0, screensizeX, screensizeY).data;
-	}
-	var p = screensizeX * 4 * y + x * 4;
-	var col = utils.rgbToDec(
-		sgetData[p + 0],
-		sgetData[p + 1],
-		sgetData[p + 2]
-	);
-	return palette.indexOf(col);
+	var w = spriteSheetSizeX * cellsizeX;
+	return spriteSheetPixels[y * w + x];
 };
 
 // Set spritesheet pixel color
@@ -2952,14 +2967,12 @@ exports.sset = function(x, y, col){
 	x = x | 0;
 	y = y | 0;
 	col = col !== undefined ? col : defaultColor;
-	if(transparentColors[col]){
-		spriteSheetContext.clearRect(x, y, 1, 1);
-	} else {
-		spriteSheetContext.fillStyle = paletteHex[col % palette.length];
-		spriteSheetContext.fillRect(x, y, 1, 1);
-	}
+
+	var w = spriteSheetSizeX * cellsizeX;
+	spriteSheetPixels[y * w + x] = col;
+	redrawSpriteSheetPixel(x,y);
+
 	mapDirty = true; // TODO: Only invalidate matching map positions
-	sgetData = null;
 };
 
 exports.fullscreen = function fullscreen(){
@@ -3165,6 +3178,8 @@ function loadJSON(data){
 			awset(n, offset, data.sfx[n].waves[offset]);
 		}
 	}
+
+	redrawSpriteSheet();
 };
 
 exports.loadjson = loadJSON;
