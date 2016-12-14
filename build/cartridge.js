@@ -2504,6 +2504,7 @@ exports.cartridge = function(options){
 	screensizeY = options.height !== undefined ? options.height : 128; // deprecated
 	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8; // deprecated
 	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8; // deprecated
+	var autoFit = options.autoFit !== undefined ? options.autoFit : true;
 
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
@@ -2546,6 +2547,13 @@ exports.cartridge = function(options){
 	pixelops.init(canvases[0]); // todo: support multiple
 
 	fit();
+
+	if(autoFit){
+		// Resize (fit) the canvas when the container changes size
+		document.body.onresize = document.body.mozfullscreenchange = function(){
+			fit();
+		};
+	}
 
 	// Start render loop
 	var currentTime = 0;
