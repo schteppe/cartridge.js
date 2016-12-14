@@ -218,14 +218,21 @@ if(btn(0)){
 ===
 
 ### camera ( x , y )
+
+<dl>
+  <dt>x</dt>
+  <dd>New camera X position</dd>
+  <dt>y</dt>
+  <dd>New camera Y position</dd>
+</dl>
+
 ```js
 camera(x, y);
 ```
 
 ===
 
-### cartridge
-
+### cartridge ( options )
 ```js
 cartridge(options);
 ```
@@ -247,6 +254,18 @@ cls();
 ===
 
 ### clip ( x , y , w , h )
+
+<dl>
+  <dt>x</dt>
+  <dd>A real number</dd>
+  <dt>y</dt>
+  <dd></dd>
+  <dt>w</dt>
+  <dd></dd>
+  <dt>h</dt>
+  <dd></dd>
+  </dl>
+
 ```js
 clip(x,y,w,h);
 ```
