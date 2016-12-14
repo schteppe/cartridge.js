@@ -147,9 +147,6 @@ function Player(){
 }
 
 cartridge({ containerId: 'container' });
-document.body.onresize = document.body.mozfullscreenchange = function(){
-	fit();
-};
 
 var player = new Player();
 

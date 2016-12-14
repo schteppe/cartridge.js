@@ -23,11 +23,6 @@
 		// Initialize
 		cartridge({ containerId: 'container' });
 
-		// Resize (fit) the canvas when the container changes size
-		document.body.onresize = document.body.mozfullscreenchange = function(){
-			fit();
-		};
-
 		// Draw function
 		function _draw(){
 			rectfill(0,0,width(),height(),7);
