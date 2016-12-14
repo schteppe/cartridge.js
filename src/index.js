@@ -158,7 +158,7 @@ exports.cartridge = function(options){
 
 	// Init font
 	font.load(function(image){
-		font.init(image, palette);
+		font.init(image, paletteHex);
 
 		if(code){
 			// Run code. If there's an error, let it throw.
@@ -238,6 +238,7 @@ function setPalette(p){
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
 	redrawSpriteSheet();
+	font.changePalette(paletteHex);
 }
 
 exports.palset = function(n, hexColor){

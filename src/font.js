@@ -1,29 +1,32 @@
 var utils = require('./utils');
 
-var fontImages = [];
+var fontImageAsCanvas;
+var coloredFontCanvases = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
 
-exports.init = function(fontImage, palette){
-	for(var i=0; i<palette.length; i++){
-		paletteHex[i] = palette[i].toString(16);
-		// left pad
-		while(paletteHex[i].length < 6){
-			paletteHex[i] = "0" + paletteHex[i];
-		}
-		paletteHex[i] = '#' + paletteHex[i];
-	}
+exports.init = function(fontImage, paletteHex){
 
 	// Make a canvas for each palette color for the font
-	var fontImageAsCanvas = document.createElement('canvas');
+	for(var i=0; i<paletteHex.length; i++){
+		var coloredFontCanvas = document.createElement('canvas');
+		coloredFontCanvases.push(coloredFontCanvas);
+	}
+
+	fontImageAsCanvas = document.createElement('canvas');
 	fontImageAsCanvas.width = fontImage.width;
 	fontImageAsCanvas.height = fontImage.height;
 	fontImageAsCanvas.getContext('2d').drawImage(fontImage, 0, 0, fontImage.width, fontImage.height);
-	var fontImageData = fontImageAsCanvas.getContext('2d').getImageData(0, 0, fontImage.width, fontImage.height);
+
+	exports.changePalette(paletteHex);
+};
+
+exports.changePalette = function(paletteHex){
+	if(!fontImageAsCanvas) return;
+	var fontImageData = fontImageAsCanvas.getContext('2d').getImageData(0, 0, fontImageAsCanvas.width, fontImageAsCanvas.height);
 	for(var i=0; i<paletteHex.length; i++){
-		var coloredFontCanvas = document.createElement('canvas');
 		// Replace color
 		var data = fontImageData.data;
 		for(var j=0; j<data.length/4; j++){
@@ -39,8 +42,7 @@ exports.init = function(fontImage, palette){
 				data[4 * j + 2] = rgb[2];
 			}
 		}
-		coloredFontCanvas.getContext('2d').putImageData(fontImageData, 0, 0);
-		fontImages.push(coloredFontCanvas);
+		coloredFontCanvases[i].getContext('2d').putImageData(fontImageData, 0, 0);
 	}
 };
 
@@ -49,7 +51,7 @@ exports.draw = function(ctx, text, x, y, col){
 		var index = chars.indexOf(text[i]);
 		if(index !== -1){
 			ctx.drawImage(
-				fontImages[col],
+				coloredFontCanvases[col],
 				index * (fontX), 0,
 				fontX, fontY,
 				x + (fontX) * i, y,
