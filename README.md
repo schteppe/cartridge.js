@@ -247,6 +247,9 @@ click(callback);
 ===
 
 ### cls ()
+
+Clear the whole screen.
+
 ```js
 cls();
 ```
@@ -273,6 +276,12 @@ clip(x,y,w,h);
 ===
 
 ### color ( col )
+
+<dl>
+	<dt>col</dt>
+	<dd>New default color</dd>
+</dl>
+
 ```js
 color(col);
 ```
@@ -280,6 +289,14 @@ color(col);
 ===
 
 ### cos ( x )
+
+<dl>
+	<dt>x</dt>
+	<dd>A number</dd>
+	<dt>Return value</dt>
+	<dd>The cosine of x</dd>
+</dl>
+
 ```js
 var y = cos(x);
 ```
