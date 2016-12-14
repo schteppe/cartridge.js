@@ -1,7 +1,7 @@
 cartridge.js
 ============
 
-HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.php). You can use it as a library and/or create content for your game using the [editor](https://schteppe.github.io/cartridge.js/editor.html).
+HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.php). You can use it as a library and/or create content for your game using the [editor](https://schteppe.github.io/cartridge.js/editor/).
 
 # Usage
 
