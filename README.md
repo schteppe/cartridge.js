@@ -201,12 +201,12 @@ var angle = atan2(x,y);
 ### btn ( n , [player] )
 
 <dl>
-  <dt>n</dt>
-  <dd>A button number: 0 = left, 1 = right, 2 = up, 3 = down, 4 = A, 5 = B</dd>
-  <dt>player</dt>
-  <dd>The gamepad/player number, starting from 1. Default is 1.</dd>
-  <dt>Return value</dt>
-  <dd>A boolean indicating if the button is pressed or not.</dd>
+	<dt>n</dt>
+	<dd>A button number: 0 = left, 1 = right, 2 = up, 3 = down, 4 = A, 5 = B</dd>
+	<dt>player</dt>
+	<dd>The gamepad/player number, starting from 1. Default is 1.</dd>
+	<dt>Return value</dt>
+	<dd>A boolean indicating if the button is pressed or not.</dd>
 </dl>
 
 ```js
@@ -220,10 +220,10 @@ if(btn(0)){
 ### camera ( x , y )
 
 <dl>
-  <dt>x</dt>
-  <dd>New camera X position</dd>
-  <dt>y</dt>
-  <dd>New camera Y position</dd>
+	<dt>x</dt>
+	<dd>New camera X position</dd>
+	<dt>y</dt>
+	<dd>New camera Y position</dd>
 </dl>
 
 ```js
@@ -257,14 +257,14 @@ cls();
 
 <dl>
   <dt>x</dt>
-  <dd>A real number</dd>
+  <dd>Clip start x</dd>
   <dt>y</dt>
-  <dd></dd>
+  <dd>Clip start y</dd>
   <dt>w</dt>
-  <dd></dd>
+  <dd>Clip rectangle width</dd>
   <dt>h</dt>
-  <dd></dd>
-  </dl>
+  <dd>Clip rectangle height</dd>
+</dl>
 
 ```js
 clip(x,y,w,h);
