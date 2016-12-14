@@ -364,16 +364,49 @@ fset(n, flags);
 ```
 
 ### fullscreen ()
+
+Enable full screen.
+
 ```js
 fullscreen();
 ```
 
 ### map ( cel_x , cel_y , sx , sy , cel_w , cel_h , [layer] )
+
+Draw a portion of the map to the canvas.
+
+<dl>
+	<dt>cel_x</dt>
+	<dd></dd>
+	<dt>cel_y</dt>
+	<dd></dd>
+	<dt>sx</dt>
+	<dd></dd>
+	<dt>sy</dt>
+	<dd></dd>
+	<dt>cel_w</dt>
+	<dd></dd>
+	<dt>cel_h</dt>
+	<dd></dd>
+	<dt>layer (optional)</dt>
+	<dd></dd>
+</dl>
+
 ```js
 map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer);
 ```
 
 ### max ( x , y )
+
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>y</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd>The maximum of x and y</dd>
+</dl>
+
 ```js
 var z = max(x, y);
 ```
