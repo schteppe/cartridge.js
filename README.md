@@ -256,14 +256,14 @@ cls();
 ### clip ( x , y , w , h )
 
 <dl>
-  <dt>x</dt>
-  <dd>Clip start x</dd>
-  <dt>y</dt>
-  <dd>Clip start y</dd>
-  <dt>w</dt>
-  <dd>Clip rectangle width</dd>
-  <dt>h</dt>
-  <dd>Clip rectangle height</dd>
+	<dt>x</dt>
+	<dd>Clip start x</dd>
+	<dt>y</dt>
+	<dd>Clip start y</dd>
+	<dt>w</dt>
+	<dd>Clip rectangle width</dd>
+	<dt>h</dt>
+	<dd>Clip rectangle height</dd>
 </dl>
 
 ```js
