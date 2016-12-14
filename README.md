@@ -240,8 +240,11 @@ cartridge(options);
 ===
 
 ### _click ()
+
 ```js
-click(callback);
+function _click(){
+  console.log('User clicked!');
+}
 ```
 
 ===
@@ -257,6 +260,8 @@ cls();
 ===
 
 ### clip ( x , y , w , h )
+
+Set drawing area for draw operations. Similar to "scissor test" in other rendering engines.
 
 <dl>
 	<dt>x</dt>
@@ -283,7 +288,7 @@ clip(x,y,w,h);
 </dl>
 
 ```js
-color(col);
+color(2); // new default color is 2
 ```
 
 ===
@@ -304,6 +309,14 @@ var y = cos(x);
 ===
 
 ### fget ( n )
+
+<dl>
+	<dt>n</dt>
+	<dd>Sprite index</dd>
+	<dt>Return value</dt>
+	<dd>Flags for the sprite (a bitmask)</dd>
+</dl>
+
 ```js
 var flags = fget(n);
 ```
@@ -311,6 +324,9 @@ var flags = fget(n);
 ===
 
 ### fit ()
+
+Fit the canvas to the container element.
+
 ```js
 fit();
 ```
@@ -318,11 +334,31 @@ fit();
 ===
 
 ### flr ( x )
+
+Floor a number
+
+<dl>
+	<dt>x</dt>
+	<dd>A number</dd>
+	<dt>Return value</dt>
+	<dd>Floored number</dd>
+</dl>
+
 ```js
-y = flr(x);
+var y = flr(1.34); // 1
 ```
 
 ### fset ( n , flags )
+
+Set flags for a sprite
+
+<dl>
+	<dt>n</dt>
+	<dd>Sprite index</dd>
+	<dt>flags</dt>
+	<dd>Bitmask flags for the sprite.</dd>
+</dl>
+
 ```js
 fset(n, flags);
 ```
