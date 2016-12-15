@@ -50,10 +50,10 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [clamp(x,min,max)](#clamp--x-min-max-) - clamp a number
 * [cos(x)](#cos--x-) - cosine
 * [flr(x)](#flr--x-) - floor
-* [max(x,y)](#max--x-y-) - maximum of two numbers
-* [mid(a,b,c)](#mid--a-b-c-) - middle of three numbers
-* [min(x,y)](#min--x-y-) - minimum
-* [mix(a,b,alpha)](#mix--a-b-alpha-) - linear interpolation
+* [max(x,y)](#max--x--y-) - maximum of two numbers
+* [mid(a,b,c)](#mid--a--b--c-) - middle of three numbers
+* [min(x,y)](#min--x--y-) - minimum
+* [mix(a,b,alpha)](#mix--a--b--alpha-) - linear interpolation
 * [rnd(n)](#rnd--n-) - generate floating point random number between 0 and n
 * [sgn(x)](#sgn) - sign
 * [sin(x)](#sin--x-) - sine
