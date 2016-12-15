@@ -46,7 +46,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 * [abs(x)](#abs--x-) - absolute value
 * [atan2(x,y)](#atan2--x--y-)
-* [ceil(x)](#ceil) - round up
+* [ceil(x)](#ceil--x-) - round up
 * [clamp(x,min,max)](#clamp) - clamp a number
 * [cos(x)](#cos) - cosine
 * [flr(x)](#flr) - floor
@@ -238,6 +238,23 @@ Initialize the library.
 
 ```js
 cartridge({ containerId: 'myContainerElementId' });
+```
+
+===
+
+### ceil ( x )
+
+Round up a number
+
+<dl>
+	<dt>x</dt>
+	<dd>A number</dd>
+	<dt>Return value</dt>
+	<dd>Rounded number</dd>
+</dl>
+
+```js
+var y = ceil(1.34); // 2
 ```
 
 ===
