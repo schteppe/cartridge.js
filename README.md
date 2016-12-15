@@ -393,6 +393,8 @@ Floor a number
 var y = flr(1.34); // 1
 ```
 
+===
+
 ### fset ( n , flags )
 
 Set flags for a sprite
@@ -408,6 +410,8 @@ Set flags for a sprite
 fset(n, flags);
 ```
 
+===
+
 ### fullscreen ()
 
 Enable full screen.
@@ -415,6 +419,8 @@ Enable full screen.
 ```js
 fullscreen();
 ```
+
+===
 
 ### map ( cel_x , cel_y , sx , sy , cel_w , cel_h , [layer] )
 
@@ -441,6 +447,8 @@ Draw a portion of the map to the canvas.
 map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer);
 ```
 
+===
+
 ### max ( x , y )
 
 <dl>
@@ -455,6 +463,8 @@ map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer);
 ```js
 var z = max(x, y);
 ```
+
+===
 
 ### mget ( x , y )
 
@@ -473,6 +483,28 @@ Get a cell from the map, as a sprite index.
 var sprite = mget(x, y);
 ```
 
+===
+
+### mid ( x , y , z )
+
+Get the middle number of three numbers
+
+<dl>
+	<dt>x</dt>
+	<dd>A number</dd>
+	<dt>y</dt>
+	<dd>A number</dd>
+	<dt>z</dt>
+	<dd>A number</dd>
+	<dt>Return value</dt>
+	<dd>The middle number</dd>
+</dl>
+
+```js
+var a = mid(1, 2, 3); // 2
+```
+
+===
 ### min ( x , y )
 
 <dl>
