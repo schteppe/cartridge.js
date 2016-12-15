@@ -47,7 +47,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [abs(x)](#abs--x-) - absolute value
 * [atan2(x,y)](#atan2--x--y-)
 * [ceil(x)](#ceil--x-) - round up
-* [clamp(x,min,max)](#clamp) - clamp a number
+* [clamp(x,min,max)](#clamp--x--min--max-) - clamp a number
 * [cos(x)](#cos) - cosine
 * [flr(x)](#flr) - floor
 * [max(x,y)](#max) - maximum of two numbers
