@@ -259,6 +259,29 @@ var y = ceil(1.34); // 2
 
 ===
 
+### clamp ( x, min, max )
+
+Clamp a number
+
+<dl>
+	<dt>x</dt>
+	<dd>A number</dd>
+	<dt>min</dt>
+	<dd>A number</dd>
+	<dt>max</dt>
+	<dd>A number</dd>
+	<dt>Return value</dt>
+	<dd>A number</dd>
+</dl>
+
+```js
+var a = clamp(1.34, 1, 2); // 1.34
+var b = clamp(3.14, 1, 2); // 2
+var c = clamp(0.11, 1, 2); // 1
+```
+
+===
+
 ### _click ()
 
 Click handler.
