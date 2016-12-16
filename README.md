@@ -580,21 +580,74 @@ palt(col, t);
 ```
 
 ### pget ( x , y )
+
+Get a pixel color on the screen.
+
+<dl>
+	<dt>x</dt>
+	<dd>X position on the screen</dd>
+	<dt>y</dt>
+	<dd>Y position on the screen</dd>
+	<dt>Return value</dt>
+	<dd>A palette color</dd>
+</dl>
+
 ```js
 var color = pget(x, y);
 ```
 
 ### print ( text , x , y , [col] )
+
+Print a text on the screen.
+
+<dl>
+	<dt>text</dt>
+	<dd>A string of text</dd>
+	<dt>x</dt>
+	<dd>X position on the screen</dd>
+	<dt>y</dt>
+	<dd>Y position on the screen</dd>
+	<dt>Return value</dt>
+	<dd>A palette color</dd>
+</dl>
+
 ```js
 print(text, x, y, col);
 ```
 
 ### pset ( x , y , col )
+
+Set pixel color.
+
+<dl>
+	<dt>x</dt>
+	<dd>X position on the screen</dd>
+	<dt>y</dt>
+	<dd>Y position on the screen</dd>
+	<dt>col</dt>
+	<dd>A palette color</dd>
+</dl>
+
 ```js
 pset(x, y, col);
 ```
 
 ### rect ( x0 , y0 , x1 , y1 , [col] )
+
+Draw a rectangle
+
+<dl>
+	<dt>x0</dt>
+	<dd>X position on the screen</dd>
+	<dt>y0</dt>
+	<dt>x1</dt>
+	<dd>X position on the screen</dd>
+	<dt>y1</dt>
+	<dd>Y position on the screen</dd>
+	<dt>col (optional)</dt>
+	<dd>A palette color</dd>
+</dl>
+
 ```js
 rect(x0, y0, x1, y1, col);
 ```
