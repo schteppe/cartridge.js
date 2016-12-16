@@ -422,19 +422,28 @@ window._click = function _click(){
 }
 
 var editorLoad = window._load = function _load(callback){
-	codeset([
-		'var x=10,y=10;',
-		'function _draw(){',
-		'  cls();',
-		'  map(0,0,0,0,16,15);',
-		'  spr(1,x,y);',
-		'  if(btn(0)) x--;',
-		'  if(btn(1)) x++;',
-		'  if(btn(2)) y--;',
-		'  if(btn(3)) y++;',
-		'  if(btn(4) && !btnp(4)) sfx(0);',
-		'}'
-	].join('\n').toLowerCase());
+
+	setInterval(function(){
+		save('autosave');
+	}, 10000);
+
+	if(!load('autosave')){
+		// TODO: Load default JSON
+		codeset([
+			'var x=10,y=10;',
+			'function _draw(){',
+			'  cls();',
+			'  map(0,0,0,0,16,15);',
+			'  spr(1,x,y);',
+			'  if(btn(0)) x--;',
+			'  if(btn(1)) x++;',
+			'  if(btn(2)) y--;',
+			'  if(btn(3)) y++;',
+			'  if(btn(4) && !btnp(4)) sfx(0);',
+			'}'
+		].join('\n').toLowerCase());
+	}
+
 	dirty = true;
 	callback();
 };
