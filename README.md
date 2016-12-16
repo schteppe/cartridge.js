@@ -634,7 +634,7 @@ pset(x, y, col);
 
 ### rect ( x0 , y0 , x1 , y1 , [col] )
 
-Draw a rectangle
+Draw a rectangle.
 
 <dl>
 	<dt>x0</dt>
@@ -652,22 +652,69 @@ Draw a rectangle
 rect(x0, y0, x1, y1, col);
 ```
 
-### rectfill 
+### rectfill ( x0 , y0 , x1 , y1 , [col] )
+
+Draw a filled rectangle.
+
+<dl>
+	<dt>x0</dt>
+	<dd>X position on the screen</dd>
+	<dt>y0</dt>
+	<dt>x1</dt>
+	<dd>X position on the screen</dd>
+	<dt>y1</dt>
+	<dd>Y position on the screen</dd>
+	<dt>col (optional)</dt>
+	<dd>A palette color</dd>
+</dl>
+
 ```js
 rectfill(x0, y0, x1, y1, col);
 ```
 
 ### rnd ( [n] )
+
+Get a random number.
+
+<dl>
+	<dt>n (optional, default is 0)</dt>
+	<dd>Max</dd>
+	<dt>Return value</dt>
+	<dd>A floating point number between 0 and n.</dd>
+</dl>
+
 ```js
 y = rnd(x);
 ```
 
 ### sfx ( n , [channel] , [offset] )
+
+<dl>
+	<dt>n</dt>
+	<dd>Sound index</dd>
+	<dt>channel</dt>
+	<dd></dd>
+	<dt>offset</dt>
+	<dd></dd>
+</dl>
+
 ```js
 sfx(n [, channelIndex [, offset]]);
 ```
 
 ### sget ( x , y )
+
+Get a sprite sheet pixel color.
+
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>y</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd>A palette color</dd>
+</dl>
+
 ```js
 color = sget(x, y);
 ```
