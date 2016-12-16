@@ -867,6 +867,17 @@ function rotateSprite(spriteNumber){
 	}
 }
 
+function clearSprite(spriteNumber){
+	var i,j;
+	for(i=0; i<cellwidth(); i++){
+		for(j=0; j<cellheight(); j++){
+			var x = ssx(spriteNumber)*cellwidth() + i;
+			var y = ssy(spriteNumber)*cellheight() + j;
+			sset(x, y, 0);
+		}
+	}
+}
+
 window.addEventListener('keydown', function(evt){
 	keysdown[evt.keyCode] = true;
 
@@ -876,7 +887,8 @@ window.addEventListener('keydown', function(evt){
 		code_stop(code);
 	} else {
 		switch(evt.keyCode){
-			case 82: if(mode === 'sprite') rotateSprite(selectedSprite); break;
+			case 82: if(mode === 'sprite') rotateSprite(selectedSprite); break; // R
+			case 46: if(mode === 'sprite') clearSprite(selectedSprite); break; // delete
 			case 81: if(mode === 'sprite') selectedSprite--; break;
 			case 87: if(mode === 'sprite') selectedSprite++; break;
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
