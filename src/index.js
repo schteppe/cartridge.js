@@ -251,6 +251,7 @@ function setPalette(p){
 
 exports.palset = function(n, hexColor){
 	var newPalette = palette.slice(0);
+	while(newPalette.length < n) newPalette.push(0x000000);
 	newPalette[n] = hexColor;
 	setPalette(newPalette);
 };

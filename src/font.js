@@ -8,23 +8,22 @@ var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
 
 exports.init = function(fontImage, paletteHex){
-
-	// Make a canvas for each palette color for the font
-	for(var i=0; i<paletteHex.length; i++){
-		var coloredFontCanvas = document.createElement('canvas');
-		coloredFontCanvases.push(coloredFontCanvas);
-	}
-
 	fontImageAsCanvas = document.createElement('canvas');
 	fontImageAsCanvas.width = fontImage.width;
 	fontImageAsCanvas.height = fontImage.height;
 	fontImageAsCanvas.getContext('2d').drawImage(fontImage, 0, 0, fontImage.width, fontImage.height);
-
 	exports.changePalette(paletteHex);
 };
 
 exports.changePalette = function(paletteHex){
 	if(!fontImageAsCanvas) return;
+
+	// Make a canvas for each palette color for the font
+	while(coloredFontCanvases.length < paletteHex.length){
+		var coloredFontCanvas = document.createElement('canvas');
+		coloredFontCanvases.push(coloredFontCanvas);
+	}
+
 	var fontImageData = fontImageAsCanvas.getContext('2d').getImageData(0, 0, fontImageAsCanvas.width, fontImageAsCanvas.height);
 	for(var i=0; i<paletteHex.length; i++){
 		// Replace color
