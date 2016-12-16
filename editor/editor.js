@@ -870,6 +870,8 @@ function code_keypress(code, evt){
 			codeArray[code.crow] = strInsertAt(codeArray[code.crow], code.ccol, char);
 			code.ccol=min(code.ccol+1,codeArray[code.crow].length);
 		}
+	} else if(evt.keyCode === 11 && evt.ctrlKey){ // k - kill rest of the line
+		codeArray[code.crow] = codeArray[code.crow].substr(0,code.ccol);
 	} else if(evt.keyCode === 13){ // enter
 		var after = codeArray[code.crow].substr(code.ccol);
 		var before = codeArray[code.crow].substr(0,code.ccol);
