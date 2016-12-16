@@ -720,6 +720,17 @@ color = sget(x, y);
 ```
 
 ### sgn ( x )
+
+Returns the sign of a number
+
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd></dd>
+</dl>
+
+
 ```js
 y = sgn(x);
 ```
