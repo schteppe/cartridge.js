@@ -1,11 +1,15 @@
+var tau = 2 * Math.PI;
+
 module.exports = {
-	sin: Math.sin,
-	cos: Math.cos,
+	// trigonometric functions use normalized angles!
+	sin: function(radians){ return Math.sin(radians * tau); },
+	cos: function(radians){ return Math.cos(radians * tau); },
+	atan2: function(y,x){ return Math.atan2(y,x) / tau; },
+
 	flr: Math.floor,
 	ceil: Math.ceil,
 	rnd: function (x){ return Math.random() * x; },
 	abs: Math.abs,
-	atan2: Math.atan2,
 	max: Math.max,
 	min: Math.min,
 	mix: function(a,b,alpha){
