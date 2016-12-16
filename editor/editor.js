@@ -752,7 +752,7 @@ function code_click(code,x,y){
 	code.crow = clamp(code.crow, 0, codeArray.length-1);
 
 	code.ccol = flr((x - code.x + code.wcol * code.fontWidth) / code.fontWidth);
-	code.ccol = clamp(code.ccol, 0, codeArray[code.crow].length);
+	code_clamp_ccol(code, codeArray);
 
 	return true;
 }
@@ -762,7 +762,7 @@ function code_clamp_ccol(code, codeArray){
 }
 
 function code_clamp_crow(code, codeArray){
-	code.crow = clamp(0, code.crow, codeArray.length-1);
+	code.crow = clamp(code.crow, 0, codeArray.length-1);
 }
 
 function code_keydown(code, evt){
@@ -868,7 +868,8 @@ function code_keypress(code, evt){
 			code.ccol = 1;
 		} else {
 			codeArray[code.crow] = strInsertAt(codeArray[code.crow], code.ccol, char);
-			code.ccol=min(code.ccol+1,codeArray[code.crow].length);
+			code.ccol++;
+			code_clamp_ccol(code, codeArray);
 		}
 	} else if(evt.keyCode === 11 && evt.ctrlKey){ // k - kill rest of the line
 		codeArray[code.crow] = codeArray[code.crow].substr(0,code.ccol);
@@ -879,7 +880,8 @@ function code_keypress(code, evt){
 		codeArray[code.crow] = before;
 		// Move cursor
 		code.ccol=0;
-		code.crow=min(code.crow+1,codeArray.length-1);
+		code.crow++;
+		code_clamp_crow(code, codeArray);
 	}
 
 	codeset(codeArray.join('\n'));
