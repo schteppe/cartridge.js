@@ -809,6 +809,16 @@ function code_keydown(code, evt){
 			var before = codeArray[code.crow].substr(0,code.ccol);
 			codeArray[code.crow] = before + after;
 			break;
+		case 33: // page up
+			code.crow -= Math.floor(code.height() / code.fontHeight);
+			code.crow = clamp(code.crow,0,codeArray.length-1);
+			code.ccol=min(code.ccol,codeArray[code.crow].length);
+			break;
+		case 34: // page down
+			code.crow += Math.floor(code.height() / code.fontHeight);
+			code.crow = clamp(code.crow,0,codeArray.length-1);
+			code.ccol=min(code.ccol,codeArray[code.crow].length);
+			break;
 		}
 	}
 
