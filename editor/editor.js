@@ -757,6 +757,14 @@ function code_click(code,x,y){
 	return true;
 }
 
+function code_clamp_ccol(code, codeArray){
+	code.ccol = clamp(code.ccol, 0, codeArray[code.crow].length);
+}
+
+function code_clamp_crow(code, codeArray){
+	code.crow = clamp(0, code.crow, codeArray.length-1);
+}
+
 function code_keydown(code, evt){
 
 	var codeArray = codeget().split('\n');
@@ -765,28 +773,39 @@ function code_keydown(code, evt){
 	if(evt.which === 9) {
 		codeArray[code.crow] = strInsertAt(codeArray[code.crow], code.ccol, ' ');
 		codeArray[code.crow] = strInsertAt(codeArray[code.crow], code.ccol, ' ');
-		code.ccol=min(code.ccol+2,codeArray[code.crow].length);
+		code.ccol += 2;
+		code_clamp_ccol(code, codeArray);
 		evt.preventDefault();
 	} else {
 		switch(evt.keyCode){
 		case 37: // left
-			code.ccol=max(code.ccol-1,0);
+			if(code.ccol === 0 && code.crow > 0){
+				code.crow--;
+				code.ccol = codeArray[code.crow].length;
+			} else {
+				code.ccol--;
+				code_clamp_ccol(code, codeArray);
+			}
 			break;
 		case 39: // right
 			if(code.ccol === codeArray[code.crow].length && code.crow !== codeArray.length-1){
 				code.ccol=0;
-				code.crow=min(code.crow+1,codeArray.length-1);
+				code.crow++;
+				code_clamp_crow(code, codeArray);
 			} else {
-				code.ccol=min(code.ccol+1,codeArray[code.crow].length);
+				code.ccol++;
+				code_clamp_ccol(code, codeArray);
 			}
 			break;
 		case 38: // up
-			code.crow=max(code.crow-1,0);
-			code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
+			code.crow--;
+			code_clamp_crow(code, codeArray);
+			code_clamp_ccol(code, codeArray);
 			break;
 		case 40: // down
-			code.crow=min(code.crow+1,codeArray.length-1);
-			code.ccol=clamp(code.ccol,0,codeArray[code.crow].length);
+			code.crow++;
+			code_clamp_crow(code, codeArray);
+			code_clamp_ccol(code, codeArray);
 			break;
 		case 8: // backspace
 			if(code.ccol !== 0){
@@ -794,7 +813,8 @@ function code_keydown(code, evt){
 				var before = codeArray[code.crow].substr(0,code.ccol-1);
 				codeArray[code.crow] = before + after;
 				// Move cursor
-				code.ccol=max(0,code.ccol-1);
+				code.ccol--;
+				code_clamp_ccol(code, codeArray);
 			} else if(code.ccol === 0 && code.crow !== 0){
 				// append to previous row
 				var newCol = codeArray[code.crow-1].length;
@@ -805,19 +825,30 @@ function code_keydown(code, evt){
 			}
 			break;
 		case 46: // delete
-			var after = codeArray[code.crow].substr(code.ccol+1);
-			var before = codeArray[code.crow].substr(0,code.ccol);
-			codeArray[code.crow] = before + after;
+			if(code.ccol !== codeArray[code.crow].length){
+				var after = codeArray[code.crow].substr(code.ccol+1);
+				var before = codeArray[code.crow].substr(0,code.ccol);
+				codeArray[code.crow] = before + after;
+			} else if(code.crow < codeArray.length-1){
+				codeArray[code.crow] += codeArray[code.crow+1];
+				codeArray.splice(code.crow+1,1);
+			}
 			break;
 		case 33: // page up
 			code.crow -= Math.floor(code.height() / code.fontHeight);
-			code.crow = clamp(code.crow,0,codeArray.length-1);
-			code.ccol=min(code.ccol,codeArray[code.crow].length);
+			code_clamp_crow(code, codeArray);
+			code_clamp_ccol(code, codeArray);
 			break;
 		case 34: // page down
 			code.crow += Math.floor(code.height() / code.fontHeight);
-			code.crow = clamp(code.crow,0,codeArray.length-1);
-			code.ccol=min(code.ccol,codeArray[code.crow].length);
+			code_clamp_crow(code, codeArray);
+			code_clamp_ccol(code, codeArray);
+			break;
+		case 35: // end
+			code.ccol = codeArray[code.crow].length;
+			break;
+		case 36: // home
+			code.ccol = 0;
 			break;
 		}
 	}
