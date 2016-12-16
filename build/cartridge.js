@@ -2367,23 +2367,22 @@ var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
 
 exports.init = function(fontImage, paletteHex){
-
-	// Make a canvas for each palette color for the font
-	for(var i=0; i<paletteHex.length; i++){
-		var coloredFontCanvas = document.createElement('canvas');
-		coloredFontCanvases.push(coloredFontCanvas);
-	}
-
 	fontImageAsCanvas = document.createElement('canvas');
 	fontImageAsCanvas.width = fontImage.width;
 	fontImageAsCanvas.height = fontImage.height;
 	fontImageAsCanvas.getContext('2d').drawImage(fontImage, 0, 0, fontImage.width, fontImage.height);
-
 	exports.changePalette(paletteHex);
 };
 
 exports.changePalette = function(paletteHex){
 	if(!fontImageAsCanvas) return;
+
+	// Make a canvas for each palette color for the font
+	while(coloredFontCanvases.length < paletteHex.length){
+		var coloredFontCanvas = document.createElement('canvas');
+		coloredFontCanvases.push(coloredFontCanvas);
+	}
+
 	var fontImageData = fontImageAsCanvas.getContext('2d').getImageData(0, 0, fontImageAsCanvas.width, fontImageAsCanvas.height);
 	for(var i=0; i<paletteHex.length; i++){
 		// Replace color
@@ -2702,6 +2701,7 @@ function setPalette(p){
 
 exports.palset = function(n, hexColor){
 	var newPalette = palette.slice(0);
+	while(newPalette.length < n) newPalette.push(0x000000);
 	newPalette[n] = hexColor;
 	setPalette(newPalette);
 };
@@ -3416,14 +3416,18 @@ exports.global = {
 };
 
 },{"./math":7}],7:[function(require,module,exports){
+var tau = 2 * Math.PI;
+
 module.exports = {
-	sin: Math.sin,
-	cos: Math.cos,
+	// trigonometric functions use normalized angles!
+	sin: function(radians){ return Math.sin(radians * tau); },
+	cos: function(radians){ return Math.cos(radians * tau); },
+	atan2: function(y,x){ return Math.atan2(y,x) / tau; },
+
 	flr: Math.floor,
 	ceil: Math.ceil,
 	rnd: function (x){ return Math.random() * x; },
 	abs: Math.abs,
-	atan2: Math.atan2,
 	max: Math.max,
 	min: Math.min,
 	mix: function(a,b,alpha){
