@@ -320,7 +320,7 @@ Set drawing area for draw operations. Similar to "scissor test" in other renderi
 </dl>
 
 ```js
-clip(x,y,w,h);
+clip(0,0,20,30);
 ```
 
 ===
@@ -747,7 +747,7 @@ spr(n, x, y, w, h, flip_x, flip_y);
 
 ### sqrt ( x )
 ```js
-y = sqrt(x);
+var y = sqrt(25); // 5
 ```
 
 ### sset ( x , y )
@@ -756,6 +756,9 @@ sset(x, y, col);
 ```
 
 ### time ()
+
+Get current time in seconds.
+
 ```js
 t = time();
 ```
