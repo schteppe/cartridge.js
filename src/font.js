@@ -6,21 +6,27 @@ var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
+var dirty = true; // Should redraw!
 
-exports.init = function(fontImage, paletteHex){
+exports.init = function(fontImage, palHex){
 	fontImageAsCanvas = document.createElement('canvas');
 	fontImageAsCanvas.width = fontImage.width;
 	fontImageAsCanvas.height = fontImage.height;
 	fontImageAsCanvas.getContext('2d').drawImage(fontImage, 0, 0, fontImage.width, fontImage.height);
-	exports.changePalette(paletteHex);
+	exports.changePalette(palHex);
 };
 
-exports.changePalette = function(paletteHex){
-	if(!fontImageAsCanvas) return;
+exports.changePalette = function(palHex){
+	paletteHex = palHex.slice();
+	dirty = true;
+};
 
+function redrawCanvases(){
 	// Make a canvas for each palette color for the font
 	while(coloredFontCanvases.length < paletteHex.length){
 		var coloredFontCanvas = document.createElement('canvas');
+		coloredFontCanvas.width = fontImageAsCanvas.width;
+		coloredFontCanvas.height = fontImageAsCanvas.height;
 		coloredFontCanvases.push(coloredFontCanvas);
 	}
 
@@ -43,9 +49,13 @@ exports.changePalette = function(paletteHex){
 		}
 		coloredFontCanvases[i].getContext('2d').putImageData(fontImageData, 0, 0);
 	}
-};
+}
 
 exports.draw = function(ctx, text, x, y, col){
+	if(dirty){
+		redrawCanvases();
+		dirty = false;
+	}
 	for(var i=0; i<text.length; i++){
 		var index = chars.indexOf(text[i]);
 		if(index !== -1){
