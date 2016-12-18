@@ -6,6 +6,7 @@ var math = require('./math');
 var colors = require('./colors');
 var sfx = require('./sfx');
 var pixelops = require('./pixelops');
+var code = require('./code');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -47,7 +48,6 @@ var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
-var code = '';
 
 exports.cartridge = function(options){
 	var autoFit = options.autoFit !== undefined ? options.autoFit : true;
@@ -166,9 +166,9 @@ exports.cartridge = function(options){
 	font.load(function(image){
 		font.init(image, paletteHex);
 
-		if(code){
+		if(code.codeget()){
 			// Run code. If there's an error, let it throw.
-			run();
+			code.run();
 		}
 
 		// Run the _load function
@@ -530,9 +530,9 @@ exports.sset = function(x, y, col){
 	var w = spriteSheetSizeX * cellsizeX;
 	spriteSheetPixels[y * w + x] = col;
 
-	/*if(spriteSheetDirty) redrawSpriteSheet();
-	redrawSpriteSheetPixel(x,y);*/
-	spriteSheetDirty = true;
+	if(spriteSheetDirty) redrawSpriteSheet();
+	redrawSpriteSheetPixel(x,y);
+	//spriteSheetDirty = true;
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
@@ -629,19 +629,6 @@ function loadJsonFromUrl(url, callback){
     xhr.send();
 }
 
-
-exports.codeset = function(codeString){
-	code = codeString;
-};
-
-exports.codeget = function(){
-	return code;
-};
-
-exports.run = function run(){
-	eval.call(null, codeget());
-};
-
 function download(key){
 	key = key || 'export';
 	var data = toJSON();
@@ -667,7 +654,7 @@ function toJSON(){
 		flags: [],
 		palette: palette.slice(0),
 		sfx: [],
-		code: codeget() // added in v2
+		code: code.codeget() // added in v2
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
@@ -701,7 +688,7 @@ function toJSON(){
 }
 
 function loadJSON(data){
-	codeset(data.code || '');
+	code.codeset(data.code || '');
 
 	if(data.width !== undefined){
 		width(data.width);
@@ -773,6 +760,7 @@ exports.mousey = function(){
 
 utils.makeGlobal(math);
 utils.makeGlobal(sfx);
+utils.makeGlobal(code);
 utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
 
