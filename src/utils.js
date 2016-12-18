@@ -103,12 +103,20 @@ exports.fullscreen = function(element) {
 	return true;
 };
 
-exports.zeros = function(n){
-	var a = [];
-	while(n--){
-		a.push(0);
+exports.zeros = function(n, reusableArray){
+	if(reusableArray === undefined){
+		var a = [];
+		while(n--){
+			a.push(0);
+		}
+		return a;
+	} else {
+		for(var i=0; i<reusableArray.length; i++){
+			reusableArray[0] = 0;
+		}
+		while(reusableArray.length < n) reusableArray.push(0);
+		return reusableArray;
 	}
-	return a;
 };
 
 exports.createCanvas = function(w,h){

@@ -33,6 +33,7 @@ var mapCacheCanvas;
 var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
+var spriteSheetDirty = false;
 var spriteFlags = utils.zeros(maxSprites);
 var spriteSheetPixels;
 var ctx;
@@ -207,7 +208,7 @@ function setCellSize(w,h){
 
 	// Reinit pixels
 	// TODO: copy over?
- 	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY);
+ 	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY, spriteSheetPixels);
 
 	// (re)init spritesheet canvas
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
@@ -226,6 +227,7 @@ function redrawSpriteSheet(){
 			redrawSpriteSheetPixel(i,j);
 		}
 	}
+	spriteSheetDirty = false;
 }
 
 function redrawSpriteSheetPixel(x,y){
@@ -245,7 +247,7 @@ function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
-	redrawSpriteSheet();
+	spriteSheetDirty = true;
 	font.changePalette(paletteHex);
 }
 
@@ -448,6 +450,8 @@ function ssy(n){
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
+	if(spriteSheetDirty) redrawSpriteSheet();
+
 	w = w !== undefined ? w : 1;
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
@@ -528,7 +532,10 @@ exports.sset = function(x, y, col){
 
 	var w = spriteSheetSizeX * cellsizeX;
 	spriteSheetPixels[y * w + x] = col;
-	redrawSpriteSheetPixel(x,y);
+
+	/*if(spriteSheetDirty) redrawSpriteSheet();
+	redrawSpriteSheetPixel(x,y);*/
+	spriteSheetDirty = true;
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
@@ -737,7 +744,7 @@ function loadJSON(data){
 		}
 	}
 
-	redrawSpriteSheet();
+	spriteSheetDirty = true;
 };
 
 exports.loadjson = loadJSON;
@@ -745,6 +752,7 @@ exports.loadjson = loadJSON;
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
 	mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
+	if(spriteSheetDirty) redrawSpriteSheet();
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
 		ssx(n) * cellsizeX, ssy(n) * cellsizeY,

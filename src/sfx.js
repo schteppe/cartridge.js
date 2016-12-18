@@ -196,13 +196,20 @@ exports.sfx = function(n, channelIndex, offset){
 	return true;
 };
 
+var whiteNoiseData = null;
 function createWhiteNoise(destination) {
 	var bufferSize = 2 * context.sampleRate,
 		noiseBuffer = context.createBuffer(1, bufferSize, context.sampleRate),
 		output = noiseBuffer.getChannelData(0);
-	for (var i = 0; i < bufferSize; i++) {
-		output[i] = Math.random() * 2 - 1;
+
+	if(!whiteNoiseData){
+		whiteNoiseData = new Float32Array(bufferSize);
+		for (var i = 0; i < bufferSize; i++) {
+			whiteNoiseData[i] = Math.random() * 2 - 1;
+		}
 	}
+
+	output.set(whiteNoiseData);
 
 	var whiteNoise = context.createBufferSource();
 	whiteNoise.buffer = noiseBuffer;
@@ -213,24 +220,28 @@ function createWhiteNoise(destination) {
 	return whiteNoise;
 }
 
+var dft = null;
 function createPulse(destination){
-	var count = 128;
-	var vals2 = [];
-	for (var i = 0; i < count; i++) {
-		var x = i / count;
-		var val = x < 0.25 ? -1 : 1;
-		vals2.push(val);
-	}
+	if(!dft){
+		var count = 128;
+		var vals2 = [];
+		for (var i = 0; i < count; i++) {
+			var x = i / count;
+			var val = x < 0.25 ? -1 : 1;
+			vals2.push(val);
+		}
 
- 	var a = new DFT(vals2.length);
-	a.forward(vals2);
-	var hornTable = context.createPeriodicWave(
-		new Float32Array(a.real), // DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
-		new Float32Array(a.imag)
+		dft = new DFT(vals2.length);
+		dft.forward(vals2);
+	}
+	// DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
+	var table = context.createPeriodicWave(
+		new Float32Array(dft.real),
+		new Float32Array(dft.imag)
 	);
 
 	osc = context.createOscillator();
-	osc.setPeriodicWave(hornTable);
+	osc.setPeriodicWave(table);
 	osc.connect(destination);
 
 	return osc;
