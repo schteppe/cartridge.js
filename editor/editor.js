@@ -954,6 +954,19 @@ function clearSprite(spriteNumber){
 	}
 }
 
+function copySprite(from,to){
+	var i,j;
+	for(i=0; i<cellwidth(); i++){
+		for(j=0; j<cellheight(); j++){
+			var x = ssx(from)*cellwidth() + i;
+			var y = ssy(from)*cellheight() + j;
+			var x1 = ssx(to)*cellwidth() + i;
+			var y1 = ssy(to)*cellheight() + j;
+			sset(x1, y1, sget(x,y));
+		}
+	}
+}
+
 window.addEventListener('keydown', function(evt){
 	keysdown[evt.keyCode] = true;
 
@@ -1097,6 +1110,13 @@ function handlePasteImage(file){
 
 function handlePasteString(str){
 	switch(mode){
+	case 'sprite':
+		var m = str.match(/sprite:([\d]+)/);
+		if(m){
+			copySprite(parseInt(m[1]), selectedSprite);
+			dirty = true;
+		}
+		break;
 	case 'code':
 		code_paste(code, str);
 		break;
