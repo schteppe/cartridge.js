@@ -32,6 +32,51 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 </html>
 ```
 
+# Editor documentation
+
+#### Sprite editor
+
+`r` rotate
+
+`q` previous
+
+`w` next
+
+`ctrl + c` copy sprite
+
+`ctrl + v` paste sprite or image
+
+#### Map editor
+
+`mmb` / `space` pan
+
+`lmb` draw
+
+#### Sound editor
+
+`space` play current sound
+
+#### Code editor
+
+`ctrl + v` paste
+
+`tab` insert two spaces
+
+`end` end of line
+
+`home` start of line
+
+`ctrl + k` remove characters on the right on the line
+
+`pagedown` move down a screen
+
+`pageup` move up a screen
+
+#### Run mode
+
+`escape` Return to editor
+
+
 # API documentation
 
 #### Game loop
