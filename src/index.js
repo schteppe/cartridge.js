@@ -50,12 +50,7 @@ var _alpha = 0;
 var code = '';
 
 exports.cartridge = function(options){
-	screensizeX = options.width !== undefined ? options.width : 128; // deprecated
-	screensizeY = options.height !== undefined ? options.height : 128; // deprecated
-	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8; // deprecated
-	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8; // deprecated
 	var autoFit = options.autoFit !== undefined ? options.autoFit : true;
-
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
 	container.innerHTML = '';
