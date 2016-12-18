@@ -6,13 +6,31 @@ var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
+var specialChars = "\x80\x81\x82\x83\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99";
 var dirty = true; // Should redraw!
 
-exports.init = function(fontImage, palHex){
+exports.init = function(palHex){
+	var chars = [
+		"### ###  ## ##  ### ###  ## # # ### ### # # #   ### ##   ## ###  #  ###  ## ### # # # # # # # # # # ### ### ##  ### ### # # ### #   ### ### ###          #  ###  #   #  ##   ##       # #       # #  #           #   ## ##    # #            #   ## # #     # #",
+		"# # # # #   # # #   #   #   # #  #   #  # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   # # #  #    #   # # # #   #     # # # # #         # #   # #     # #     #  #   #   #  ### # # #    #       #   #   #   #   #    #      #  #    #    #   #",
+		"### ##  #   # # ##  ##  #   ###  #   #  ##  #   # # # # # # ### # # ##  ###  #  # # # # # #  #  ###  #  # #  #  ###  ## ### ### ###   # ### ###              ## #     # #     #      #   #              ### ###  #  #     # #     #          #   #  ### ###  # ",
+		"# # # # #   # # #   #   # # # #  #   #  # # #   # # # # # # #   ##  # #   #  #  # # ### ### # #   # #   # #  #  #     #   #   # # #   # # #   #      #          #     # #     #  #   #   #  ###          #           #   #   #   #    #      #  # #  #  #   #  ",
+		"# # ###  ## ### ### #   ### # # ### ##  # # ### # # # # ##  #    ## # # ##   #   ##  #  ### # # ### ### ### ### ### ###   # ### ###   # ###   #  #  #        #   #   #  ##   ##     #     #                      #   ## ##    # #    #  ###  #  ### # #     # #"
+	];
+	var width = chars[0].length;
+	var height = chars.length;
 	fontImageAsCanvas = document.createElement('canvas');
-	fontImageAsCanvas.width = fontImage.width;
-	fontImageAsCanvas.height = fontImage.height;
-	fontImageAsCanvas.getContext('2d').drawImage(fontImage, 0, 0, fontImage.width, fontImage.height);
+	fontImageAsCanvas.width = width;
+	fontImageAsCanvas.height = height;
+	var ctx = fontImageAsCanvas.getContext('2d');
+	var imageData = ctx.createImageData(width, height);
+	for(var i=0; i<height; i++){
+		for(var j=0; j<width; j++){
+			var p = 4 * (i * width + j);
+			imageData.data[p+3] = (chars[i][j] === '#') ? 255 : 0;
+		}
+	}
+	ctx.putImageData(imageData, 0, 0);
 	exports.changePalette(palHex);
 };
 
@@ -70,14 +88,4 @@ exports.draw = function(ctx, text, x, y, col){
 			);
 		}
 	}
-};
-
-exports.load = function(callback){
-	var im = new Image();
-	im.onload = function(){
-		callback(im);
-	};
-	// To decode, paste the URL below in a browser
-	// To encode, use e.g. https://www.base64-image.de/
-	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAFAgMAAAD3b9ImAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAAAAAQAAIRqQRwAAAABdFJOUwBA5thmAAAAsklEQVQY0zWQsREEMQgDFRB8SOACHH4ZBCqAQAVdeKVcmS8892CPwR7QGkirvSmx1EupJY5JvqdKEpDK7IUoMJ2tdoT9vXGDLFYVM93gVFaeI5gRfgoSYJQ9My2TyLHAvvbnA3Wxu0ahRpetaWBJDowUQ4A1DVzpUMqTYO/n2S8BD8HINyPnP2GoCjPY4bo/ASZ5Ce59XeDIGF5tdXYtdi6T6ljMiqwp8QxGF+8MUvvxDH5Q4jvxySaSSgAAAABJRU5ErkJggg==";
 };

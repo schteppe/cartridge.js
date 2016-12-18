@@ -166,26 +166,24 @@ exports.cartridge = function(options){
 	requestAnimationFrame(render);
 
 	// Init font
-	font.load(function(image){
-		font.init(image, paletteHex);
+	font.init(paletteHex);
 
-		if(code.codeget()){
-			// Run code. If there's an error, let it throw.
-			code.run();
-		}
+	if(code.codeget()){
+		// Run code. If there's an error, let it throw.
+		code.run();
+	}
 
-		// Run the _load function
-		if(typeof(_load) !== 'undefined'){
-			try {
-				_load(postLoad);
-			} catch(err){
-				console.error(err);
-				postLoad(err);
-			}
-		} else {
-			postLoad();
+	// Run the _load function
+	if(typeof(_load) !== 'undefined'){
+		try {
+			_load(postLoad);
+		} catch(err){
+			console.error(err);
+			postLoad(err);
 		}
-	});
+	} else {
+		postLoad();
+	}
 };
 
 function postLoad(err){
