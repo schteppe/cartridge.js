@@ -774,6 +774,28 @@ function code_clamp_crow(code, codeArray){
 	code.crow = clamp(code.crow, 0, codeArray.length-1);
 }
 
+function code_paste(code, str){
+	var codeArray = codeget().split('\n');
+	var newCode = str.split('\n');
+
+	// Insert first row at current position
+	var before = codeArray[code.crow].substr(0,code.ccol);
+	var after = codeArray[code.crow].substr(code.ccol);
+
+	if(newCode.length === 1){
+		codeArray[code.crow] = before + newCode[0] + after;
+		code.ccol += newCode[0].length;
+	} else if(codeArray.length > code.crow){
+		codeArray[code.crow] = before + newCode[0];
+		codeArray.splice.apply(codeArray, [code.crow+1, 0].concat(newCode.slice(1,newCode.length-1)).concat(newCode[newCode.length - 1] + after));
+		code.crow += newCode.length - 1;
+		code.ccol = newCode[0].length;
+	}
+
+	codeset(codeArray.join('\n'));
+	dirty = true;
+}
+
 function code_keydown(code, evt){
 
 	var codeArray = codeget().split('\n');
@@ -993,76 +1015,95 @@ function readSingleFile(e) {
 }
 
 function handlepaste (e) {
-	var types, pastedData, savedContent;
-
-	if(mode !== 'sprite') return;
-
-	// Browsers that support the 'text/html' type in the Clipboard API (Chrome, Firefox 22+)
 	if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
-		types = e.clipboardData.types;
+		var types = e.clipboardData.types;
+		var handled = false;
 
 		if (((types instanceof DOMStringList) && types.contains("Files")) || (types.indexOf && types.indexOf('Files') !== -1)) {
 			var data = e.clipboardData.items[0];
 			if(data.kind == 'file' && data.type.match('^image/')) {
-
-				// Extract data and pass it to callback
 				var file = data.getAsFile();
-
-				var urlCreator = window.URL || window.webkitURL;
-				var img = new Image();
-				img.onload = function(){
-					// paste pixels into current sprite
-					var tmpCanvas = document.createElement('canvas');
-					tmpCanvas.width = img.width;
-					tmpCanvas.height = img.height;
-					tmpCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
-					var imgData = tmpCanvas.getContext('2d').getImageData(0, 0, img.width, img.height);
-					var pixels = imgData.data;
-
-					for(var i=0; i<img.width && i < 16 * cellwidth(); i++){
-						for(var j=0; j<img.height && j < 16 * cellheight(); j++){
-							// Get best matching color
-							var p = 4 * (i + j*img.width);
-							var r = pixels[p + 0];
-							var g = pixels[p + 1];
-							var b = pixels[p + 2];
-							var a = pixels[p + 3];
-
-							var bestColor = 0;
-							var distance = 1e10;
-							for(var k=0; k<16; k++){
-								var dec = palget(k);
-								var dr = decToR(dec);
-								var dg = decToG(dec);
-								var db = decToB(dec);
-								var da = palt(k) ? 0 : 255;
-								var newDistance = (r-dr)*(r-dr) + (g-dg)*(g-dg) + (b-db)*(b-db) + (a-da)*(a-da);
-								if(newDistance < distance){
-									bestColor = k;
-									distance = newDistance;
-								}
-							}
-
-							// write to spritesheet at current position
-							var x = (ssx(selectedSprite) * cellwidth() + i);
-							var y = (ssy(selectedSprite) * cellheight() + j);
-							sset(x, y, bestColor);
-							dirty = true;
-						}
-					}
-
-					urlCreator.revokeObjectURL(img.src);
-				};
-				img.src = urlCreator.createObjectURL(file);
-
-				// Stop the data from actually being pasted
-				e.stopPropagation();
-				e.preventDefault();
+				handlePasteImage(file);
+				handled = true;
 			}
+		} else if (((types instanceof DOMStringList) && types.contains("text/plain")) || (types.indexOf && types.indexOf('text/plain') !== -1)) {
+			var data = e.clipboardData.items[0];
+			if(data.kind == 'string' && data.type.match('^text/')) {
+				data.getAsString(handlePasteString);
+				handled = true;
+			}
+		}
+
+		if(handled){
+			// Stop from actually pasting
+			e.stopPropagation();
+			e.preventDefault();
 			return false;
 		}
 	}
 	return true;
+}
+
+function handlePasteImage(file){
+	if(mode !== 'sprite') return;
+
+	var urlCreator = window.URL || window.webkitURL;
+	var img = new Image();
+	img.onload = function(){
+		// paste pixels into current sprite
+		var tmpCanvas = document.createElement('canvas');
+		tmpCanvas.width = img.width;
+		tmpCanvas.height = img.height;
+		tmpCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+		var imgData = tmpCanvas.getContext('2d').getImageData(0, 0, img.width, img.height);
+		var pixels = imgData.data;
+
+		for(var i=0; i<img.width && i < 16 * cellwidth(); i++){
+			for(var j=0; j<img.height && j < 16 * cellheight(); j++){
+				// Get best matching color
+				var p = 4 * (i + j*img.width);
+				var r = pixels[p + 0];
+				var g = pixels[p + 1];
+				var b = pixels[p + 2];
+				var a = pixels[p + 3];
+
+				var bestColor = 0;
+				var distance = 1e10;
+				for(var k=0; k<16; k++){
+					var dec = palget(k);
+					var dr = decToR(dec);
+					var dg = decToG(dec);
+					var db = decToB(dec);
+					var da = palt(k) ? 0 : 255;
+					var newDistance = (r-dr)*(r-dr) + (g-dg)*(g-dg) + (b-db)*(b-db) + (a-da)*(a-da);
+					if(newDistance < distance){
+						bestColor = k;
+						distance = newDistance;
+					}
+				}
+
+				// write to spritesheet at current position
+				var x = (ssx(selectedSprite) * cellwidth() + i);
+				var y = (ssy(selectedSprite) * cellheight() + j);
+				sset(x, y, bestColor);
+				dirty = true;
+			}
+		}
+
+		urlCreator.revokeObjectURL(img.src);
+	};
+	img.src = urlCreator.createObjectURL(file);
+}
+
+function handlePasteString(str){
+	switch(mode){
+	case 'code':
+		code_paste(code, str);
+		break;
+	default:
+		console.log('Unhandled paste string!');
+		break;
+	}
 }
 
 window.addEventListener('paste', handlepaste, false);
