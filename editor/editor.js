@@ -1026,7 +1026,7 @@ function readSingleFile(e) {
 	};
 	reader.readAsText(file);
 }
-
+window.addEventListener('paste', handlepaste, false);
 function handlepaste (e) {
 	if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
 		var types = e.clipboardData.types;
@@ -1126,6 +1126,11 @@ function handlePasteString(str){
 	}
 }
 
-window.addEventListener('paste', handlepaste, false);
+document.addEventListener('copy', function(e){
+	if(mode === 'sprite'){
+		e.clipboardData.setData('text/plain', 'sprite:'+selectedSprite);
+		e.preventDefault();
+	}
+});
 
 })();
