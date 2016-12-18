@@ -619,18 +619,18 @@ exports.load = function(key){
 };
 
 function loadJsonFromUrl(url, callback){
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function(){
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(null, JSON.parse(xhr.responseText));
-            } else {
-                callback(xhr);
-            }
-        }
-    };
-    xhr.open("GET", url, true);
-    xhr.send();
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(){
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+				callback(null, JSON.parse(xhr.responseText));
+			} else {
+				callback(xhr);
+			}
+		}
+	};
+	xhr.open("GET", url, true);
+	xhr.send();
 }
 
 function download(key){

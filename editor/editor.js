@@ -975,21 +975,21 @@ function openfile(){
 }
 
 function readSingleFile(e) {
-  var file = e.target.files[0];
-  if (!file) {
-	return;
-  }
-  var reader = new FileReader();
-  reader.onload = function(e) {
-	try {
-		var json = JSON.parse(e.target.result);
-		loadjson(json);
-		dirty = true;
-	} catch(err){
-		console.error("Could not open file.");
+	var file = e.target.files[0];
+	if (!file) {
+		return;
 	}
-  };
-  reader.readAsText(file);
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		try {
+			var json = JSON.parse(e.target.result);
+			loadjson(json);
+			dirty = true;
+		} catch(err){
+			console.error("Could not open file.");
+		}
+	};
+	reader.readAsText(file);
 }
 
 function handlepaste (e) {
