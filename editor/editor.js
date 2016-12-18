@@ -2,32 +2,6 @@
 
 var editorDraw;
 
-cartridge({
-	containerId: 'container'
-});
-
-cellwidth(16);
-cellheight(16);
-width(256);
-height(240);
-
-palset(0, 0x000000);
-palset(1, 0x0829fc);
-palset(2, 0x7e2500);
-palset(3, 0x008000);
-palset(4, 0xab5236);
-palset(5, 0x5f574f);
-palset(6, 0xc2c3c7);
-palset(7, 0xfff1e8);
-palset(8, 0xe40405);
-palset(9, 0xffa300);
-palset(10, 0xfff024);
-palset(11, 0x00e756);
-palset(12, 0x8bf9fc);
-palset(13, 0x83769c);
-palset(14, 0xff8e7d);
-palset(15, 0xffffff);
-
 document.body.onresize = document.body.mozfullscreenchange = function(){
 	fit();
 	dirty = true;
@@ -1132,5 +1106,29 @@ document.addEventListener('copy', function(e){
 		e.preventDefault();
 	}
 });
+
+cartridge({ containerId: 'container' });
+
+cellwidth(16);
+cellheight(16);
+width(256);
+height(240);
+
+palset(0, 0x000000);
+palset(1, 0x0829fc);
+palset(2, 0x7e2500);
+palset(3, 0x008000);
+palset(4, 0xab5236);
+palset(5, 0x5f574f);
+palset(6, 0xc2c3c7);
+palset(7, 0xfff1e8);
+palset(8, 0xe40405);
+palset(9, 0xffa300);
+palset(10, 0xfff024);
+palset(11, 0x00e756);
+palset(12, 0x8bf9fc);
+palset(13, 0x83769c);
+palset(14, 0xff8e7d);
+palset(15, 0xffffff);
 
 })();
