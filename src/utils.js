@@ -125,3 +125,19 @@ exports.createCanvas = function(w,h){
 	canvas.height = h;
 	return canvas;
 }
+
+exports.createCanvasFromAscii = function(asciiArray){
+	var width = asciiArray[0].length;
+	var height = asciiArray.length;
+	var canvas = exports.createCanvas(width, height);
+	var ctx = canvas.getContext('2d');
+	var imageData = ctx.createImageData(width, height);
+	for(var i=0; i<height; i++){
+		for(var j=0; j<width; j++){
+			var p = 4 * (i * width + j);
+			imageData.data[p+3] = (asciiArray[i][j] === '#') ? 255 : 0;
+		}
+	}
+	ctx.putImageData(imageData, 0, 0);
+	return canvas;
+};
