@@ -13,6 +13,7 @@
   "scripts": {
     "build": "browserify --entry src/index.js --outfile build/cartridge.js",
     "minify": "uglifyjs --output build/cartridge.min.js -- build/cartridge.js",
+    "all": "npm run build && npm run minify",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
