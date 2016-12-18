@@ -1026,6 +1026,7 @@ function handlepaste (e) {
 							var r = pixels[p + 0];
 							var g = pixels[p + 1];
 							var b = pixels[p + 2];
+							var a = pixels[p + 3];
 
 							var bestColor = 0;
 							var distance = 1e10;
@@ -1034,7 +1035,8 @@ function handlepaste (e) {
 								var dr = decToR(dec);
 								var dg = decToG(dec);
 								var db = decToB(dec);
-								var newDistance = (r-dr)*(r-dr) + (g-dg)*(g-dg) + (b-db)*(b-db);
+								var da = palt(k) ? 0 : 255;
+								var newDistance = (r-dr)*(r-dr) + (g-dg)*(g-dg) + (b-db)*(b-db) + (a-da)*(a-da);
 								if(newDistance < distance){
 									bestColor = k;
 									distance = newDistance;

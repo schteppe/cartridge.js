@@ -320,7 +320,11 @@ exports.color = function(col){
 };
 
 exports.palt = function(col, t){
-	transparentColors[col] = t;
+	if(t !== undefined){
+		transparentColors[col] = t;
+	} else {
+		return transparentColors[col];
+	}
 };
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
@@ -730,8 +734,6 @@ function loadJSON(data){
 
 	spriteSheetDirty = true;
 };
-
-exports.loadjson = loadJSON;
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
