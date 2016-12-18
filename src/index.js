@@ -54,10 +54,11 @@ exports.cartridge = function(options){
 	var autoFit = options.autoFit !== undefined ? options.autoFit : true;
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
-	container.innerHTML = '';
+	var html = '';
 	for(var i=0; i<numCanvases; i++){
-		container.innerHTML += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensizeX + '" height="' + screensizeY + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
+		html += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensizeX + '" height="' + screensizeY + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
 	}
+	container.innerHTML = html;
 
 	for(var i=0; i<numCanvases; i++){
 		var c = document.getElementById('cartridgeCanvas' + i);
