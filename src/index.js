@@ -1,5 +1,6 @@
 var help = require('./help');
 var input = require('./input');
+var mouse = require('./mouse');
 var utils = require('./utils');
 var font = require('./font');
 var math = require('./math');
@@ -89,6 +90,7 @@ exports.cartridge = function(options){
 	canvas(0);
 
 	input.init(canvases);
+	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
 	fit();
@@ -753,11 +755,11 @@ exports.help = function(){
 };
 
 exports.mousex = function(){
-	return Math.floor(input.mousexNormalized() * screensizeX);
+	return Math.floor(mouse.mousexNormalized() * screensizeX);
 };
 
 exports.mousey = function(){
-	return Math.floor(input.mouseyNormalized() * screensizeY);
+	return Math.floor(mouse.mouseyNormalized() * screensizeY);
 };
 
 utils.makeGlobal(math);
@@ -765,6 +767,7 @@ utils.makeGlobal(sfx);
 utils.makeGlobal(code);
 utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
+utils.makeGlobal(mouse.global);
 
 help.hello();
 help.print();
