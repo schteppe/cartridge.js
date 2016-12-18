@@ -100,15 +100,11 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	var i,j;
 	var osc = channel.oscillators[allTypes[types[offset+0]]];
 	var gain = channel.gains[allTypes[types[offset+0]]];
-	gain.gain.value = volumes[offset+0] / 255;
-	if(osc.frequency){ // noises dont have frequency
-		osc.frequency.value = frequencies[offset+0] / 255 * (maxFrequency - minFrequency) + minFrequency;
-	}
 
 	// Get the length by looking at the volume values
 	var endPosition = 0;
 	for(i=0; i<volumes.length; i++){
-		if(volumes[i]){
+		if(volumes[i] > 0){
 			endPosition = i + 1;
 		}
 	}
