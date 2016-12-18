@@ -100,9 +100,11 @@ exports.cartridge = function(options){
 
 	if(autoFit){
 		// Resize (fit) the canvas when the container changes size
-		document.body.onresize = document.body.mozfullscreenchange = function(){
+		var resizeHandler = function(){
 			fit();
 		};
+		document.body.addEventListener('resize', resizeHandler);
+		document.body.addEventListener('mozfullscreenchange', resizeHandler);
 	}
 
 	// Start render loop
