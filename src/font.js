@@ -47,7 +47,9 @@ function redrawCanvases(){
 				data[4 * j + 2] = rgb[2];
 			}
 		}
-		coloredFontCanvases[i].getContext('2d').putImageData(fontImageData, 0, 0);
+		var ctx = coloredFontCanvases[i].getContext('2d');
+		utils.disableImageSmoothing(ctx);
+		ctx.putImageData(fontImageData, 0, 0);
 	}
 }
 
