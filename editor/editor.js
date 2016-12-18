@@ -1051,7 +1051,7 @@ function handlepaste (e) {
 						}
 					}
 
-					urlCreator.revokeObjectURL(file);
+					urlCreator.revokeObjectURL(img.src);
 				};
 				img.src = urlCreator.createObjectURL(file);
 
