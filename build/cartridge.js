@@ -2322,6 +2322,20 @@ if (module && typeof module.exports !== 'undefined') {
   };
 }
 },{}],2:[function(require,module,exports){
+var code = '';
+
+exports.codeset = function(codeString){
+	code = codeString;
+};
+
+exports.codeget = function(){
+	return code;
+};
+
+exports.run = function(){
+	eval.call(null, code);
+};
+},{}],3:[function(require,module,exports){
 exports.defaultPalette = function(){
 	return [
 		0x000000, // 0
@@ -2356,30 +2370,53 @@ exports.int2hex = function(int){
 
 	return hex;
 }
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var utils = require('./utils');
 
 var fontImageAsCanvas;
+var specialCharsCanvas;
 var coloredFontCanvases = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
+var specialChars = "\x80\x81\x82\x83\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99";
+var dirty = true; // Should redraw!
 
-exports.init = function(fontImage, paletteHex){
-	fontImageAsCanvas = document.createElement('canvas');
-	fontImageAsCanvas.width = fontImage.width;
-	fontImageAsCanvas.height = fontImage.height;
-	fontImageAsCanvas.getContext('2d').drawImage(fontImage, 0, 0, fontImage.width, fontImage.height);
-	exports.changePalette(paletteHex);
+exports.init = function(palHex){
+
+	// Normal font
+	fontImageAsCanvas = utils.createCanvasFromAscii([
+		"### ###  ## ##  ### ###  ## # # ### ### # # #   ### ##   ## ###  #  ###  ## ### # # # # # # # # # # ### ### ##  ### ### # # ### #   ### ### ###          #  ###  #   #  ##   ##       # #       # #  #           #   ## ##    # #            #   ## # #     # #",
+		"# # # # #   # # #   #   #   # #  #   #  # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   # # #  #    #   # # # #   #     # # # # #         # #   # #     # #     #  #   #   #  ### # # #    #       #   #   #   #   #    #      #  #    #    #   #",
+		"### ##  #   # # ##  ##  #   ###  #   #  ##  #   # # # # # # ### # # ##  ###  #  # # # # # #  #  ###  #  # #  #  ###  ## ### ### ###   # ### ###              ## #     # #     #      #   #              ### ###  #  #     # #     #          #   #  ### ###  # ",
+		"# # # # #   # # #   #   # # # #  #   #  # # #   # # # # # # #   ##  # #   #  #  # # ### ### # #   # #   # #  #  #     #   #   # # #   # # #   #      #          #     # #     #  #   #   #  ###          #           #   #   #   #    #      #  # #  #  #   #  ",
+		"# # ###  ## ### ### #   ### # # ### ##  # # ### # # # # ##  #    ## # # ##   #   ##  #  ### # # ### ### ### ### ### ###   # ### ###   # ###   #  #  #        #   #   #  ##   ##     #     #                      #   ## ##    # #    #  ###  #  ### # #     # #"
+	]);
+
+	// Special chars
+	specialCharsCanvas = utils.createCanvasFromAscii([
+		"####### # # # # #     #  #####  # #    #    ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
+		"#######  # # #  ####### ##   ##  # #   #### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
+		"####### # # # # # ### # ##   ## # #    ###  ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
+		"#######  # # #  # ### # ### ###  # #  ####  ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
+		"####### # # # #  #####   #####  # #      #  ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### "
+	]);
+
+	exports.changePalette(palHex);
 };
 
-exports.changePalette = function(paletteHex){
-	if(!fontImageAsCanvas) return;
+exports.changePalette = function(palHex){
+	paletteHex = palHex.slice();
+	dirty = true;
+};
 
+function redrawCanvases(){
 	// Make a canvas for each palette color for the font
 	while(coloredFontCanvases.length < paletteHex.length){
 		var coloredFontCanvas = document.createElement('canvas');
+		coloredFontCanvas.width = fontImageAsCanvas.width;
+		coloredFontCanvas.height = fontImageAsCanvas.height;
 		coloredFontCanvases.push(coloredFontCanvas);
 	}
 
@@ -2400,11 +2437,17 @@ exports.changePalette = function(paletteHex){
 				data[4 * j + 2] = rgb[2];
 			}
 		}
-		coloredFontCanvases[i].getContext('2d').putImageData(fontImageData, 0, 0);
+		var ctx = coloredFontCanvases[i].getContext('2d');
+		utils.disableImageSmoothing(ctx);
+		ctx.putImageData(fontImageData, 0, 0);
 	}
-};
+}
 
 exports.draw = function(ctx, text, x, y, col){
+	if(dirty){
+		redrawCanvases();
+		dirty = false;
+	}
 	for(var i=0; i<text.length; i++){
 		var index = chars.indexOf(text[i]);
 		if(index !== -1){
@@ -2419,16 +2462,7 @@ exports.draw = function(ctx, text, x, y, col){
 	}
 };
 
-exports.load = function(callback){
-	var im = new Image();
-	im.onload = function(){
-		callback(im);
-	};
-	// To decode, paste the URL below in a browser
-	// To encode, use e.g. https://www.base64-image.de/
-	im.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAFAgMAAAD3b9ImAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAAAAAAAQAAIRqQRwAAAABdFJOUwBA5thmAAAAsklEQVQY0zWQsREEMQgDFRB8SOACHH4ZBCqAQAVdeKVcmS8892CPwR7QGkirvSmx1EupJY5JvqdKEpDK7IUoMJ2tdoT9vXGDLFYVM93gVFaeI5gRfgoSYJQ9My2TyLHAvvbnA3Wxu0ahRpetaWBJDowUQ4A1DVzpUMqTYO/n2S8BD8HINyPnP2GoCjPY4bo/ASZ5Ce59XeDIGF5tdXYtdi6T6ljMiqwp8QxGF+8MUvvxDH5Q4jvxySaSSgAAAABJRU5ErkJggg==";
-};
-},{"./utils":10}],4:[function(require,module,exports){
+},{"./utils":12}],5:[function(require,module,exports){
 exports.hello = function(){
 	console.log([
 		'CARTRIDGE.JS',
@@ -2447,15 +2481,17 @@ exports.print = function(){
 		'save("name.json") Download the contents to a JSON file.'
 	].join('\n'));
 };
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var help = require('./help');
 var input = require('./input');
+var mouse = require('./mouse');
 var utils = require('./utils');
 var font = require('./font');
 var math = require('./math');
 var colors = require('./colors');
 var sfx = require('./sfx');
 var pixelops = require('./pixelops');
+var code = require('./code');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -2483,6 +2519,7 @@ var mapCacheCanvas;
 var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
+var spriteSheetDirty = false;
 var spriteFlags = utils.zeros(maxSprites);
 var spriteSheetPixels;
 var ctx;
@@ -2496,21 +2533,16 @@ var transparentColors = utils.zeros(16).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
-var code = '';
 
 exports.cartridge = function(options){
-	screensizeX = options.width !== undefined ? options.width : 128; // deprecated
-	screensizeY = options.height !== undefined ? options.height : 128; // deprecated
-	cellsizeX = options.cellwidth !== undefined ? options.cellwidth : 8; // deprecated
-	cellsizeY = options.cellheight !== undefined ? options.cellheight : 8; // deprecated
 	var autoFit = options.autoFit !== undefined ? options.autoFit : true;
-
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
-	container.innerHTML = '';
+	var html = '';
 	for(var i=0; i<numCanvases; i++){
-		container.innerHTML += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensizeX + '" height="' + screensizeY + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
+		html += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensizeX + '" height="' + screensizeY + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
 	}
+	container.innerHTML = html;
 
 	for(var i=0; i<numCanvases; i++){
 		var c = document.getElementById('cartridgeCanvas' + i);
@@ -2543,15 +2575,18 @@ exports.cartridge = function(options){
 	canvas(0);
 
 	input.init(canvases);
+	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
 	fit();
 
 	if(autoFit){
 		// Resize (fit) the canvas when the container changes size
-		document.body.onresize = document.body.mozfullscreenchange = function(){
+		var resizeHandler = function(){
 			fit();
 		};
+		document.body.addEventListener('resize', resizeHandler);
+		document.body.addEventListener('mozfullscreenchange', resizeHandler);
 	}
 
 	// Start render loop
@@ -2615,26 +2650,24 @@ exports.cartridge = function(options){
 	requestAnimationFrame(render);
 
 	// Init font
-	font.load(function(image){
-		font.init(image, paletteHex);
+	font.init(paletteHex);
 
-		if(code){
-			// Run code. If there's an error, let it throw.
-			run();
-		}
+	if(code.codeget()){
+		// Run code. If there's an error, let it throw.
+		code.run();
+	}
 
-		// Run the _load function
-		if(typeof(_load) !== 'undefined'){
-			try {
-				_load(postLoad);
-			} catch(err){
-				console.error(err);
-				postLoad(err);
-			}
-		} else {
-			postLoad();
+	// Run the _load function
+	if(typeof(_load) !== 'undefined'){
+		try {
+			_load(postLoad);
+		} catch(err){
+			console.error(err);
+			postLoad(err);
 		}
-	});
+	} else {
+		postLoad();
+	}
 };
 
 function postLoad(err){
@@ -2657,7 +2690,7 @@ function setCellSize(w,h){
 
 	// Reinit pixels
 	// TODO: copy over?
- 	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY);
+ 	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY, spriteSheetPixels);
 
 	// (re)init spritesheet canvas
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
@@ -2676,6 +2709,7 @@ function redrawSpriteSheet(){
 			redrawSpriteSheetPixel(i,j);
 		}
 	}
+	spriteSheetDirty = false;
 }
 
 function redrawSpriteSheetPixel(x,y){
@@ -2695,7 +2729,7 @@ function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
-	redrawSpriteSheet();
+	spriteSheetDirty = true;
 	font.changePalette(paletteHex);
 }
 
@@ -2771,7 +2805,11 @@ exports.color = function(col){
 };
 
 exports.palt = function(col, t){
-	transparentColors[col] = t;
+	if(t !== undefined){
+		transparentColors[col] = t;
+	} else {
+		return transparentColors[col];
+	}
 };
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
@@ -2898,6 +2936,8 @@ function ssy(n){
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
+	if(spriteSheetDirty) redrawSpriteSheet();
+
 	w = w !== undefined ? w : 1;
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
@@ -2978,7 +3018,10 @@ exports.sset = function(x, y, col){
 
 	var w = spriteSheetSizeX * cellsizeX;
 	spriteSheetPixels[y * w + x] = col;
+
+	if(spriteSheetDirty) redrawSpriteSheet();
 	redrawSpriteSheetPixel(x,y);
+	//spriteSheetDirty = true;
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
@@ -3061,32 +3104,19 @@ exports.load = function(key){
 };
 
 function loadJsonFromUrl(url, callback){
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function(){
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(null, JSON.parse(xhr.responseText));
-            } else {
-                callback(xhr);
-            }
-        }
-    };
-    xhr.open("GET", url, true);
-    xhr.send();
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(){
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+				callback(null, JSON.parse(xhr.responseText));
+			} else {
+				callback(xhr);
+			}
+		}
+	};
+	xhr.open("GET", url, true);
+	xhr.send();
 }
-
-
-exports.codeset = function(codeString){
-	code = codeString;
-};
-
-exports.codeget = function(){
-	return code;
-};
-
-exports.run = function run(){
-	eval.call(null, codeget());
-};
 
 function download(key){
 	key = key || 'export';
@@ -3113,7 +3143,7 @@ function toJSON(){
 		flags: [],
 		palette: palette.slice(0),
 		sfx: [],
-		code: codeget() // added in v2
+		code: code.codeget() // added in v2
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
@@ -3147,7 +3177,7 @@ function toJSON(){
 }
 
 function loadJSON(data){
-	codeset(data.code || '');
+	code.codeset(data.code || '');
 
 	if(data.width !== undefined){
 		width(data.width);
@@ -3187,14 +3217,13 @@ function loadJSON(data){
 		}
 	}
 
-	redrawSpriteSheet();
+	spriteSheetDirty = true;
 };
-
-exports.loadjson = loadJSON;
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
 	mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
+	if(spriteSheetDirty) redrawSpriteSheet();
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
 		ssx(n) * cellsizeX, ssy(n) * cellsizeY,
@@ -3209,165 +3238,82 @@ exports.help = function(){
 };
 
 exports.mousex = function(){
-	return Math.floor(input.mousexNormalized() * screensizeX);
+	return Math.floor(mouse.mousexNormalized() * screensizeX);
 };
 
 exports.mousey = function(){
-	return Math.floor(input.mouseyNormalized() * screensizeY);
+	return Math.floor(mouse.mouseyNormalized() * screensizeY);
 };
 
 utils.makeGlobal(math);
 utils.makeGlobal(sfx);
+utils.makeGlobal(code);
 utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
+utils.makeGlobal(mouse.global);
 
 help.hello();
 help.print();
-},{"./colors":2,"./font":3,"./help":4,"./input":6,"./math":7,"./pixelops":8,"./sfx":9,"./utils":10}],6:[function(require,module,exports){
+},{"./code":2,"./colors":3,"./font":4,"./help":5,"./input":7,"./math":8,"./mouse":9,"./pixelops":10,"./sfx":11,"./utils":12}],7:[function(require,module,exports){
 var math = require('./math');
+var utils = require('./utils');
 
-function defaultKeyMap(player){
-	if(player === 1){
-		return {
-			0: 37, // left
-			2: 38, // up
-			1: 39, // right
-			3: 40, // down
-			4: 90, // z
-			5: 88 // x
-		};
-	} else if(player === 2){
-		return {
-			0: 83, // S
-			2: 69, // E
-			1: 70, // F
-			3: 68, // D
-			4: 65, // A
-			5: 81 // Q
-		};
-	}
+var maxPlayers = 6; // 0-1 keyboard, 2-5 gamepad
+var maxButtons = 5;
+var buttonStates = utils.zeros(maxPlayers * maxButtons);
+var prevButtonStates = utils.zeros(maxPlayers * maxButtons);
+var buttonMap = { // Maps keycodes to button index
 
-	return null;
-}
+	// Player 0
+	37: 0, // left
+	39: 1, // right
+	38: 2, // up
+	40: 3, // down
+	90: 4, // z
+	88: 5, // x
 
-var keyboardStates = {};
-var keyboardStatesPrev = {};
-var keyMap0 = defaultKeyMap(1);
-var keyMap1 = defaultKeyMap(2);
-var _mousex = 0;
-var _mousey = 0;
-var _mousebtns = {};
-var gamepads = [];
+	// Player 1
+	83: 6, // S
+	70: 7, // F
+	69: 8, // E
+	68: 9, // D
+	65: 10, // A
+	81: 11  // Q
+};
+
 var stickSensitivity = 0.1;
 
-function buttonPressed(b) {
-	if (typeof(b) == "object") {
-		return b.pressed;
-	}
-	return b == 1.0;
-}
-
 exports.btn = function btn(i, player){
-	player = player !== undefined ? player : 1;
-	var keyCode = 0;
-
-	if(player === 1 || player === 2){
-		if(player === 1){
-			keyCode = keyMap0[i];
-		} else if(player === 2){
-			keyCode = keyMap1[i];
-		}
-		return !!keyboardStates[keyCode];
-	} else if(player === 3){
-		if(gamepads[0]){
-			if(i === 4) return buttonPressed(gamepads[0].buttons[0]);
-			else if(i === 5) return buttonPressed(gamepads[0].buttons[1]);
-			else if(i === 0) return gamepads[0].axes[0] < -stickSensitivity;
-			else if(i === 1) return gamepads[0].axes[0] > stickSensitivity;
-			else if(i === 2) return gamepads[0].axes[1] < -stickSensitivity;
-			else if(i === 3) return gamepads[0].axes[1] > stickSensitivity;
-		}
-	}
+	i = i !== undefined ? i : 0;
+	player = player !== undefined ? player : 0;
+	return buttonStates[player * maxPlayers + i];
 };
 
 // TODO: need to support multiple "prev" button states, so it can work in _update, _draw, etc
 exports.btnp = function btnp(i, player){
-	player = player !== undefined ? player : 1;
-	var keyCode = 0;
-
-	if(player === 1 || player === 2){
-		if(player === 1){
-			keyCode = keyMap0[i];
-		} else if(player === 2){
-			keyCode = keyMap1[i];
-		}
-		return !!keyboardStatesPrev[keyCode];
-	} else if(player === 3){
-		// TODO
-		return false;
-	}
+	i = i !== undefined ? i : 0;
+	player = player !== undefined ? player : 0;
+	return prevButtonStates[player * maxPlayers + i];
 };
 
 exports.update = function (){
-	var keys = Object.keys(keyboardStates);
-	for(var i=0; i<keys.length; i++){
-		keyboardStatesPrev[keys[i]] = keyboardStates[keys[i]];
+	updateGamepadInputs();
+	for(var i=0; i<buttonStates.length; i++){
+		prevButtonStates[i] = buttonStates[i];
 	}
-	updateGamepads();
 };
 
 exports.init = function(canvases){
 	addInputListeners(canvases);
 };
 
-exports.mousex = function mousex(){
-	return _mousex;
-};
-
-exports.mousey = function mousey(){
-	return _mousey;
-};
-
-exports.mousebtn = function mousebtn(i){
-	return !!_mousebtns[i];
-};
-
 function addInputListeners(canvases){
-	canvasListeners = {
-		click: function(evt){
-			if(typeof(_click) !== 'undefined'){
-				updateMouseCoords(evt, canvases);
-				_mousebtns[evt.which] = true;
-				_click();
-				_mousebtns[evt.which] = false;
-			}
-		},
-		mousedown: function(evt){
-			_mousebtns[evt.which] = true;
-			updateMouseCoords(evt, canvases);
-		},
-		mouseup: function(evt){
-			_mousebtns[evt.which] = false;
-			updateMouseCoords(evt, canvases);
-		},
-		mouseleave: function(evt){
-			_mousebtns[evt.which] = false;
-			updateMouseCoords(evt, canvases);
-		}
-	};
-	for(var key in canvasListeners){
-		canvases[0].addEventListener(key, canvasListeners[key]);
-	}
-
 	bodyListeners = {
 		keydown: function(e){
-			keyboardStates[e.keyCode] = 1;
+			buttonStates[buttonMap[e.keyCode]] = 1;
 		},
 		keyup: function(e){
-			keyboardStates[e.keyCode] = 0;
-		},
-		mousemove: function(evt){
-			updateMouseCoords(evt, canvases);
+			buttonStates[buttonMap[e.keyCode]] = 0;
 		}
 	};
 	for(var key in bodyListeners){
@@ -3385,37 +3331,34 @@ function removeInputListeners(canvases){
 	}
 }
 
-function updateMouseCoords(evt, canvases){
-	if(canvases.indexOf(evt.target) === -1) return;
-
-	var rect = evt.target.getBoundingClientRect(); // cache this?
-	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
-	var subx = 0;
-	var suby = 0;
-	_mousex = (evt.clientX - rect.left - subx) / rect.width;
-	_mousey = (evt.clientY - rect.top - suby) / rect.height;
+function buttonPressed(b) {
+	if (typeof(b) == "object") {
+		return b.pressed;
+	}
+	return b == 1.0;
 }
 
-function updateGamepads() {
-	gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+function updateGamepadInputs() {
+	var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+
+	for(var i=0; i<gamepads.length && i < maxPlayers; i++){
+		if(!gamepads[i]) continue;
+		var p = 2 + maxPlayers * i;
+		buttonStates[p + 0] = gamepads[i].axes[0] < -stickSensitivity;
+		buttonStates[p + 1] = gamepads[i].axes[0] > stickSensitivity;
+		buttonStates[p + 2] = gamepads[i].axes[1] < -stickSensitivity;
+		buttonStates[p + 3] = gamepads[i].axes[1] > stickSensitivity;
+		buttonStates[p + 4] = buttonPressed(gamepads[i].buttons[0]);
+		buttonStates[p + 5] = buttonPressed(gamepads[i].buttons[1]);
+	}
 }
-
-exports.mousexNormalized = function(){
-	return _mousex;
-};
-
-exports.mouseyNormalized = function(){
-	return _mousey;
-};
 
 exports.global = {
 	btn: exports.btn,
-	btnp: exports.btnp,
-	mousebtn: exports.mousebtn,
-	click: exports.click
+	btnp: exports.btnp
 };
 
-},{"./math":7}],7:[function(require,module,exports){
+},{"./math":8,"./utils":12}],8:[function(require,module,exports){
 var tau = 2 * Math.PI;
 
 module.exports = {
@@ -3450,7 +3393,92 @@ module.exports = {
 		return Math.min(Math.max(x,min), max);
 	}
 };
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+var math = require('./math');
+var utils = require('./utils');
+
+var _mousex = 0;
+var _mousey = 0;
+var _mousebtns = {};
+
+exports.init = function(canvases){
+	addListeners(canvases);
+};
+
+exports.mousex = function mousex(){ return _mousex; };
+exports.mousey = function mousey(){ return _mousey; };
+
+exports.mousebtn = function mousebtn(i){
+	return !!_mousebtns[i];
+};
+
+function addListeners(canvases){
+	canvasListeners = {
+		click: function(evt){
+			if(typeof(_click) !== 'undefined'){
+				updateMouseCoords(evt, canvases);
+				_mousebtns[evt.which] = true;
+				_click();
+				_mousebtns[evt.which] = false;
+			}
+		},
+		mousedown: function(evt){
+			_mousebtns[evt.which] = true;
+			updateMouseCoords(evt, canvases);
+		},
+		mouseup: function(evt){
+			_mousebtns[evt.which] = false;
+			updateMouseCoords(evt, canvases);
+		},
+		mouseleave: function(evt){
+			_mousebtns[evt.which] = false;
+			updateMouseCoords(evt, canvases);
+		}
+	};
+	for(var key in canvasListeners){
+		canvases[0].addEventListener(key, canvasListeners[key]);
+	}
+
+	bodyListeners = {
+		mousemove: function(evt){
+			updateMouseCoords(evt, canvases);
+		}
+	};
+	for(var key in bodyListeners){
+		document.body.addEventListener(key, bodyListeners[key]);
+	}
+}
+
+function removeListeners(canvases){
+	var key;
+	for(key in canvasListeners){
+		canvases[0].removeEventListener(key, canvasListeners[key]);
+	}
+	for(key in bodyListeners){
+		document.body.removeEventListener(key, bodyListeners[key]);
+	}
+}
+
+function updateMouseCoords(evt, canvases){
+	if(canvases.indexOf(evt.target) === -1) return;
+
+	var rect = evt.target.getBoundingClientRect(); // cache this?
+	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
+	var subx = 0;
+	var suby = 0;
+	_mousex = (evt.clientX - rect.left - subx) / rect.width;
+	_mousey = (evt.clientY - rect.top - suby) / rect.height;
+}
+
+exports.mousexNormalized = function(){ return _mousex; };
+exports.mouseyNormalized = function(){ return _mousey; };
+
+exports.global = {
+	mousebtn: exports.mousebtn,
+	click: exports.click
+};
+
+},{"./math":8,"./utils":12}],10:[function(require,module,exports){
 var ctx;
 var writeData = null;
 var readData = null;
@@ -3532,7 +3560,7 @@ exports.flush = function(){
 		}
 	}
 };
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
 var minFrequency = 0;
@@ -3635,15 +3663,11 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	var i,j;
 	var osc = channel.oscillators[allTypes[types[offset+0]]];
 	var gain = channel.gains[allTypes[types[offset+0]]];
-	gain.gain.value = volumes[offset+0] / 255;
-	if(osc.frequency){ // noises dont have frequency
-		osc.frequency.value = frequencies[offset+0] / 255 * (maxFrequency - minFrequency) + minFrequency;
-	}
 
 	// Get the length by looking at the volume values
 	var endPosition = 0;
 	for(i=0; i<volumes.length; i++){
-		if(volumes[i]){
+		if(volumes[i] > 0){
 			endPosition = i + 1;
 		}
 	}
@@ -3731,13 +3755,20 @@ exports.sfx = function(n, channelIndex, offset){
 	return true;
 };
 
+var whiteNoiseData = null;
 function createWhiteNoise(destination) {
 	var bufferSize = 2 * context.sampleRate,
 		noiseBuffer = context.createBuffer(1, bufferSize, context.sampleRate),
 		output = noiseBuffer.getChannelData(0);
-	for (var i = 0; i < bufferSize; i++) {
-		output[i] = Math.random() * 2 - 1;
+
+	if(!whiteNoiseData){
+		whiteNoiseData = new Float32Array(bufferSize);
+		for (var i = 0; i < bufferSize; i++) {
+			whiteNoiseData[i] = Math.random() * 2 - 1;
+		}
 	}
+
+	output.set(whiteNoiseData);
 
 	var whiteNoise = context.createBufferSource();
 	whiteNoise.buffer = noiseBuffer;
@@ -3748,30 +3779,34 @@ function createWhiteNoise(destination) {
 	return whiteNoise;
 }
 
+var dft = null;
 function createPulse(destination){
-	var count = 128;
-	var vals2 = [];
-	for (var i = 0; i < count; i++) {
-		var x = i / count;
-		var val = x < 0.25 ? -1 : 1;
-		vals2.push(val);
-	}
+	if(!dft){
+		var count = 128;
+		var vals2 = [];
+		for (var i = 0; i < count; i++) {
+			var x = i / count;
+			var val = x < 0.25 ? -1 : 1;
+			vals2.push(val);
+		}
 
- 	var a = new DFT(vals2.length);
-	a.forward(vals2);
-	var hornTable = context.createPeriodicWave(
-		new Float32Array(a.real), // DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
-		new Float32Array(a.imag)
+		dft = new DFT(vals2.length);
+		dft.forward(vals2);
+	}
+	// DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
+	var table = context.createPeriodicWave(
+		new Float32Array(dft.real),
+		new Float32Array(dft.imag)
 	);
 
 	osc = context.createOscillator();
-	osc.setPeriodicWave(hornTable);
+	osc.setPeriodicWave(table);
 	osc.connect(destination);
 
 	return osc;
 }
 
-},{"./utils":10,"dsp.js/dsp":1}],10:[function(require,module,exports){
+},{"./utils":12,"dsp.js/dsp":1}],12:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
@@ -3877,12 +3912,20 @@ exports.fullscreen = function(element) {
 	return true;
 };
 
-exports.zeros = function(n){
-	var a = [];
-	while(n--){
-		a.push(0);
+exports.zeros = function(n, reusableArray){
+	if(reusableArray === undefined){
+		var a = [];
+		while(n--){
+			a.push(0);
+		}
+		return a;
+	} else {
+		for(var i=0; i<reusableArray.length; i++){
+			reusableArray[0] = 0;
+		}
+		while(reusableArray.length < n) reusableArray.push(0);
+		return reusableArray;
 	}
-	return a;
 };
 
 exports.createCanvas = function(w,h){
@@ -3891,4 +3934,20 @@ exports.createCanvas = function(w,h){
 	canvas.height = h;
 	return canvas;
 }
-},{}]},{},[5]);
+
+exports.createCanvasFromAscii = function(asciiArray){
+	var width = asciiArray[0].length;
+	var height = asciiArray.length;
+	var canvas = exports.createCanvas(width, height);
+	var ctx = canvas.getContext('2d');
+	var imageData = ctx.createImageData(width, height);
+	for(var i=0; i<height; i++){
+		for(var j=0; j<width; j++){
+			var p = 4 * (i * width + j);
+			imageData.data[p+3] = (asciiArray[i][j] === '#') ? 255 : 0;
+		}
+	}
+	ctx.putImageData(imageData, 0, 0);
+	return canvas;
+};
+},{}]},{},[6]);
