@@ -569,6 +569,7 @@ var a = mid(1, 2, 3); // 2
 ```
 
 ===
+
 ### min ( x , y )
 
 <dl>
@@ -583,6 +584,8 @@ var a = mid(1, 2, 3); // 2
 ```js
 var z = min(x, y);
 ```
+
+===
 
 ### mousebtn ( n )
 
@@ -599,6 +602,8 @@ Get mouse button state.
 var isdown = mousebtn(i);
 ```
 
+===
+
 ### mousex ()
 
 Returns the x position of the mouse.
@@ -607,11 +612,15 @@ Returns the x position of the mouse.
 var x = mousex();
 ```
 
+===
+
 ### mousey ()
 
 ```js
 var y = mousey();
 ```
+
+===
 
 ### mset ( x , y , n )
 
@@ -630,6 +639,8 @@ Set the sprite to be rendered at a cell position in the map.
 mset(x, y, i);
 ```
 
+===
+
 ### palt ( col , t )
 
 <dl>
@@ -642,6 +653,8 @@ mset(x, y, i);
 ```js
 palt(col, t);
 ```
+
+===
 
 ### pget ( x , y )
 
@@ -659,6 +672,8 @@ Get a pixel color on the screen.
 ```js
 var color = pget(x, y);
 ```
+
+===
 
 ### print ( text , x , y , [col] )
 
@@ -679,6 +694,8 @@ Print a text on the screen.
 print(text, x, y, col);
 ```
 
+===
+
 ### pset ( x , y , col )
 
 Set pixel color.
@@ -695,6 +712,8 @@ Set pixel color.
 ```js
 pset(x, y, col);
 ```
+
+===
 
 ### rect ( x0 , y0 , x1 , y1 , [col] )
 
@@ -716,6 +735,8 @@ Draw a rectangle.
 rect(x0, y0, x1, y1, col);
 ```
 
+===
+
 ### rectfill ( x0 , y0 , x1 , y1 , [col] )
 
 Draw a filled rectangle.
@@ -736,6 +757,8 @@ Draw a filled rectangle.
 rectfill(x0, y0, x1, y1, col);
 ```
 
+===
+
 ### rnd ( [n] )
 
 Get a random number.
@@ -751,6 +774,8 @@ Get a random number.
 y = rnd(x);
 ```
 
+===
+
 ### sfx ( n , [channel] , [offset] )
 
 <dl>
@@ -765,6 +790,8 @@ y = rnd(x);
 ```js
 sfx(n [, channelIndex [, offset]]);
 ```
+
+===
 
 ### sget ( x , y )
 
@@ -783,6 +810,8 @@ Get a sprite sheet pixel color.
 color = sget(x, y);
 ```
 
+===
+
 ### sgn ( x )
 
 Returns the sign of a number
@@ -794,30 +823,39 @@ Returns the sign of a number
 	<dd></dd>
 </dl>
 
-
 ```js
 y = sgn(x);
 ```
+
+===
 
 ### sin ( x )
 ```js
 y = sin(x);
 ```
 
+===
+
 ### spr ( n , x , y , w , h , flip_x , flip_y )
 ```js
 spr(n, x, y, w, h, flip_x, flip_y);
 ```
+
+===
 
 ### sqrt ( x )
 ```js
 var y = sqrt(25); // 5
 ```
 
+===
+
 ### sset ( x , y )
 ```js
 sset(x, y, col);
 ```
+
+===
 
 ### time ()
 
