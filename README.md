@@ -691,7 +691,7 @@ Print a text on the screen.
 </dl>
 
 ```js
-print(text, x, y, col);
+print("Hello world!", 15, 10, 7);
 ```
 
 ===
@@ -710,7 +710,7 @@ Set pixel color.
 </dl>
 
 ```js
-pset(x, y, col);
+pset(5, 4, 8); // Set pixel (5,4) to color 8
 ```
 
 ===
