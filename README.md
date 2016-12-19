@@ -121,10 +121,10 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 * [camera(x,y)](#camera--x--y-)
 * [clip(x,y,w,h)](#clip--x--y--w--h-) - only allow rendering within a rectangle
-* [cls()](#cls) - clear screen
-* [color(col)](#color) - set default color
-* [fget(n)](#fget) - get flags for a map cell
-* [fset(n,flags)](#fset) - set flags for a map cell
+* [cls()](#cls-) - clear screen
+* [color(col)](#color--col-) - set default color
+* [fget(n)](#fget--n-) - get flags for a map cell
+* [fset(n,flags)](#fset--n--flags-) - set flags for a map cell
 * [palget(n)](#palget) - get palette color in decimal form
 * [palset(n,col)](#palset) - set palette color
 * [palt(col,t)](#palt) - set transparency color
@@ -134,7 +134,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [rect(x0,y0,x1,y1,[col])](#rect) - draw rectangle
 * [rectfill(x0,y0,x1,y1,[col])](#rectfill) - draw filled rectangle
 * [sget(x,y)](#sget) - get spritesheet pixel color
-* [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr) - draw sprite
+* [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr--n--x--y--w--h--flip_x--flip_y-) - draw sprite
 * [sset(x,y,col)](#sset) - set pixel color in spritesheet
 
 #### Map
@@ -637,6 +637,36 @@ Set the sprite to be rendered at a cell position in the map.
 
 ```js
 mset(x, y, i);
+```
+
+===
+
+### palget ( col )
+
+<dl>
+	<dt>col</dt>
+	<dd>Palette color</dd>
+	<dt>Return value</dt>
+	<dd></dd>
+</dl>
+
+```js
+var dec = palget(0); // 0x000000
+```
+
+===
+
+### palset ( col , dec )
+
+<dl>
+	<dt>col</dt>
+	<dd>Palette color</dd>
+	<dt>dec</dt>
+	<dd>Color in decimal format</dd>
+</dl>
+
+```js
+palset(1, 0xff0000); // Set color 1 to red
 ```
 
 ===
