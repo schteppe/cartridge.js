@@ -109,7 +109,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [btn(n,[p])](#btn--n--player-) - get button state
 * [btnp(n,[p])](#btnp--n--player-) - get previous button state
 * [_click](#_click-) - called upon click
-* [mousebtn(n)](#mousebtn) - get mousebutton state
+* [mousebtn(n)](#mousebtn--n-) - get mousebutton state
 * [mousex()](#mousex) - get mouse x position
 * [mousey()](#mousey) - get mouse x position
 
