@@ -100,41 +100,41 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [min(x,y)](#min--x--y-) - minimum
 * [mix(a,b,alpha)](#mix--a--b--alpha-) - linear interpolation
 * [rnd(n)](#rnd--n-) - generate floating point random number between 0 and n
-* [sgn(x)](#sgn) - sign
+* [sgn(x)](#sgn--x-) - sign
 * [sin(x)](#sin--x-) - sine
 * [sqrt(x)](#sqrt--x-) - square root
 
 #### Input
 
 * [btn(n,[p])](#btn--n--player-) - get button state
-* [btnp(n,[p])](#btn) - get previous button state
+* [btnp(n,[p])](#btnp--n--player-) - get previous button state
 * [_click](#_click-) - called upon click
-* [mousebtn(n)](#mousebtn) - get mousebutton state
-* [mousex()](#mousex) - get mouse x position
-* [mousey()](#mousey) - get mouse x position
+* [mousebtn(n)](#mousebtn--n-) - get mousebutton state
+* [mousex()](#mousex-) - get mouse x position
+* [mousey()](#mousey-) - get mouse x position
 
 #### Audio
 
-* [sfx(n,[channel],[offset])](#sfx) - play sound effect
+* [sfx(n,[channel],[offset])](#sfx--n--channel--offset-) - play sound effect
 
 #### Graphics
 
-* [camera(x,y)](#camera)
-* [clip(x,y,w,h)](#clip) - only allow rendering within a rectangle
-* [cls()](#cls) - clear screen
-* [color(col)](#color) - set default color
-* [fget(n)](#fget) - get flags for a map cell
-* [fset(n,flags)](#fset) - set flags for a map cell
-* [palget(n)](#palget) - get palette color in decimal form
-* [palset(n,col)](#palset) - set palette color
-* [palt(col,t)](#palt) - set transparency color
-* [pget(x,y)](#pget) - get screen pixel color
+* [camera(x,y)](#camera--x--y-)
+* [clip(x,y,w,h)](#clip--x--y--w--h-) - only allow rendering within a rectangle
+* [cls()](#cls-) - clear screen
+* [color(col)](#color--col-) - set default color
+* [fget(n)](#fget--n-) - get flags for a map cell
+* [fset(n,flags)](#fset--n--flags-) - set flags for a map cell
+* [palget(n)](#palget--col-) - get palette color in decimal form
+* [palset(n,col)](#palset--col--dec-) - set palette color
+* [palt(col,t)](#palt--col--t-) - set transparency color
+* [pget(x,y)](#pget--x--y-) - get screen pixel color
 * [print(text,x,y,[col])](#print) - draw text
 * [pset(x,y,col)](#pset) - set pixel color
 * [rect(x0,y0,x1,y1,[col])](#rect) - draw rectangle
 * [rectfill(x0,y0,x1,y1,[col])](#rectfill) - draw filled rectangle
 * [sget(x,y)](#sget) - get spritesheet pixel color
-* [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr) - draw sprite
+* [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr--n--x--y--w--h--flip_x--flip_y-) - draw sprite
 * [sset(x,y,col)](#sset) - set pixel color in spritesheet
 
 #### Map
@@ -256,6 +256,25 @@ var angle = atan2(x,y);
 
 ```js
 if(btn(0)){
+  player.x--;
+}
+```
+
+===
+
+### btnp ( n , [player] )
+
+<dl>
+	<dt>n</dt>
+	<dd>See `btn`</dd>
+	<dt>player</dt>
+	<dd>See `btn`</dd>
+	<dt>Return value</dt>
+	<dd>A boolean indicating if the button is pressed or not.</dd>
+</dl>
+
+```js
+if(btnp(0)){
   player.x--;
 }
 ```
@@ -550,6 +569,7 @@ var a = mid(1, 2, 3); // 2
 ```
 
 ===
+
 ### min ( x , y )
 
 <dl>
@@ -564,6 +584,8 @@ var a = mid(1, 2, 3); // 2
 ```js
 var z = min(x, y);
 ```
+
+===
 
 ### mousebtn ( n )
 
@@ -580,6 +602,8 @@ Get mouse button state.
 var isdown = mousebtn(i);
 ```
 
+===
+
 ### mousex ()
 
 Returns the x position of the mouse.
@@ -588,11 +612,15 @@ Returns the x position of the mouse.
 var x = mousex();
 ```
 
+===
+
 ### mousey ()
 
 ```js
 var y = mousey();
 ```
+
+===
 
 ### mset ( x , y , n )
 
@@ -611,6 +639,38 @@ Set the sprite to be rendered at a cell position in the map.
 mset(x, y, i);
 ```
 
+===
+
+### palget ( col )
+
+<dl>
+	<dt>col</dt>
+	<dd>Palette color</dd>
+	<dt>Return value</dt>
+	<dd></dd>
+</dl>
+
+```js
+var dec = palget(0); // 0x000000
+```
+
+===
+
+### palset ( col , dec )
+
+<dl>
+	<dt>col</dt>
+	<dd>Palette color</dd>
+	<dt>dec</dt>
+	<dd>Color in decimal format</dd>
+</dl>
+
+```js
+palset(1, 0xff0000); // Set color 1 to red
+```
+
+===
+
 ### palt ( col , t )
 
 <dl>
@@ -623,6 +683,8 @@ mset(x, y, i);
 ```js
 palt(col, t);
 ```
+
+===
 
 ### pget ( x , y )
 
@@ -641,6 +703,8 @@ Get a pixel color on the screen.
 var color = pget(x, y);
 ```
 
+===
+
 ### print ( text , x , y , [col] )
 
 Print a text on the screen.
@@ -657,8 +721,10 @@ Print a text on the screen.
 </dl>
 
 ```js
-print(text, x, y, col);
+print("Hello world!", 15, 10, 7);
 ```
+
+===
 
 ### pset ( x , y , col )
 
@@ -674,8 +740,10 @@ Set pixel color.
 </dl>
 
 ```js
-pset(x, y, col);
+pset(5, 4, 8); // Set pixel (5,4) to color 8
 ```
+
+===
 
 ### rect ( x0 , y0 , x1 , y1 , [col] )
 
@@ -697,6 +765,8 @@ Draw a rectangle.
 rect(x0, y0, x1, y1, col);
 ```
 
+===
+
 ### rectfill ( x0 , y0 , x1 , y1 , [col] )
 
 Draw a filled rectangle.
@@ -717,6 +787,8 @@ Draw a filled rectangle.
 rectfill(x0, y0, x1, y1, col);
 ```
 
+===
+
 ### rnd ( [n] )
 
 Get a random number.
@@ -732,6 +804,8 @@ Get a random number.
 y = rnd(x);
 ```
 
+===
+
 ### sfx ( n , [channel] , [offset] )
 
 <dl>
@@ -746,6 +820,8 @@ y = rnd(x);
 ```js
 sfx(n [, channelIndex [, offset]]);
 ```
+
+===
 
 ### sget ( x , y )
 
@@ -764,6 +840,8 @@ Get a sprite sheet pixel color.
 color = sget(x, y);
 ```
 
+===
+
 ### sgn ( x )
 
 Returns the sign of a number
@@ -775,35 +853,67 @@ Returns the sign of a number
 	<dd></dd>
 </dl>
 
-
 ```js
 y = sgn(x);
 ```
 
+===
+
 ### sin ( x )
+
+Calculates the sine of x.
+
+<dl>
+	<dt>x</dt>
+	<dd>A normalized angle. Number between 0 and 1.</dd>
+	<dt>Return value</dt>
+	<dd>The sine of x.</dd>
+</dl>
+
 ```js
-y = sin(x);
+var a = sin(0); // 0
+var b = sin(0.25); // 1
+var c = sin(0.5); // 0
+var d = sin(0.75); // -1
+var e = sin(1); // 0
 ```
 
-### spr ( n , x , y , w , h , flip_x , flip_y )
+===
+
+### spr ( n , x , y , [w] , [h] , [flip_x] , [flip_y] )
+
+Draws a sprite.
+
 ```js
-spr(n, x, y, w, h, flip_x, flip_y);
+spr(1, 10, 20); // draw sprite 1 at coordinate (10,20)
 ```
+
+===
 
 ### sqrt ( x )
+
+Square root.
+
 ```js
 var y = sqrt(25); // 5
 ```
 
+===
+
 ### sset ( x , y )
+
+Set sprite sheet pixel color.
+
 ```js
 sset(x, y, col);
 ```
+
+===
 
 ### time ()
 
 Get current time in seconds.
 
 ```js
-t = time();
+var t = time();
 ```
