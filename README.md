@@ -110,17 +110,17 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [btnp(n,[p])](#btnp--n--player-) - get previous button state
 * [_click](#_click-) - called upon click
 * [mousebtn(n)](#mousebtn--n-) - get mousebutton state
-* [mousex()](#mousex) - get mouse x position
-* [mousey()](#mousey) - get mouse x position
+* [mousex()](#mousex-) - get mouse x position
+* [mousey()](#mousey-) - get mouse x position
 
 #### Audio
 
-* [sfx(n,[channel],[offset])](#sfx) - play sound effect
+* [sfx(n,[channel],[offset])](#sfx--n--channel--offset-) - play sound effect
 
 #### Graphics
 
-* [camera(x,y)](#camera)
-* [clip(x,y,w,h)](#clip) - only allow rendering within a rectangle
+* [camera(x,y)](#camera--x--y-)
+* [clip(x,y,w,h)](#clip--x--y--w--h-) - only allow rendering within a rectangle
 * [cls()](#cls) - clear screen
 * [color(col)](#color) - set default color
 * [fget(n)](#fget) - get flags for a map cell
