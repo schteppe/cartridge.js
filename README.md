@@ -125,10 +125,10 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [color(col)](#color--col-) - set default color
 * [fget(n)](#fget--n-) - get flags for a map cell
 * [fset(n,flags)](#fset--n--flags-) - set flags for a map cell
-* [palget(n)](#palget) - get palette color in decimal form
-* [palset(n,col)](#palset) - set palette color
-* [palt(col,t)](#palt) - set transparency color
-* [pget(x,y)](#pget) - get screen pixel color
+* [palget(n)](#palget--col-) - get palette color in decimal form
+* [palset(n,col)](#palset--col--dec-) - set palette color
+* [palt(col,t)](#palt--col--t-) - set transparency color
+* [pget(x,y)](#pget--x--y-) - get screen pixel color
 * [print(text,x,y,[col])](#print) - draw text
 * [pset(x,y,col)](#pset) - set pixel color
 * [rect(x0,y0,x1,y1,[col])](#rect) - draw rectangle
