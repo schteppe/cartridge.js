@@ -119,14 +119,20 @@ exports.zeros = function(n, reusableArray){
 	}
 };
 
-exports.createCanvas = function(w,h){
+exports.createCanvas = function(w,h,pixelSmoothing){
+	pixelSmoothing = pixelSmoothing === undefined ? true : pixelSmoothing;
+
 	var canvas = document.createElement('canvas');
 	canvas.width = w;
 	canvas.height = h;
+	if(pixelSmoothing){
+		exports.disableImageSmoothing(canvas.getContext('2d'));
+	}
+
 	return canvas;
 }
 
-exports.createCanvasFromAscii = function(asciiArray){
+exports.createCanvasFromAscii = function(asciiArray, charToColorMap){
 	var width = asciiArray[0].length;
 	var height = asciiArray.length;
 	var canvas = exports.createCanvas(width, height);
@@ -135,7 +141,11 @@ exports.createCanvasFromAscii = function(asciiArray){
 	for(var i=0; i<height; i++){
 		for(var j=0; j<width; j++){
 			var p = 4 * (i * width + j);
-			imageData.data[p+3] = (asciiArray[i][j] === '#') ? 255 : 0;
+			var rgba = charToColorMap[asciiArray[i][j]];
+			imageData.data[p+0] = rgba[0];
+			imageData.data[p+1] = rgba[1];
+			imageData.data[p+2] = rgba[2];
+			imageData.data[p+3] = rgba[3];
 		}
 	}
 	ctx.putImageData(imageData, 0, 0);
