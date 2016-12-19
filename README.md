@@ -100,7 +100,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 * [min(x,y)](#min--x--y-) - minimum
 * [mix(a,b,alpha)](#mix--a--b--alpha-) - linear interpolation
 * [rnd(n)](#rnd--n-) - generate floating point random number between 0 and n
-* [sgn(x)](#sgn) - sign
+* [sgn(x)](#sgn--x-) - sign
 * [sin(x)](#sin--x-) - sine
 * [sqrt(x)](#sqrt--x-) - square root
 
