@@ -928,6 +928,23 @@ function clearSprite(spriteNumber){
 	}
 }
 
+function flipSprite(spriteNumber, flipX){
+	var pixels = [];
+	var i,j,w=cellwidth(),h=cellheight();
+	for(i=0; i<w; i++){
+		for(j=0; j<h; j++){
+			var x = ssx(spriteNumber)*w + i;
+			var y = ssy(spriteNumber)*h + j;
+			var newX = flipX ? ssx(spriteNumber)*w + w - 1 - i : x;
+			var newY = flipX ? y : ssy(spriteNumber)*h + h - 1 - j;
+			pixels.push(newX, newY, sget(x,y));
+		}
+	}
+	for(i=0; i<pixels.length; i+=3){
+		sset(pixels[i+0],pixels[i+1],pixels[i+2]);
+	}
+}
+
 function copySprite(from,to){
 	var i,j;
 	for(i=0; i<cellwidth(); i++){
@@ -950,6 +967,8 @@ window.addEventListener('keydown', function(evt){
 		code_stop(code);
 	} else {
 		switch(evt.keyCode){
+			case 86: if(mode === 'sprite') flipSprite(selectedSprite, false); break; // V
+			case 70: if(mode === 'sprite') flipSprite(selectedSprite, true); break; // F
 			case 82: if(mode === 'sprite') rotateSprite(selectedSprite); break; // R
 			case 46: if(mode === 'sprite') clearSprite(selectedSprite); break; // delete
 			case 81: if(mode === 'sprite') selectedSprite--; break;
