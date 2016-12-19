@@ -830,20 +830,40 @@ y = sgn(x);
 ===
 
 ### sin ( x )
+
+Calculates the sine of x.
+
+<dl>
+	<dt>x</dt>
+	<dd>A normalized angle. Number between 0 and 1.</dd>
+	<dt>Return value</dt>
+	<dd>The sine of x.</dd>
+</dl>
+
 ```js
-y = sin(x);
+var a = sin(0); // 0
+var b = sin(0.25); // 1
+var c = sin(0.5); // 0
+var d = sin(0.75); // -1
+var e = sin(1); // 0
 ```
 
 ===
 
-### spr ( n , x , y , w , h , flip_x , flip_y )
+### spr ( n , x , y , [w] , [h] , [flip_x] , [flip_y] )
+
+Draws a sprite.
+
 ```js
-spr(n, x, y, w, h, flip_x, flip_y);
+spr(1, 10, 20); // draw sprite 1 at coordinate (10,20)
 ```
 
 ===
 
 ### sqrt ( x )
+
+Square root.
+
 ```js
 var y = sqrt(25); // 5
 ```
@@ -851,6 +871,9 @@ var y = sqrt(25); // 5
 ===
 
 ### sset ( x , y )
+
+Set sprite sheet pixel color.
+
 ```js
 sset(x, y, col);
 ```
@@ -862,5 +885,5 @@ sset(x, y, col);
 Get current time in seconds.
 
 ```js
-t = time();
+var t = time();
 ```
