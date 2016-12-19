@@ -107,7 +107,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 #### Input
 
 * [btn(n,[p])](#btn--n--player-) - get button state
-* [btnp(n,[p])](#btn) - get previous button state
+* [btnp(n,[p])](#btnp--n--player-) - get previous button state
 * [_click](#_click-) - called upon click
 * [mousebtn(n)](#mousebtn) - get mousebutton state
 * [mousex()](#mousex) - get mouse x position
@@ -256,6 +256,25 @@ var angle = atan2(x,y);
 
 ```js
 if(btn(0)){
+  player.x--;
+}
+```
+
+===
+
+### btnp ( n , [player] )
+
+<dl>
+	<dt>n</dt>
+	<dd>See `btn`</dd>
+	<dt>player</dt>
+	<dd>See `btn`</dd>
+	<dt>Return value</dt>
+	<dd>A boolean indicating if the button is pressed or not.</dd>
+</dl>
+
+```js
+if(btnp(0)){
   player.x--;
 }
 ```
