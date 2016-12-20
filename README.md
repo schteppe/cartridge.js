@@ -884,6 +884,23 @@ var e = sin(1); // 0
 
 Draws a sprite.
 
+<dl>
+	<dt>n</dt>
+	<dd>Sprite index</dd>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>y</dt>
+	<dd></dd>
+	<dt>w</dt>
+	<dd></dd>
+	<dt>h</dt>
+	<dd></dd>
+	<dt>flip_x</dt>
+	<dd></dd>
+	<dt>flip_y</dt>
+	<dd></dd>
+</dl>
+
 ```js
 spr(1, 10, 20); // draw sprite 1 at coordinate (10,20)
 ```
@@ -894,18 +911,37 @@ spr(1, 10, 20); // draw sprite 1 at coordinate (10,20)
 
 Square root.
 
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd></dd>
+</dl>
+
+
 ```js
 var y = sqrt(25); // 5
 ```
 
 ===
 
-### sset ( x , y )
+### sset ( x , y , col )
 
 Set sprite sheet pixel color.
 
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>y</dt>
+	<dd></dd>
+	<dt>col</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd></dd>
+</dl>
+
 ```js
-sset(x, y, col);
+sset(10, 5, 3);
 ```
 
 ===
