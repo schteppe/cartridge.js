@@ -38,9 +38,9 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 `r` rotate
 
-`q` previous
+`f` / `v` flip left / right
 
-`w` next
+`q` / `w` previous / next
 
 `ctrl + c` copy sprite
 
@@ -62,15 +62,11 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 `tab` insert two spaces
 
-`end` end of line
-
-`home` start of line
+`home` / `end` end/start of line
 
 `ctrl + k` remove characters on the right on the line
 
-`pagedown` move down a screen
-
-`pageup` move up a screen
+`pagedown` / `pageup` move up/down a screen
 
 #### Run mode
 
