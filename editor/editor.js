@@ -749,7 +749,7 @@ function code_clamp_crow(code, codeArray){
 
 function code_paste(code, str){
 	var codeArray = codeget().split('\n');
-	var newCode = str.split('\n');
+	var newCode = str.toLowerCase().split('\n');
 
 	// Insert first row at current position
 	var before = codeArray[code.crow].substr(0,code.ccol);
