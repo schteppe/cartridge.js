@@ -169,3 +169,5 @@ function _draw(){
 	map(0, 0, 0, 0, 128, 32, 0);
 	player.draw(alpha());
 }
+
+run();

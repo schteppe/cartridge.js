@@ -23,11 +23,19 @@
 		// Initialize
 		cartridge({ containerId: 'container' });
 
+		function _init(){
+			console.log('Game loop started!');
+		}
+
 		// Draw function
 		function _draw(){
 			rectfill(0,0,width(),height(),7);
-			print('HELLO WORLD!', 30 + sin(time()*5) * 10, 10, 0);
+			print('HELLO WORLD!', 30 + sin(time()) * 10, 10, 0);
 		}
+
+		// Start game loop
+		run();
+
 	</script>
 </body>
 </html>
