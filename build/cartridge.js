@@ -2373,36 +2373,16 @@ exports.int2hex = function(int){
 },{}],4:[function(require,module,exports){
 var utils = require('./utils');
 
-var fontImageAsCanvas;
-var specialCharsCanvas;
 var coloredFontCanvases = [];
+var coloredSpecialCharsCanvases = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
 var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
-var specialChars = "\x80\x81\x82\x83\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99";
+var specialChars = "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99";
 var dirty = true; // Should redraw!
 
 exports.init = function(palHex){
-
-	// Normal font
-	fontImageAsCanvas = utils.createCanvasFromAscii([
-		"### ###  ## ##  ### ###  ## # # ### ### # # #   ### ##   ## ###  #  ###  ## ### # # # # # # # # # # ### ### ##  ### ### # # ### #   ### ### ###          #  ###  #   #  ##   ##       # #       # #  #           #   ## ##    # #            #   ## # #     # #",
-		"# # # # #   # # #   #   #   # #  #   #  # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   # # #  #    #   # # # #   #     # # # # #         # #   # #     # #     #  #   #   #  ### # # #    #       #   #   #   #   #    #      #  #    #    #   #",
-		"### ##  #   # # ##  ##  #   ###  #   #  ##  #   # # # # # # ### # # ##  ###  #  # # # # # #  #  ###  #  # #  #  ###  ## ### ### ###   # ### ###              ## #     # #     #      #   #              ### ###  #  #     # #     #          #   #  ### ###  # ",
-		"# # # # #   # # #   #   # # # #  #   #  # # #   # # # # # # #   ##  # #   #  #  # # ### ### # #   # #   # #  #  #     #   #   # # #   # # #   #      #          #     # #     #  #   #   #  ###          #           #   #   #   #    #      #  # #  #  #   #  ",
-		"# # ###  ## ### ### #   ### # # ### ##  # # ### # # # # ##  #    ## # # ##   #   ##  #  ### # # ### ### ### ### ### ###   # ### ###   # ###   #  #  #        #   #   #  ##   ##     #     #                      #   ## ##    # #    #  ###  #  ### # #     # #"
-	]);
-
-	// Special chars
-	specialCharsCanvas = utils.createCanvasFromAscii([
-		"####### # # # # #     #  #####  # #    #    ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
-		"#######  # # #  ####### ##   ##  # #   #### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
-		"####### # # # # # ### # ##   ## # #    ###  ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
-		"#######  # # #  # ### # ### ###  # #  ####  ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ",
-		"####### # # # #  #####   #####  # #      #  ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### ####### "
-	]);
-
 	exports.changePalette(palHex);
 };
 
@@ -2412,34 +2392,33 @@ exports.changePalette = function(palHex){
 };
 
 function redrawCanvases(){
-	// Make a canvas for each palette color for the font
-	while(coloredFontCanvases.length < paletteHex.length){
-		var coloredFontCanvas = document.createElement('canvas');
-		coloredFontCanvas.width = fontImageAsCanvas.width;
-		coloredFontCanvas.height = fontImageAsCanvas.height;
-		coloredFontCanvases.push(coloredFontCanvas);
-	}
-
-	var fontImageData = fontImageAsCanvas.getContext('2d').getImageData(0, 0, fontImageAsCanvas.width, fontImageAsCanvas.height);
+	var backgroundColor = [0,0,0,0];
 	for(var i=0; i<paletteHex.length; i++){
-		// Replace color
-		var data = fontImageData.data;
-		for(var j=0; j<data.length/4; j++){
-			if(!(
-				data[4 * j + 0] === 0 &&
-				data[4 * j + 1] === 0 &&
-				data[4 * j + 2] === 0 &&
-				data[4 * j + 3] === 0
-			)){
-				var rgb = utils.hexToRgb(paletteHex[i]);
-				data[4 * j + 0] = rgb[0];
-				data[4 * j + 1] = rgb[1];
-				data[4 * j + 2] = rgb[2];
-			}
-		}
-		var ctx = coloredFontCanvases[i].getContext('2d');
-		utils.disableImageSmoothing(ctx);
-		ctx.putImageData(fontImageData, 0, 0);
+		var rgba = utils.hexToRgb(paletteHex[i]);
+		rgba[3] = 255;
+
+		var colorMap = {
+			'#': rgba,
+			' ': backgroundColor
+		};
+
+		// Normal font
+		coloredFontCanvases[i] = utils.createCanvasFromAscii([
+			"### ###  ## ##  ### ###  ## # # ### ### # # #   ### ##   ## ###  #  ###  ## ### # # # # # # # # # # ### ### ##  ### ### # # ### #   ### ### ###          #  ###  #   #  ##   ##       # #       # #  #           #   ## ##    # #            #   ## # #     # #",
+			"# # # # #   # # #   #   #   # #  #   #  # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   # # #  #    #   # # # #   #     # # # # #         # #   # #     # #     #  #   #   #  ### # # #    #       #   #   #   #   #    #      #  #    #    #   #",
+			"### ##  #   # # ##  ##  #   ###  #   #  ##  #   # # # # # # ### # # ##  ###  #  # # # # # #  #  ###  #  # #  #  ###  ## ### ### ###   # ### ###              ## #     # #     #      #   #              ### ###  #  #     # #     #          #   #  ### ###  # ",
+			"# # # # #   # # #   #   # # # #  #   #  # # #   # # # # # # #   ##  # #   #  #  # # ### ### # #   # #   # #  #  #     #   #   # # #   # # #   #      #          #     # #     #  #   #   #  ###          #           #   #   #   #    #      #  # #  #  #   #  ",
+			"# # ###  ## ### ### #   ### # # ### ##  # # ### # # # # ##  #    ## # # ##   #   ##  #  ### # # ### ### ### ### ### ###   # ### ###   # ###   #  #  #        #   #   #  ##   ##     #     #                      #   ## ##    # #    #  ###  #  ### # #     # #"
+		], colorMap);
+
+		// Special chars
+		coloredSpecialCharsCanvases[i] = utils.createCanvasFromAscii([
+			"####### # # # # #     #  #####  #   #     #      ###    ## ##    ###     ###     ###    #####  #######    ###   #####     #             #####     #     #####   #####                   #####  ####### # # # # ",
+			"#######  # # #  ####### ##   ##   #   #   ####  ### #   #####   ## ##    ###    #####  ###  ## # ### #    #    ##   ##   ###           ##  ###   ###     ###   ### ### # #     #   #   ## # ##         # # # # ",
+			"####### # # # # # ### # ##   ## #   #     ###   #####   #####  ### ###  #####  ####### ##   ## #######    #    ## # ##  #####  # # # # ##   ## #######    #    ##   ##  #  # #  # # #  ### ### ####### # # # # ",
+			"#######  # # #  # ### # ### ###   #   #  ####   #####    ###    ## ##    ###    # # #  ###  ## #     #  ###    ##   ##   ###           ##  ###  #####    ###   ##   ##      #    #   # ## # ##         # # # # ",
+			"####### # # # #  #####   #####  #   #       #    ###      #      ###     # #    # ###   #####  #######  ###     #####     #             #####   #   #   #####   #####                   #####  ####### # # # # "
+		], colorMap);
 	}
 }
 
@@ -2448,17 +2427,29 @@ exports.draw = function(ctx, text, x, y, col){
 		redrawCanvases();
 		dirty = false;
 	}
+
+	var position = 0;
 	for(var i=0; i<text.length; i++){
 		var index = chars.indexOf(text[i]);
 		if(index !== -1){
 			ctx.drawImage(
 				coloredFontCanvases[col],
-				index * (fontX), 0,
+				index * fontX, 0,
 				fontX, fontY,
-				x + (fontX) * i, y,
+				x + fontX * position, y,
 				fontX, fontY
 			);
+		} else if((index = specialChars.indexOf(text[i])) !== -1){
+			ctx.drawImage(
+				coloredSpecialCharsCanvases[col],
+				index * fontX * 2, 0,
+				fontX * 2, fontY,
+				x + fontX * position, y,
+				fontX * 2, fontY
+			);
+			position++;
 		}
+		position++;
 	}
 };
 
@@ -3928,14 +3919,20 @@ exports.zeros = function(n, reusableArray){
 	}
 };
 
-exports.createCanvas = function(w,h){
+exports.createCanvas = function(w,h,pixelSmoothing){
+	pixelSmoothing = pixelSmoothing === undefined ? true : pixelSmoothing;
+
 	var canvas = document.createElement('canvas');
 	canvas.width = w;
 	canvas.height = h;
+	if(pixelSmoothing){
+		exports.disableImageSmoothing(canvas.getContext('2d'));
+	}
+
 	return canvas;
 }
 
-exports.createCanvasFromAscii = function(asciiArray){
+exports.createCanvasFromAscii = function(asciiArray, charToColorMap){
 	var width = asciiArray[0].length;
 	var height = asciiArray.length;
 	var canvas = exports.createCanvas(width, height);
@@ -3944,7 +3941,11 @@ exports.createCanvasFromAscii = function(asciiArray){
 	for(var i=0; i<height; i++){
 		for(var j=0; j<width; j++){
 			var p = 4 * (i * width + j);
-			imageData.data[p+3] = (asciiArray[i][j] === '#') ? 255 : 0;
+			var rgba = charToColorMap[asciiArray[i][j]];
+			imageData.data[p+0] = rgba[0];
+			imageData.data[p+1] = rgba[1];
+			imageData.data[p+2] = rgba[2];
+			imageData.data[p+3] = rgba[3];
 		}
 	}
 	ctx.putImageData(imageData, 0, 0);
