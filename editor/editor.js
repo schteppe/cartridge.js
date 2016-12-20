@@ -395,7 +395,7 @@ window._click = function _click(){
 	}
 }
 
-var editorLoad = window._load = function _load(callback){
+var editorLoad = window._init = function _init(){
 
 	setInterval(function(){
 		save('autosave');
@@ -419,7 +419,6 @@ var editorLoad = window._load = function _load(callback){
 	}
 
 	dirty = true;
-	callback();
 };
 
 editorDraw = window._draw = function _draw(){
@@ -1011,7 +1010,7 @@ function readSingleFile(e) {
 	reader.onload = function(e) {
 		try {
 			var json = JSON.parse(e.target.result);
-			loadjson(json);
+			load(json);
 			dirty = true;
 		} catch(err){
 			console.error("Could not open file.");
@@ -1149,5 +1148,7 @@ palset(12, 0x8bf9fc);
 palset(13, 0x83769c);
 palset(14, 0xff8e7d);
 palset(15, 0xffffff);
+
+run();
 
 })();

@@ -167,30 +167,31 @@ exports.cartridge = function(options){
 
 	// Init font
 	font.init(paletteHex);
-
-	if(code.codeget()){
-		// Run code. If there's an error, let it throw.
-		code.run();
-	}
-
-	// Run the _load function
-	if(typeof(_load) !== 'undefined'){
-		try {
-			_load(postLoad);
-		} catch(err){
-			console.error(err);
-			postLoad(err);
-		}
-	} else {
-		postLoad();
-	}
 };
 
-function postLoad(err){
+exports.run = function(){
+	if(loaded){
+		runKill();
+	}
+	code.run();
+	runInit();
+};
+
+function runInit(){
 	loaded = true;
 	if(typeof(_init) !== 'undefined'){
 		try {
 			_init();
+		} catch(err){
+			console.error(err);
+		}
+	}
+}
+function runKill(){
+	loaded = false;
+	if(typeof(_kill) !== 'undefined'){
+		try {
+			_kill();
 		} catch(err){
 			console.error(err);
 		}
@@ -600,21 +601,24 @@ exports.save = function(key){
 };
 
 exports.load = function(key){
-	key = key || 'save';
-	if(key.indexOf('.json') !== -1){
-		loadJsonFromUrl(key,function(err,json){
-			if(json){
-				loadJSON(json);
-				run();
-			}
-		});
+	if(typeof(key) === 'object'){
+		loadJSON(key);
 	} else {
-		try {
-			var data = JSON.parse(localStorage.getItem(key));
-			loadJSON(data);
-			return true;
-		} catch(err) {
-			return false;
+		key = key || 'save';
+		if(key.indexOf('.json') !== -1){
+			loadJsonFromUrl(key,function(err,json){
+				if(json){
+					loadJSON(json);
+				}
+			});
+		} else {
+			try {
+				var data = JSON.parse(localStorage.getItem(key));
+				loadJSON(data);
+				return true;
+			} catch(err) {
+				return false;
+			}
 		}
 	}
 };
@@ -734,6 +738,14 @@ function loadJSON(data){
 	}
 
 	spriteSheetDirty = true;
+
+	if(typeof(_load) !== 'undefined'){
+		try {
+			_load();
+		} catch(err){
+			console.error(err);
+		}
+	}
 };
 
 function updateMapCacheCanvas(x,y){
