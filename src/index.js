@@ -754,11 +754,11 @@ exports.help = function(){
 };
 
 exports.mousex = function(){
-	return Math.floor(mouse.mousexNormalized() * screensizeX);
+	return Math.floor(mouse.mousexNormalized() * (screensizeX-1));
 };
 
 exports.mousey = function(){
-	return Math.floor(mouse.mouseyNormalized() * screensizeY);
+	return Math.floor(mouse.mouseyNormalized() * (screensizeY-1));
 };
 
 utils.makeGlobal(math);

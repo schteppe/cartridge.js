@@ -70,8 +70,8 @@ function updateMouseCoords(evt, canvases){
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var subx = 0;
 	var suby = 0;
-	_mousex = (evt.clientX - rect.left - subx) / rect.width;
-	_mousey = (evt.clientY - rect.top - suby) / rect.height;
+	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
+	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
 }
 
 exports.mousexNormalized = function(){ return _mousex; };
