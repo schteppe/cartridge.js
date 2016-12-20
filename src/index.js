@@ -617,6 +617,7 @@ exports.load = function(key){
 				loadJSON(data);
 				return true;
 			} catch(err) {
+				// localStorage is undefined (iOS private mode) or something else went wrong
 				return false;
 			}
 		}
