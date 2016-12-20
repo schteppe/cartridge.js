@@ -780,7 +780,7 @@ Draw a filled rectangle.
 </dl>
 
 ```js
-rectfill(x0, y0, x1, y1, col);
+rectfill(10, 10, 20, 20, 3);
 ```
 
 ===
@@ -790,14 +790,16 @@ rectfill(x0, y0, x1, y1, col);
 Get a random number.
 
 <dl>
-	<dt>n (optional, default is 0)</dt>
-	<dd>Max</dd>
+	<dt>n (optional, default is 1)</dt>
+	<dd>Max random number</dd>
 	<dt>Return value</dt>
 	<dd>A floating point number between 0 and n.</dd>
 </dl>
 
 ```js
-y = rnd(x);
+var a = rnd(); // a random number between 0 and 1
+var b = rnd(1); // a random number between 0 and 1
+var c = rnd(2); // a random number between 0 and 2
 ```
 
 ===
@@ -814,7 +816,7 @@ y = rnd(x);
 </dl>
 
 ```js
-sfx(n [, channelIndex [, offset]]);
+sfx(0); // play sound effect 0
 ```
 
 ===
@@ -833,7 +835,7 @@ Get a sprite sheet pixel color.
 </dl>
 
 ```js
-color = sget(x, y);
+var color = sget(4, 3);
 ```
 
 ===
@@ -850,7 +852,10 @@ Returns the sign of a number
 </dl>
 
 ```js
-y = sgn(x);
+var a = sgn(-2); // -1
+var b = sgn(1); // 1
+var c = sgn(42); // 1
+var d = sgn(0); // 0
 ```
 
 ===
