@@ -408,7 +408,10 @@ color(2); // new default color is 2
 </dl>
 
 ```js
-var y = cos(x);
+var a = cos(0); // 1
+var b = cos(1); // 1
+var c = cos(0.25); // 0
+var c = cos(0.5); // -1
 ```
 
 ===
@@ -423,7 +426,7 @@ var y = cos(x);
 </dl>
 
 ```js
-var flags = fget(n);
+var flags = fget(0); // get flags for sprite 0
 ```
 
 ===
@@ -467,7 +470,7 @@ Set flags for a sprite
 </dl>
 
 ```js
-fset(n, flags);
+fset(1, 1|2|4); // set first, second and third flag for sprite 1
 ```
 
 ===
@@ -540,7 +543,7 @@ Get a cell from the map, as a sprite index.
 </dl>
 
 ```js
-var sprite = mget(x, y);
+var sprite = mget(1, 2); // get sprite at position 1,2 in the map
 ```
 
 ===
@@ -578,7 +581,7 @@ var a = mid(1, 2, 3); // 2
 </dl>
 
 ```js
-var z = min(x, y);
+var z = min(1, 2); // 1
 ```
 
 ===
@@ -595,7 +598,7 @@ Get mouse button state.
 </dl>
 
 ```js
-var isdown = mousebtn(i);
+var isdown = mousebtn(1);
 ```
 
 ===
