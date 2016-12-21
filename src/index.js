@@ -778,7 +778,7 @@ exports.mousey = function(){
 
 utils.makeGlobal(music);
 utils.makeGlobal(math);
-utils.makeGlobal(sfx);
+utils.makeGlobal(sfx.global);
 utils.makeGlobal(code);
 utils.makeGlobal(exports);
 utils.makeGlobal(input.global);

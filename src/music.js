@@ -1,4 +1,5 @@
 var utils = require('./utils');
+var sfx = require('./sfx');
 
 /**
  * Equal Temperament Tuning
@@ -6,9 +7,11 @@ var utils = require('./utils');
  */
 var frequencies = [16.35, 17.32, 17.32, 18.35, 19.45, 19.45, 20.60, 21.83, 23.12, 23.12, 24.50, 25.96, 25.96, 27.50, 29.14, 29.14, 30.87, 32.70, 34.65, 34.65, 36.71, 38.89, 38.89, 41.20, 43.65, 46.25, 46.25, 49.00, 51.91, 51.91, 55.00, 58.27, 58.27, 61.74, 65.41, 69.30, 69.30, 73.42, 77.78, 77.78, 82.41, 87.31, 92.50, 92.50, 98.00, 103.83, 103.83, 110.00, 116.54, 116.54, 123.47, 130.81, 138.59, 138.59, 146.83, 155.56, 155.56, 164.81, 174.61, 185.00, 185.00, 196.00, 207.65, 207.65, 220.00, 233.08, 233.08, 246.94, 261.63, 277.18, 277.18, 293.66, 311.13, 311.13, 329.63, 349.23, 369.99, 369.99, 392.00, 415.30, 415.30, 440.00, 466.16, 466.16, 493.88, 523.25, 554.37, 554.37, 587.33, 622.25, 622.25, 659.26, 698.46, 739.99, 739.99, 783.99, 830.61, 830.61, 880.00, 932.33, 932.33, 987.77, 1046.50, 1108.73, 1108.73, 1174.66, 1244.51, 1244.51, 1318.51, 1396.91, 1479.98, 1479.98, 1567.98, 1661.22, 1661.22, 1760.00, 1864.66, 1864.66, 1975.53, 2093.00, 2217.46, 2217.46, 2349.32, 2489.02, 2489.02, 2637.02, 2793.83, 2959.96, 2959.96, 3135.96, 3322.44, 3322.44, 3520.00, 3729.31, 3729.31, 3951.07, 4186.01];
 
+var noteNames = "C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B".split(' ');
+
 // pitch: 0-16. Octave: 0-8
 function getFrequency(pitch, octave){
-	return frequencies[octave * 17 + pitch];
+	return frequencies[octave * noteNames.length + pitch];
 }
 
 var groups = [];
@@ -31,6 +34,7 @@ exports.gsget = function(group){
 };
 
 exports.npset = function(group, position, pitch){
+	if(pitch < 0 || pitch > noteNames.length) throw new Error('Pitch out of range');
 	groups[group].notes[5 * position + 0] = pitch;
 };
 
@@ -38,13 +42,13 @@ exports.npget = function(group, position){
 	return groups[group].notes[5 * position + 0];
 };
 
-var noteNames = "C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B".split(' ');
 exports.nnget = function(note){
 	return noteNames[note % 17];
 };
 
 // Octave is the "pitch multiplier", from 0 to 8 (more limits?)
 exports.noset = function(group, position, octave){
+	if(octave < 0 || octave > 8) throw new Error('Octave out of range');
 	groups[group].notes[5 * position + 1] = octave;
 };
 
@@ -54,11 +58,20 @@ exports.noget = function(group, position){
 
 // volume for a note
 exports.nvset = function(group, position, volume){
-	groups[group].notes[5 * position + 1] = volume;
+	groups[group].notes[5 * position + 3] = volume;
 };
 
 exports.nvget = function(group, position){
-	return groups[group].notes[5 * position + 1];
+	return groups[group].notes[5 * position + 3];
+};
+
+// instrument for a note
+exports.niset = function(group, position, instrument){
+	groups[group].notes[5 * position + 2] = instrument;
+};
+
+exports.niget = function(group, position){
+	return groups[group].notes[5 * position + 2];
 };
 
 // Set a group to be played in a channel in a pattern.
@@ -75,6 +88,98 @@ exports.mfset = function(pattern, flags){
 	patterns[pattern * 5 + 0] = flags;
 };
 
-exports.music = function(pattern){
-
+// Play or stop music
+exports.music = function(pattern, fade, channelmask){
+	fade = fade !== undefined ? fade : 0;
+	channelmask = channelmask !== undefined ? channelmask : 0;
 };
+
+// Create audio stuff
+// TODO: share with sfx - create a class?
+var context = sfx.getContext();
+var masterGain = sfx.getMasterGain();
+var channels = [];
+var oscillatorTypes = sfx.getOscillatorTypes();
+var allTypes = sfx.getAllOscillatorTypes();
+for(var j=0; j<4; j++){ // one for each channel in the music
+	var channel = {
+		instruments: {},
+		gains: {}
+	};
+	channels.push(channel);
+
+	// add 4 basic instruments and gains to channel
+	for(var i=0; i<oscillatorTypes.length; i++){
+		var osc = context.createOscillator();
+		var type = oscillatorTypes[i];
+		osc.type = type;
+
+		var gain = context.createGain();
+		gain.gain.value = 0;
+		gain.connect(masterGain);
+
+		osc.connect(gain);
+		channel.instruments[type] = osc;
+		channel.gains[type] = gain;
+		osc.start(context.currentTime);
+	}
+
+	// Add square25 / pulse
+	var gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var square25 = sfx.createPulse(gain);
+	channel.instruments.square25 = square25;
+	channel.gains.square25 = gain;
+	square25.start(context.currentTime);
+
+	// Add white noise
+	gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var whiteNoise = sfx.createWhiteNoise(gain);
+	channel.instruments.white = whiteNoise;
+	channel.gains.white = gain;
+	whiteNoise.start(context.currentTime);
+}
+
+// preview play a group
+exports.group = function(groupIndex, channelIndex){
+	scheduleGroup(groupIndex, channelIndex||0, context.currentTime);
+};
+
+function scheduleGroup(groupIndex, channelIndex, time){
+	var i,j;
+	var group = groups[groupIndex];
+	var channel = channels[channelIndex];
+	var speed = group.speed;
+	var n = 0;
+	for(var i=0; i < 32; i++){ // all rows in the group
+		var volume = nvget(groupIndex, i);
+		var pitch = npget(groupIndex, i);
+		var octave = noget(groupIndex, i);
+		var instrument = niget(groupIndex, i);
+		if(volume === 0){
+			continue;
+		}
+		var startPosition = i;
+		var endPosition = i+1;
+		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && endPosition < 32){
+			endPosition++;
+		}
+		var startTime = time + startPosition / speed;
+		var endTime = time + endPosition / speed;
+
+		var osc = channel.instruments[allTypes[instrument]];
+		var gain = channel.gains[allTypes[instrument]];
+
+		if(osc.frequency){ // noise doesn't have frequency
+			var frequency = getFrequency(pitch, octave);
+			osc.frequency.setValueAtTime(frequency, startTime);
+		}
+		gain.gain.setValueAtTime(volume, startTime);
+		gain.gain.setValueAtTime(0, endTime);
+
+		i = endPosition - 1;
+	}
+}

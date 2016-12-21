@@ -1,12 +1,24 @@
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
+
 var minFrequency = 0;
 var maxFrequency = 1000;
+var maxEffects = 64;
+var channels = [];
+var effects = [];
 
 var context = new createAudioContext();
 var masterGain = context.createGain();
 masterGain.gain.value = 1;
 masterGain.connect(context.destination);
+
+exports.getContext = function(){
+	return context;
+};
+
+exports.getMasterGain = function(){
+	return masterGain;
+};
 
 var oscillatorTypes = [
 	'sine',
@@ -20,60 +32,13 @@ var allTypes = oscillatorTypes.concat([
 	'white'
 ]);
 
-var channels = [];
-for(var j=0; j<4; j++){
-	var channel = {
-		oscillators: {},
-		gains: {},
-		occupiedUntil: -1
-	};
-	channels.push(channel);
+exports.getOscillatorTypes = function(){
+	return oscillatorTypes;
+};
 
-	// add 4 basic oscillators and gains to channel
-	for(var i=0; i<oscillatorTypes.length; i++){
-		var osc = context.createOscillator();
-		var type = oscillatorTypes[i];
-		osc.type = type;
-
-		var gain = context.createGain();
-		gain.gain.value = 0;
-		gain.connect(masterGain);
-
-		osc.connect(gain);
-		channel.oscillators[type] = osc;
-		channel.gains[type] = gain;
-		osc.start(context.currentTime);
-	}
-
-	// Add square25 / pulse
-	var gain = context.createGain();
-	gain.gain.value = 0;
-	gain.connect(masterGain);
-	var square25 = createPulse(gain);
-	channel.oscillators.square25 = square25;
-	channel.gains.square25 = gain;
-	square25.start(context.currentTime);
-
-	// Add white noise
-	gain = context.createGain();
-	gain.gain.value = 0;
-	gain.connect(masterGain);
-	var whiteNoise = createWhiteNoise(gain);
-	channel.oscillators.white = whiteNoise;
-	channel.gains.white = gain;
-	whiteNoise.start(context.currentTime);
-}
-
-var maxEffects = 64;
-var effects = [];
-for(var i=0; i<maxEffects; i++){
-	effects.push({
-		types: utils.zeros(maxEffects),
-		frequencies: utils.zeros(maxEffects),
-		volumes: utils.zeros(maxEffects),
-		speed: 16
-	});
-}
+exports.getAllOscillatorTypes = function(){
+	return allTypes;
+};
 
 function createAudioContext(desiredSampleRate) {
 	var AudioCtor = window.AudioContext || window.webkitAudioContext;
@@ -193,7 +158,7 @@ exports.sfx = function(n, channelIndex, offset){
 };
 
 var whiteNoiseData = null;
-function createWhiteNoise(destination) {
+exports.createWhiteNoise = function(destination) {
 	var bufferSize = 2 * context.sampleRate,
 		noiseBuffer = context.createBuffer(1, bufferSize, context.sampleRate),
 		output = noiseBuffer.getChannelData(0);
@@ -217,7 +182,7 @@ function createWhiteNoise(destination) {
 }
 
 var dft = null;
-function createPulse(destination){
+exports.createPulse = function(destination){
 	if(!dft){
 		var count = 128;
 		var vals2 = [];
@@ -242,3 +207,69 @@ function createPulse(destination){
 
 	return osc;
 }
+
+
+for(var j=0; j<4; j++){
+	var channel = {
+		oscillators: {},
+		gains: {},
+		occupiedUntil: -1
+	};
+	channels.push(channel);
+
+	// add 4 basic oscillators and gains to channel
+	for(var i=0; i<oscillatorTypes.length; i++){
+		var osc = context.createOscillator();
+		var type = oscillatorTypes[i];
+		osc.type = type;
+
+		var gain = context.createGain();
+		gain.gain.value = 0;
+		gain.connect(masterGain);
+
+		osc.connect(gain);
+		channel.oscillators[type] = osc;
+		channel.gains[type] = gain;
+		osc.start(context.currentTime);
+	}
+
+	// Add square25 / pulse
+	var gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var square25 = exports.createPulse(gain);
+	channel.oscillators.square25 = square25;
+	channel.gains.square25 = gain;
+	square25.start(context.currentTime);
+
+	// Add white noise
+	gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var whiteNoise = exports.createWhiteNoise(gain);
+	channel.oscillators.white = whiteNoise;
+	channel.gains.white = gain;
+	whiteNoise.start(context.currentTime);
+}
+
+for(var i=0; i<maxEffects; i++){
+	effects.push({
+		types: utils.zeros(maxEffects),
+		frequencies: utils.zeros(maxEffects),
+		volumes: utils.zeros(maxEffects),
+		speed: 16
+	});
+}
+
+
+exports.global = {
+	asset: exports.asset,
+	asget: exports.asget,
+	avset: exports.avset,
+	avget: exports.avget,
+	afset: exports.afset,
+	afget: exports.afget,
+	awset: exports.awset,
+	awget: exports.awget,
+	sfx: exports.sfx
+};
