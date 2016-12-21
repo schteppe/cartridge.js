@@ -18,6 +18,7 @@ var mapSizeX = 128; // cells
 var mapSizeY = 32; // cells
 var spriteSheetSizeX = 16; // sprites
 var spriteSheetSizeY = 16; // sprites
+var paletteSize = 16; // colors
 
 var maxSprites = spriteSheetSizeX * spriteSheetSizeY; // sprites
 
@@ -46,7 +47,7 @@ var camY = 0;
 var palette;
 var paletteHex;
 var defaultColor = 0;
-var transparentColors = utils.zeros(16).map(function(){ return false; });
+var transparentColors = utils.zeros(paletteSize).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
@@ -442,14 +443,14 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	}
 };
 
-// Returns the sprite X position in the 16x16 spritesheet
+// Returns the sprite X position in the spritesheet
 function ssx(n){
-	return n % 16;
+	return n % spriteSheetSizeX;
 }
 
-// Returns the sprite Y position in the 16x16 spritesheet
+// Returns the sprite Y position in the spritesheet
 function ssy(n){
-	return Math.floor(n / 16) % (16 * 16);
+	return Math.floor(n / spriteSheetSizeX) % (spriteSheetSizeX * spriteSheetSizeY);
 }
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
