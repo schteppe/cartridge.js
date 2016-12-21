@@ -23,6 +23,19 @@ var viewport = {
 	sy: function(){ return flr((height() * 0.6) / cellheight()); }
 };
 
+var music = {
+	x: 1,
+	y: 8,
+	width: function(){ return width() - 3; },
+	height: function(){ return height() - 9; },
+	row: 0,
+	col: 0
+};
+
+function music_draw(){
+
+}
+
 function viewport_draw(viewport){
 	for(var i=0; i<cellwidth(); i++){
 		for(var j=0; j<cellheight(); j++){

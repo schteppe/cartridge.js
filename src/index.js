@@ -8,6 +8,7 @@ var colors = require('./colors');
 var sfx = require('./sfx');
 var pixelops = require('./pixelops');
 var code = require('./code');
+var music = require('./music');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -774,6 +775,7 @@ exports.mousey = function(){
 	return Math.floor(mouse.mouseyNormalized() * (screensizeY-1));
 };
 
+utils.makeGlobal(music);
 utils.makeGlobal(math);
 utils.makeGlobal(sfx);
 utils.makeGlobal(code);
