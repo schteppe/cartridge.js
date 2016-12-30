@@ -56,8 +56,9 @@ function viewport_draw(viewport){
 var code = {
 	x: 1,
 	y: 8,
+	margin: 1,
 	initialized: false,
-	width: function(){ return width() - 3; },
+	width: function(){ return width() - 2; },
 	height: function(){ return height() - 9; },
 	fontHeight: 6,
 	fontWidth: 4,
@@ -65,7 +66,14 @@ var code = {
 	crow: 0,
 	wcol: 0, // window position
 	wrow: 0,
-	cursorVisible: true
+	cursorVisible: true,
+	textColor: 7,
+	bgColor: 5,
+	keywordColor: 14,
+	literalColor: 12,
+	apiColor: 11,
+	commentColor: 13,
+	identifierColor: 6
 };
 
 var mapPanX = 0;
@@ -416,7 +424,7 @@ var editorLoad = window._init = function _init(){
 
 	if(!load('autosave')){
 		// TODO: Load default JSON
-		codeset([
+		code_set([
 			'var x=10,y=10;',
 			'function _draw(){',
 			'  cls();',
@@ -661,11 +669,32 @@ function pitches_draw(pitches, source, col){
 	}
 }
 
+var syntaxTree;
+var syntaxTreeDirty = true;
+var syntaxComments = [];
+var cartridgeIdentifiers = [ // todo: add all
+	"spr",
+	"map",
+	"palt",
+	"sqrt",
+	"mix",
+	"cos",
+	"sin"
+];
+
 function code_draw(code){
 	var x = code.x;
 	var y = code.y;
 	var w = code.width();
 	var h = code.height();
+
+	rectfill(
+		x-code.margin,
+		y-code.margin,
+		x+w-1+code.margin,
+		y+h-1+code.margin,
+		code.bgColor
+	);
 
 	var fontHeight = code.fontHeight;
 	var fontWidth = code.fontWidth;
@@ -677,11 +706,93 @@ function code_draw(code){
 	if(code.ccol < code.wcol) code.wcol = code.ccol;
 	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
 
+	if(syntaxTreeDirty){
+		syntaxComments.length = 0;
+		try {
+			syntaxTree = acorn.parse(codeget(), { onComment: syntaxComments });
+		} catch(err){
+			syntaxTree = { body: [] };
+		}
+		syntaxTreeDirty = false;
+	}
+
 	var codeArray = codeget().split('\n');
 
 	// Draw code
+	var position = 0;
+	for(var i=0; i<code.wrow; i++){
+		var row = codeArray[i];
+		position += row.length + 1;
+	}
 	for(var i=0; i+code.wrow < codeArray.length && h > (i+1) * fontHeight; i++){
-		print(codeArray[i + code.wrow].substr(code.wcol, cols), x, y + i * fontHeight);
+		var row = codeArray[i + code.wrow];
+		var rowY = y + i * fontHeight;
+		var rowstart = position + code.wcol;
+		var rowend = rowstart + (row.length - code.wcol);
+
+		// Check if current line is in a block comment. Currently not working properly.
+		var isInBlockComment = false;
+		/*for(var j=0; j<syntaxComments.length; j++){
+			var comment = syntaxComments[j];
+			if(comment.end >= rowstart && comment.start <= rowend){
+				isInBlockComment = true;
+				break;
+			}
+		}*/
+		print(row.substr(code.wcol, cols), x, rowY, isInBlockComment ? code.commentColor : code.textColor);
+
+		// Any syntax highlighting on this row?
+		var queue = syntaxTree.body.slice(0);
+		queue.push.apply(queue, syntaxComments);
+		while(queue.length){
+			var node = queue.pop();
+			if(node.end < rowstart || node.start > rowend){
+				// Node not visible
+				continue;
+			}
+			var nodeX = x + (node.start - rowstart) * fontWidth;
+
+			switch(node.type){
+				case "VariableDeclaration":
+					print("var", nodeX, rowY, code.keywordColor);
+					break;
+				case "VariableDeclarator":
+					break;
+				case "Literal":
+					print(node.raw, nodeX, rowY, code.literalColor);
+					break;
+				case "FunctionDeclaration":
+					print("function", nodeX, rowY, code.keywordColor);
+					break;
+				case "Identifier":
+					var isApi = cartridgeIdentifiers.indexOf(node.name) !== -1;
+					var color = isApi ? code.apiColor : code.identifierColor;
+					print(node.name, nodeX, rowY, color);
+					break;
+				case "ForStatement":
+					print("for", nodeX, rowY, code.keywordColor);
+					break;
+				case "BinaryExpression":
+					break;
+				case "WhileStatement":
+					print("while", nodeX, rowY, code.keywordColor);
+					break;
+				case "Line":
+					print("//" + node.value, nodeX, rowY, code.commentColor);
+					break;
+			}
+			function add(prop){
+				if(!prop) return;
+				if(prop instanceof acorn.Node){
+					queue.push(prop);
+				} else if(Array.isArray(prop)){
+					prop.forEach(add);
+				}
+			}
+			Object.values(node).forEach(add);
+		}
+
+		position += row.length + 1;
 	}
 
 	// Draw cursor
@@ -760,6 +871,11 @@ function code_clamp_crow(code, codeArray){
 	code.crow = clamp(code.crow, 0, codeArray.length-1);
 }
 
+function code_set(str){
+	codeset(str);
+	syntaxTreeDirty = true;
+}
+
 function code_paste(code, str){
 	var codeArray = codeget().split('\n');
 	var newCode = str.toLowerCase().split('\n');
@@ -778,7 +894,7 @@ function code_paste(code, str){
 		code.ccol = newCode[0].length;
 	}
 
-	codeset(codeArray.join('\n'));
+	code_set(codeArray.join('\n'));
 	dirty = true;
 }
 
@@ -870,7 +986,7 @@ function code_keydown(code, evt){
 		}
 	}
 
-	codeset(codeArray.join('\n'));
+	code_set(codeArray.join('\n'));
 }
 
 function code_keypress(code, evt){
@@ -901,7 +1017,7 @@ function code_keypress(code, evt){
 		code_clamp_crow(code, codeArray);
 	}
 
-	codeset(codeArray.join('\n'));
+	code_set(codeArray.join('\n'));
 }
 
 window.addEventListener('keyup', function(evt){
