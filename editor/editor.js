@@ -672,14 +672,61 @@ function pitches_draw(pitches, source, col){
 var syntaxTree;
 var syntaxTreeDirty = true;
 var syntaxComments = [];
-var cartridgeIdentifiers = [ // todo: add all
-	"spr",
-	"map",
-	"palt",
-	"sqrt",
-	"mix",
+var cartridgeIdentifiers = [
+	"abs",
+	"alpha",
+	"atan2",
+	"btn",
+	"btnp",
+	"camera",
+	"canvas",
+	"cartridge",
+	"ceil",
+	"cellheight",
+	"cellwidth",
+	"clamp",
+	"clip",
+	"cls",
+	"codeget",
+	"codeset",
+	"color",
 	"cos",
-	"sin"
+	"fget",
+	"fit",
+	"flr",
+	"fset",
+	"fullscreen",
+	"height",
+	"load",
+	"map",
+	"max",
+	"mget",
+	"mid",
+	"min",
+	"mix",
+	"mousebtn",
+	"mousex",
+	"mousey",
+	"mset",
+	"palget",
+	"palset",
+	"palt",
+	"pget",
+	"print",
+	"pset",
+	"rect",
+	"rectfill",
+	"rnd",
+	"save",
+	"sfx",
+	"sget",
+	"sgn",
+	"sin",
+	"spr",
+	"sqrt",
+	"sset",
+	"time",
+	"width"
 ];
 
 function code_draw(code){
@@ -812,6 +859,13 @@ function code_run(code){
 	code.previousMode = mode;
 	mode = 'run';
 	code.initialized = false;
+
+	delete window._update;
+	delete window._update60;
+	delete window._init;
+	delete window._kill;
+	delete window._draw;
+
 	try {
 		eval.call(null, codeget());
 		// Manually run the init
