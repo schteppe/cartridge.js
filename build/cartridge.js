@@ -2453,7 +2453,7 @@ exports.draw = function(ctx, text, x, y, col){
 	}
 };
 
-},{"./utils":12}],5:[function(require,module,exports){
+},{"./utils":13}],5:[function(require,module,exports){
 exports.hello = function(){
 	console.log([
 		'CARTRIDGE.JS',
@@ -2483,6 +2483,7 @@ var colors = require('./colors');
 var sfx = require('./sfx');
 var pixelops = require('./pixelops');
 var code = require('./code');
+var music = require('./music');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -2492,6 +2493,7 @@ var mapSizeX = 128; // cells
 var mapSizeY = 32; // cells
 var spriteSheetSizeX = 16; // sprites
 var spriteSheetSizeY = 16; // sprites
+var paletteSize = 16; // colors
 
 var maxSprites = spriteSheetSizeX * spriteSheetSizeY; // sprites
 
@@ -2520,7 +2522,7 @@ var camY = 0;
 var palette;
 var paletteHex;
 var defaultColor = 0;
-var transparentColors = utils.zeros(16).map(function(){ return false; });
+var transparentColors = utils.zeros(paletteSize).map(function(){ return false; });
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
@@ -2642,30 +2644,31 @@ exports.cartridge = function(options){
 
 	// Init font
 	font.init(paletteHex);
-
-	if(code.codeget()){
-		// Run code. If there's an error, let it throw.
-		code.run();
-	}
-
-	// Run the _load function
-	if(typeof(_load) !== 'undefined'){
-		try {
-			_load(postLoad);
-		} catch(err){
-			console.error(err);
-			postLoad(err);
-		}
-	} else {
-		postLoad();
-	}
 };
 
-function postLoad(err){
+exports.run = function(){
+	if(loaded){
+		runKill();
+	}
+	code.run();
+	runInit();
+};
+
+function runInit(){
 	loaded = true;
 	if(typeof(_init) !== 'undefined'){
 		try {
 			_init();
+		} catch(err){
+			console.error(err);
+		}
+	}
+}
+function runKill(){
+	loaded = false;
+	if(typeof(_kill) !== 'undefined'){
+		try {
+			_kill();
 		} catch(err){
 			console.error(err);
 		}
@@ -2915,14 +2918,14 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	}
 };
 
-// Returns the sprite X position in the 16x16 spritesheet
+// Returns the sprite X position in the spritesheet
 function ssx(n){
-	return n % 16;
+	return n % spriteSheetSizeX;
 }
 
-// Returns the sprite Y position in the 16x16 spritesheet
+// Returns the sprite Y position in the spritesheet
 function ssy(n){
-	return Math.floor(n / 16) % (16 * 16);
+	return Math.floor(n / spriteSheetSizeX) % (spriteSheetSizeX * spriteSheetSizeY);
 }
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
@@ -3075,21 +3078,25 @@ exports.save = function(key){
 };
 
 exports.load = function(key){
-	key = key || 'save';
-	if(key.indexOf('.json') !== -1){
-		loadJsonFromUrl(key,function(err,json){
-			if(json){
-				loadJSON(json);
-				run();
-			}
-		});
+	if(typeof(key) === 'object'){
+		loadJSON(key);
 	} else {
-		try {
-			var data = JSON.parse(localStorage.getItem(key));
-			loadJSON(data);
-			return true;
-		} catch(err) {
-			return false;
+		key = key || 'save';
+		if(key.indexOf('.json') !== -1){
+			loadJsonFromUrl(key,function(err,json){
+				if(json){
+					loadJSON(json);
+				}
+			});
+		} else {
+			try {
+				var data = JSON.parse(localStorage.getItem(key));
+				loadJSON(data);
+				return true;
+			} catch(err) {
+				// localStorage is undefined (iOS private mode) or something else went wrong
+				return false;
+			}
 		}
 	}
 };
@@ -3209,6 +3216,14 @@ function loadJSON(data){
 	}
 
 	spriteSheetDirty = true;
+
+	if(typeof(_load) !== 'undefined'){
+		try {
+			_load();
+		} catch(err){
+			console.error(err);
+		}
+	}
 };
 
 function updateMapCacheCanvas(x,y){
@@ -3229,15 +3244,16 @@ exports.help = function(){
 };
 
 exports.mousex = function(){
-	return Math.floor(mouse.mousexNormalized() * screensizeX);
+	return Math.floor(mouse.mousexNormalized() * (screensizeX-1));
 };
 
 exports.mousey = function(){
-	return Math.floor(mouse.mouseyNormalized() * screensizeY);
+	return Math.floor(mouse.mouseyNormalized() * (screensizeY-1));
 };
 
+utils.makeGlobal(music);
 utils.makeGlobal(math);
-utils.makeGlobal(sfx);
+utils.makeGlobal(sfx.global);
 utils.makeGlobal(code);
 utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
@@ -3245,7 +3261,7 @@ utils.makeGlobal(mouse.global);
 
 help.hello();
 help.print();
-},{"./code":2,"./colors":3,"./font":4,"./help":5,"./input":7,"./math":8,"./mouse":9,"./pixelops":10,"./sfx":11,"./utils":12}],7:[function(require,module,exports){
+},{"./code":2,"./colors":3,"./font":4,"./help":5,"./input":7,"./math":8,"./mouse":9,"./music":10,"./pixelops":11,"./sfx":12,"./utils":13}],7:[function(require,module,exports){
 var math = require('./math');
 var utils = require('./utils');
 
@@ -3349,7 +3365,7 @@ exports.global = {
 	btnp: exports.btnp
 };
 
-},{"./math":8,"./utils":12}],8:[function(require,module,exports){
+},{"./math":8,"./utils":13}],8:[function(require,module,exports){
 var tau = 2 * Math.PI;
 
 module.exports = {
@@ -3457,8 +3473,8 @@ function updateMouseCoords(evt, canvases){
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var subx = 0;
 	var suby = 0;
-	_mousex = (evt.clientX - rect.left - subx) / rect.width;
-	_mousey = (evt.clientY - rect.top - suby) / rect.height;
+	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
+	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
 }
 
 exports.mousexNormalized = function(){ return _mousex; };
@@ -3469,7 +3485,234 @@ exports.global = {
 	click: exports.click
 };
 
-},{"./math":8,"./utils":12}],10:[function(require,module,exports){
+},{"./math":8,"./utils":13}],10:[function(require,module,exports){
+var utils = require('./utils');
+var sfx = require('./sfx');
+
+/**
+ * Equal Temperament Tuning
+ * Source: http://www.phy.mtu.edu/~suits/notefreqs.html
+ */
+var frequencies = [16.35, 17.32, 17.32, 18.35, 19.45, 19.45, 20.60, 21.83, 23.12, 23.12, 24.50, 25.96, 25.96, 27.50, 29.14, 29.14, 30.87, 32.70, 34.65, 34.65, 36.71, 38.89, 38.89, 41.20, 43.65, 46.25, 46.25, 49.00, 51.91, 51.91, 55.00, 58.27, 58.27, 61.74, 65.41, 69.30, 69.30, 73.42, 77.78, 77.78, 82.41, 87.31, 92.50, 92.50, 98.00, 103.83, 103.83, 110.00, 116.54, 116.54, 123.47, 130.81, 138.59, 138.59, 146.83, 155.56, 155.56, 164.81, 174.61, 185.00, 185.00, 196.00, 207.65, 207.65, 220.00, 233.08, 233.08, 246.94, 261.63, 277.18, 277.18, 293.66, 311.13, 311.13, 329.63, 349.23, 369.99, 369.99, 392.00, 415.30, 415.30, 440.00, 466.16, 466.16, 493.88, 523.25, 554.37, 554.37, 587.33, 622.25, 622.25, 659.26, 698.46, 739.99, 739.99, 783.99, 830.61, 830.61, 880.00, 932.33, 932.33, 987.77, 1046.50, 1108.73, 1108.73, 1174.66, 1244.51, 1244.51, 1318.51, 1396.91, 1479.98, 1479.98, 1567.98, 1661.22, 1661.22, 1760.00, 1864.66, 1864.66, 1975.53, 2093.00, 2217.46, 2217.46, 2349.32, 2489.02, 2489.02, 2637.02, 2793.83, 2959.96, 2959.96, 3135.96, 3322.44, 3322.44, 3520.00, 3729.31, 3729.31, 3951.07, 4186.01];
+var noteNames = "C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B".split(' ');
+var PatternFlags = {
+	ACTIVE: 1,
+	THROW: 2,
+	CATCH: 4,
+	STOP: 8
+};
+
+// pitch: 0-16. Octave: 0-8
+function getFrequency(pitch, octave){
+	return frequencies[octave * noteNames.length + pitch];
+}
+
+var groups = [];
+var patterns = utils.zeros(8 * (4 + 1)); // 4 channels (pointing to groups), 1 bitfield/flags
+
+while(groups.length < 8){
+	var group = {
+		speed: 16,
+		notes: utils.zeros(5 * 8 * 4) // pitch, octave, instrument, volume, effect
+	};
+	groups.push(group);
+}
+
+exports.gsset = function(group, speed){
+	groups[group].speed = speed;
+};
+
+exports.gsget = function(group){
+	return groups[group].speed;
+};
+
+exports.npset = function(group, position, pitch){
+	if(pitch < 0 || pitch > noteNames.length) throw new Error('Pitch out of range');
+	groups[group].notes[5 * position + 0] = pitch;
+};
+
+exports.npget = function(group, position){
+	return groups[group].notes[5 * position + 0];
+};
+
+exports.nnget = function(note){
+	return noteNames[note % 17];
+};
+
+// Octave is the "pitch multiplier", from 0 to 8 (more limits?)
+exports.noset = function(group, position, octave){
+	if(octave < 0 || octave > 8) throw new Error('Octave out of range');
+	groups[group].notes[5 * position + 1] = octave;
+};
+
+exports.noget = function(group, position){
+	return groups[group].notes[5 * position + 1];
+};
+
+// volume for a note
+exports.nvset = function(group, position, volume){
+	groups[group].notes[5 * position + 3] = volume;
+};
+
+exports.nvget = function(group, position){
+	return groups[group].notes[5 * position + 3];
+};
+
+// instrument for a note
+exports.niset = function(group, position, instrument){
+	groups[group].notes[5 * position + 2] = instrument;
+};
+
+exports.niget = function(group, position){
+	return groups[group].notes[5 * position + 2];
+};
+
+// Set a group to be played in a channel in a pattern.
+exports.mgset = function(pattern, channel, group){
+	patterns[pattern * 5 + 1 + channel] = group;
+};
+
+exports.mgget = function(pattern, channel){
+	return patterns[pattern * 5 + 1 + channel];
+};
+
+// Set flags for a pattern
+exports.mfset = function(pattern, flags){
+	patterns[pattern * 5 + 0] = flags;
+};
+
+// Get flags
+exports.mfget = function(pattern){
+	return patterns[pattern * 5 + 0];
+};
+
+// Create audio stuff
+// TODO: share with sfx - create a class?
+var context = sfx.getContext();
+var masterGain = sfx.getMasterGain();
+var channels = [];
+var oscillatorTypes = sfx.getOscillatorTypes();
+var allTypes = sfx.getAllOscillatorTypes();
+for(var j=0; j<4; j++){ // one for each channel in the music
+	var channel = {
+		instruments: {},
+		gains: {}
+	};
+	channels.push(channel);
+
+	// add 4 basic instruments and gains to channel
+	for(var i=0; i<oscillatorTypes.length; i++){
+		var osc = context.createOscillator();
+		var type = oscillatorTypes[i];
+		osc.type = type;
+
+		var gain = context.createGain();
+		gain.gain.value = 0;
+		gain.connect(masterGain);
+
+		osc.connect(gain);
+		channel.instruments[type] = osc;
+		channel.gains[type] = gain;
+		osc.start(context.currentTime);
+	}
+
+	// Add square25 / pulse
+	var gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var square25 = sfx.createPulse(gain);
+	channel.instruments.square25 = square25;
+	channel.gains.square25 = gain;
+	square25.start(context.currentTime);
+
+	// Add white noise
+	gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var whiteNoise = sfx.createWhiteNoise(gain);
+	channel.instruments.white = whiteNoise;
+	channel.gains.white = gain;
+	whiteNoise.start(context.currentTime);
+}
+
+// preview play a group
+exports.group = function(groupIndex, channelIndex){
+	scheduleGroup(groupIndex, channelIndex||0, context.currentTime);
+};
+
+function scheduleGroup(groupIndex, channelIndex, time){
+	var i,j;
+	var group = groups[groupIndex];
+	var channel = channels[channelIndex];
+	var speed = group.speed;
+	var n = 0;
+	for(var i=0; i < 32; i++){ // all rows in the group
+		var volume = nvget(groupIndex, i);
+		var pitch = npget(groupIndex, i);
+		var octave = noget(groupIndex, i);
+		var instrument = niget(groupIndex, i);
+		if(volume === 0){
+			continue;
+		}
+		var startPosition = i;
+		var endPosition = i+1;
+		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && endPosition < 32){
+			endPosition++;
+		}
+		var startTime = time + startPosition / speed;
+		var endTime = time + endPosition / speed;
+
+		var osc = channel.instruments[allTypes[instrument]];
+		var gain = channel.gains[allTypes[instrument]];
+
+		if(osc.frequency){ // noise doesn't have frequency
+			var frequency = getFrequency(pitch, octave);
+			osc.frequency.setValueAtTime(frequency, startTime);
+		}
+		gain.gain.setValueAtTime(volume, startTime);
+		gain.gain.setValueAtTime(0, endTime);
+
+		i = endPosition - 1;
+	}
+}
+
+// Play or stop music
+exports.music = function(patternIndex, fade, channelmask){
+	fade = fade !== undefined ? fade : 0;
+	channelmask = channelmask !== undefined ? channelmask : 0;
+	if(patternIndex === -1){
+		stop(fade);
+		return;
+	}
+
+	// schedule all groups
+	var startTime = context.currentTime;
+	for(var patternIndex=0; patternIndex < patterns.length; patternIndex++){
+		var flags = mfget(patternIndex);
+		if(!(flags & PatternFlags.ACTIVE)) continue;
+		for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
+			var groupIndex = mgget(patternIndex, channelIndex);
+			var speed = gsget(groupIndex);
+			scheduleGroup(groupIndex, channelIndex, startTime);
+		}
+	}
+};
+
+function stop(fade){
+	var currentTime = context.currentTime;
+	for(var channelIndex=0; channelIndex<channels.length; channelIndex++){
+		var channel = channels[channelIndex];
+		for(var i=0; i<allTypes.length; i++){
+			var instrument = channel.instruments[allTypes[i]];
+			if(instrument.frequency){
+				instrument.frequency.cancelAllScheduledValues();
+			}
+			instrument.gain.cancelAllScheduledValues();
+			instrument.gain.setValueAtTime(0, currentTime);
+		}
+	}
+}
+},{"./sfx":12,"./utils":13}],11:[function(require,module,exports){
 var ctx;
 var writeData = null;
 var readData = null;
@@ -3551,16 +3794,28 @@ exports.flush = function(){
 		}
 	}
 };
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
+
 var minFrequency = 0;
 var maxFrequency = 1000;
+var maxEffects = 64;
+var channels = [];
+var effects = [];
 
 var context = new createAudioContext();
 var masterGain = context.createGain();
 masterGain.gain.value = 1;
 masterGain.connect(context.destination);
+
+exports.getContext = function(){
+	return context;
+};
+
+exports.getMasterGain = function(){
+	return masterGain;
+};
 
 var oscillatorTypes = [
 	'sine',
@@ -3574,60 +3829,13 @@ var allTypes = oscillatorTypes.concat([
 	'white'
 ]);
 
-var channels = [];
-for(var j=0; j<4; j++){
-	var channel = {
-		oscillators: {},
-		gains: {},
-		occupiedUntil: -1
-	};
-	channels.push(channel);
+exports.getOscillatorTypes = function(){
+	return oscillatorTypes;
+};
 
-	// add 4 basic oscillators and gains to channel
-	for(var i=0; i<oscillatorTypes.length; i++){
-		var osc = context.createOscillator();
-		var type = oscillatorTypes[i];
-		osc.type = type;
-
-		var gain = context.createGain();
-		gain.gain.value = 0;
-		gain.connect(masterGain);
-
-		osc.connect(gain);
-		channel.oscillators[type] = osc;
-		channel.gains[type] = gain;
-		osc.start(context.currentTime);
-	}
-
-	// Add square25 / pulse
-	var gain = context.createGain();
-	gain.gain.value = 0;
-	gain.connect(masterGain);
-	var square25 = createPulse(gain);
-	channel.oscillators.square25 = square25;
-	channel.gains.square25 = gain;
-	square25.start(context.currentTime);
-
-	// Add white noise
-	gain = context.createGain();
-	gain.gain.value = 0;
-	gain.connect(masterGain);
-	var whiteNoise = createWhiteNoise(gain);
-	channel.oscillators.white = whiteNoise;
-	channel.gains.white = gain;
-	whiteNoise.start(context.currentTime);
-}
-
-var maxEffects = 64;
-var effects = [];
-for(var i=0; i<maxEffects; i++){
-	effects.push({
-		types: utils.zeros(maxEffects),
-		frequencies: utils.zeros(maxEffects),
-		volumes: utils.zeros(maxEffects),
-		speed: 16
-	});
-}
+exports.getAllOscillatorTypes = function(){
+	return allTypes;
+};
 
 function createAudioContext(desiredSampleRate) {
 	var AudioCtor = window.AudioContext || window.webkitAudioContext;
@@ -3747,7 +3955,7 @@ exports.sfx = function(n, channelIndex, offset){
 };
 
 var whiteNoiseData = null;
-function createWhiteNoise(destination) {
+exports.createWhiteNoise = function(destination) {
 	var bufferSize = 2 * context.sampleRate,
 		noiseBuffer = context.createBuffer(1, bufferSize, context.sampleRate),
 		output = noiseBuffer.getChannelData(0);
@@ -3771,7 +3979,7 @@ function createWhiteNoise(destination) {
 }
 
 var dft = null;
-function createPulse(destination){
+exports.createPulse = function(destination){
 	if(!dft){
 		var count = 128;
 		var vals2 = [];
@@ -3797,7 +4005,72 @@ function createPulse(destination){
 	return osc;
 }
 
-},{"./utils":12,"dsp.js/dsp":1}],12:[function(require,module,exports){
+
+for(var j=0; j<4; j++){
+	var channel = {
+		oscillators: {},
+		gains: {},
+		occupiedUntil: -1
+	};
+	channels.push(channel);
+
+	// add 4 basic oscillators and gains to channel
+	for(var i=0; i<oscillatorTypes.length; i++){
+		var osc = context.createOscillator();
+		var type = oscillatorTypes[i];
+		osc.type = type;
+
+		var gain = context.createGain();
+		gain.gain.value = 0;
+		gain.connect(masterGain);
+
+		osc.connect(gain);
+		channel.oscillators[type] = osc;
+		channel.gains[type] = gain;
+		osc.start(context.currentTime);
+	}
+
+	// Add square25 / pulse
+	var gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var square25 = exports.createPulse(gain);
+	channel.oscillators.square25 = square25;
+	channel.gains.square25 = gain;
+	square25.start(context.currentTime);
+
+	// Add white noise
+	gain = context.createGain();
+	gain.gain.value = 0;
+	gain.connect(masterGain);
+	var whiteNoise = exports.createWhiteNoise(gain);
+	channel.oscillators.white = whiteNoise;
+	channel.gains.white = gain;
+	whiteNoise.start(context.currentTime);
+}
+
+for(var i=0; i<maxEffects; i++){
+	effects.push({
+		types: utils.zeros(maxEffects),
+		frequencies: utils.zeros(maxEffects),
+		volumes: utils.zeros(maxEffects),
+		speed: 16
+	});
+}
+
+
+exports.global = {
+	asset: exports.asset,
+	asget: exports.asget,
+	avset: exports.avset,
+	avget: exports.avget,
+	afset: exports.afset,
+	afget: exports.afget,
+	awset: exports.awset,
+	awget: exports.awget,
+	sfx: exports.sfx
+};
+},{"./utils":13,"dsp.js/dsp":1}],13:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
