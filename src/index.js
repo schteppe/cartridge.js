@@ -42,6 +42,7 @@ var spriteFlags = utils.zeros(maxSprites);
 var spriteSheetPixels;
 var ctx;
 var _time = 0;
+var _startTime = 0;
 var camX = 0;
 var camY = 0;
 var palette;
@@ -149,7 +150,10 @@ exports.cartridge = function(options){
 				}
 			}
 		}
-		_time = newTime;
+		if(_startTime === -1){
+			_startTime = newTime;
+		}
+		_time = newTime - _startTime;
 		if(loaded && typeof(_draw) !== 'undefined'){
 			try {
 				_draw();
@@ -175,6 +179,7 @@ exports.run = function(){
 	if(loaded){
 		runKill();
 	}
+	_startTime = -1;
 	code.run();
 	runInit();
 };
