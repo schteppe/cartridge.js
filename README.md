@@ -5,32 +5,7 @@ HTML5 retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.ph
 
 # Usage
 
-```html
-<html>
-<body>
-	<div id="container" style="width: 100%; height: 100%; background-color: black"></div>
-	<script src="cartridge.js"></script>
-	<script>
-		var x = 50, y = 50;
-
-		// Initialize
-		cartridge({ containerId: 'container' });
-
-		function _draw(){
-			// Process input
-			if (btn(0)) x--;
-			if (btn(1)) x++;
-			if (btn(2)) y--;
-			if (btn(3)) y++;
-
-			cls(); // Clear screen
-			print('HELLO WORLD', 10, 10); // draw a text
-			spr(1, x, y); // draw sprite 1 from spritesheet
-		}
-	</script>
-</body>
-</html>
-```
+See the [examples](examples/).
 
 # Editor documentation
 
