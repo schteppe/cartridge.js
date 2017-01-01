@@ -1338,4 +1338,15 @@ palset(15, 0xffffff);
 
 run();
 
+if(window.location.hash.length){
+	loadHash();
+}
+window.onhashchange = loadHash;
+function loadHash(){
+	load('/carts/' + window.location.hash.replace("#","") + '.json');
+}
+window._load = function(){
+	dirty = true;
+};
+
 })();
