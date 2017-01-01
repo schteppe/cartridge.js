@@ -383,9 +383,8 @@ window._click = function _click(){
 	// mode switcher
 	if(buttons_click(topButtons,mx,my)){
 		if(modes[topButtons.current] === 'run'){
-			if(code_run(code)){
-				dirty = true;
-			}
+			code_run(code);
+			dirty = true;
 		} else {
 			mode = modes[topButtons.current];
 		}
@@ -748,11 +747,6 @@ function code_draw(code){
 	var rows = flr(h / fontHeight);
 	var cols = flr(w / fontWidth);
 
-	if(code.crow < code.wrow) code.wrow = code.crow;
-	if(code.crow > code.wrow + rows - 1) code.wrow = code.crow - rows + 1;
-	if(code.ccol < code.wcol) code.wcol = code.ccol;
-	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
-
 	if(syntaxTreeDirty){
 		syntaxComments.length = 0;
 		try {
@@ -762,8 +756,14 @@ function code_draw(code){
 		}
 		syntaxTreeDirty = false;
 	}
-
 	var codeArray = codeget().split('\n');
+
+	code.crow = clamp(code.crow,0,codeArray.length-1);
+	code.wrow = clamp(code.wrow,0,codeArray.length-1);
+	if(code.crow < code.wrow) code.wrow = code.crow;
+	if(code.crow > code.wrow + rows - 1) code.wrow = code.crow - rows + 1;
+	if(code.ccol < code.wcol) code.wcol = code.ccol;
+	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
 
 	// Draw code
 	var position = 0;
@@ -867,7 +867,7 @@ function code_run(code){
 	delete window._draw;
 
 	try {
-		eval.call(null, codeget());
+		run();
 		// Manually run the init
 		if(window._init){
 			window._init();
@@ -899,6 +899,10 @@ function code_stop(code){
 	delete window._kill;
 	mode = code.previousMode;
 	window._draw = editorDraw;
+	var oldCode = codeget();
+	codeset("");
+	run();
+	codeset(oldCode);
 }
 
 function code_click(code,x,y){
@@ -1153,8 +1157,8 @@ window.addEventListener('keydown', function(evt){
 			case 70: if(mode === 'sprite') flipSprite(selectedSprite, true); break; // F
 			case 82: if(mode === 'sprite') rotateSprite(selectedSprite); break; // R
 			case 46: if(mode === 'sprite') clearSprite(selectedSprite); break; // delete
-			case 81: if(mode === 'sprite') selectedSprite--; break;
-			case 87: if(mode === 'sprite') selectedSprite++; break;
+			case 81: if(mode === 'sprite' || mode === 'map') selectedSprite--; break; // Q
+			case 87: if(mode === 'sprite' || mode === 'map') selectedSprite++; break; // W
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 			case 83: save('game.json'); break;
 			case 79: openfile(); break;
