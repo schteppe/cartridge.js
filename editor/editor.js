@@ -1343,7 +1343,7 @@ if(window.location.hash.length){
 }
 window.onhashchange = loadHash;
 function loadHash(){
-	load('/carts/' + window.location.hash.replace("#","") + '.json');
+	load('../carts/' + window.location.hash.replace("#","") + '.json');
 }
 window._load = function(){
 	dirty = true;
