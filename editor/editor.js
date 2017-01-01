@@ -1336,10 +1336,11 @@ palset(13, 0x83769c);
 palset(14, 0xff8e7d);
 palset(15, 0xffffff);
 
-run();
 
 if(window.location.hash.length){
 	loadHash();
+} else {
+	run();
 }
 window.onhashchange = loadHash;
 function loadHash(){
@@ -1347,6 +1348,7 @@ function loadHash(){
 }
 window._load = function(){
 	dirty = true;
+	code_run(code);
 };
 
 })();
