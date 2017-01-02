@@ -7,7 +7,7 @@ document.body.onresize = document.body.mozfullscreenchange = function(){
 	dirty = true;
 };
 
-var modes = ['help', 'game', 'sprite', 'map', 'sfx', 'code', 'music', 'run'];
+var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'music', 'run', 'help'];
 var mode = modes[0];
 
 var selectedSprite = 1; // Because zero is "empty sprite"
@@ -37,11 +37,13 @@ function music_draw(){
 }
 
 function viewport_draw(viewport){
+	var sx = ssx(selectedSprite);
+	var sy = ssy(selectedSprite);
+	var x = sx * cellwidth();
+	var y = sy * cellheight();
 	for(var i=0; i<cellwidth(); i++){
 		for(var j=0; j<cellheight(); j++){
-			var x = (ssx(selectedSprite) * cellwidth() + i) % width();
-			var y = (ssy(selectedSprite) * cellheight() + j) % height();
-			var col = sget(x, y);
+			var col = sget(x+i, y+j);
 			rectfill(
 				viewport.x + i * viewport.sx(),
 				viewport.y + j * viewport.sy(),
@@ -99,14 +101,6 @@ var flags = {
 	}
 };
 
-var buttons = {
-	x: function(){ return width() - 56; },
-	y: function(){ return height() - 4 * cellheight() - 7; },
-	num: 4,
-	current: 0,
-	padding: 4
-};
-
 var slotButtons = {
 	x: function(){ return 5; },
 	y: function(){ return 21; },
@@ -132,7 +126,7 @@ var waveformButtons = {
 var topButtons = {
 	x: function(){ return 0; },
 	y: function(){ return 0; },
-	options: ['HLP', 'CRT', 'SPR', 'MAP', 'SFX', '.JS', 'MUS', 'RUN'],
+	options: ['CRT', 'SPR', 'MAP', 'SFX', '.JS', 'MUS', 'RUN', '?'],
 	current: 0,
 	bgColor: 7,
 	textColor: 0,
@@ -148,57 +142,68 @@ var toolButtons = {
 };
 
 var speedSelector = {
-	x: 1,
-	y: 16,
+	x: function(){ return 1; },
+	y: function(){ return 16; },
 	current: 1,
 	padding: 6,
-	min: 1,
-	max: 64,
+	min: function(){ return 1; },
+	max: function(){ return 64; },
 	prefix: '',
 	postfix: 'X'
 };
 
 var sfxSelector = {
-	x: 1,
-	y: 8,
+	x: function(){ return 1; },
+	y: function(){ return 8; },
 	current: 0,
 	padding: 6,
-	min: 0,
-	max: 63,
+	min: function(){ return 0; },
+	max: function(){ return 63; },
+	prefix: '',
+	postfix: ''
+};
+
+var spriteSheetPageSelector = {
+	x: function(){ return width() - 54; },
+	y: function(){ return height() - 4 * cellheight() - 7; },
+	current: 0,
+	padding: 6,
+	min: function(){ return 0; },
+	max: function(){ return ssget() === 16 ? 3 : 15; },
 	prefix: '',
 	postfix: ''
 };
 
 function intsel_draw(intsel){
 	var padding = intsel.padding;
-	var numDigits = intsel.max.toString().length;
+	var numDigits = intsel.max().toString().length;
 	var chars = ['<', intsel.prefix + intsel.current + intsel.postfix, '>'];
 	for(var i=0; i<3; i++){
-		var x0 = intsel.x + i * (6 + padding*2);
+		var x0 = intsel.x() + i * (6 + padding*2);
 		rectfill(
-			x0, intsel.y,
-			intsel.x+5+padding*2 + i * (6+padding*2)-1, intsel.y+6,
+			x0, intsel.y(),
+			intsel.x() + 5+padding*2 + i * (6+padding*2)-1, intsel.y()+6,
 			6
 		);
-		var x1 = intsel.x+1+padding + i * (6 + padding*2);
+		var x1 = intsel.x() + 1 + padding + i * (6 + padding*2);
 		print(
 			chars[i],
-			(x0+1) + padding - (chars[i].length-1) * 2, intsel.y+1,
+			(x0+1) + padding - (chars[i].length-1) * 2, intsel.y()+1,
 			0
 		);
 	}
 }
 
 function intsel_click(intsel, x, y){
-	if(inrect(x,y,intsel.x,intsel.y, 3 * (intsel.padding * 2 + 6),7)){
+	if(inrect(x,y,intsel.x(),intsel.y(), 3 * (intsel.padding * 2 + 6),7)){
 		var speed = keysdown[16] ? 10 : 1;
-		var button = flr((x-intsel.x) / (intsel.padding * 2 + 6));
+		var button = flr((x-intsel.x()) / (intsel.padding * 2 + 6));
 		if(button === 0){
 			intsel.current -= speed;
 		} else if(button === 2){
 			intsel.current += speed;
 		}
-		intsel.current = clamp(intsel.current, intsel.min, intsel.max);
+		intsel.current = clamp(intsel.current, intsel.min(), intsel.max());
 		return true;
 	}
 	return false;
@@ -219,8 +224,8 @@ var volumes = {
 };
 
 // Helpers
-function ssx(n){ return n % 16; }
-function ssy(n){ return Math.floor(n / 16) % (16 * 16); }
+function ssx(n){ return n % ssget(); }
+function ssy(n){ return Math.floor(n / ssget()) % (ssget() * ssget()); }
 function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y < ry + rh; }
 function decToR(c){ return Math.floor(c / (256*256)); }
 function decToG(c){ return Math.floor(c / 256) % 256; }
@@ -291,7 +296,7 @@ function mousemovehandler(forceMouseDown){
 			mapPanX += dx;
 			mapPanY += dy;
 			dirty = true;
-		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), buttons.y()-9)){
+		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
 			// Draw on map
 			mset(
 				flr((mousex() - mapPanX) / cellwidth()),
@@ -352,17 +357,24 @@ window._click = function _click(){
 	if(mode === 'sprite' || mode === 'map'){
 		var spritesHeight = height() - cellheight() * 4;
 		if(my >= height() - cellheight() * 4){
+			var cw = cellwidth();
+			var ch = cellheight();
 
-			var cw = min(flr(width() / 16), cellwidth());
-			var ch = min(flr(height() / 16), cellheight());
+			var spriteX, spriteY;
 
-			var spriteX = flr(mx / cw);
-			var spriteY = buttons.current * 4 + flr((my-spritesHeight) / ch);
-			if(spriteX < 16 && spriteY < 16){
-				selectedSprite = spriteX + spriteY * 16;
+
+			if(ssget() === 16){
+				spriteX = flr(mx / cw);
+				spriteY = flr((my-spritesHeight) / ch) + spriteSheetPageSelector.current * 4;
+			} else {
+				spriteX = flr(mx / cw) + (spriteSheetPageSelector.current % 2) * 16;
+				spriteY = flr((my-spritesHeight) / ch) + flr(spriteSheetPageSelector.current / 2) * 4;
+			}
+			if(spriteX < ssget() && spriteY < ssget()){
+				selectedSprite = spriteX + spriteY * ssget();
 				dirty = true;
 			}
-		} else if(buttons_click(buttons, mx, my)){
+		} else if(intsel_click(spriteSheetPageSelector, mx, my)){
 			dirty = true;
 		}
 	}
@@ -466,15 +478,15 @@ editorDraw = window._draw = function _draw(){
 		viewport_draw(viewport);
 		sprites_draw();
 		palette_draw(palette);
-		buttons_draw(buttons);
 		buttons_draw(toolButtons);
+		intsel_draw(spriteSheetPageSelector);
 		flags_draw(flags);
 		break;
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		sprites_draw();
-		buttons_draw(buttons);
+		intsel_draw(spriteSheetPageSelector);
 		break;
 	case 'sfx':
 		pitches_draw(pitches, 0);
@@ -596,22 +608,25 @@ function sprites_draw(){
 	var offsetX = 0;
 	var offsetY = height() - cellheight() * 4;
 
-	var cw = min(flr(width() / 16), cellwidth());
-	var ch = cw;
+	var cw = cellwidth();
+	var ch = cellheight();
 
 	rectfill(offsetX, offsetY, cw * 16, height(), 0);
 
-	var n = buttons.current*4*16;
-	for(var j=0; j<4; j++){
-		for(var i=0; i<16; i++){
-			spr(n, i*cw+offsetX, j*ch+offsetY);
-			n++;
-		}
+	var n = spriteSheetPageSelector.current * 4 * 16;
+	var viewX = 0;
+	var viewY = 4 * spriteSheetPageSelector.current;
+	if(ssget() === 32){
+		viewX = (spriteSheetPageSelector.current % 2) * 16;
+		viewY = flr(spriteSheetPageSelector.current/2) * 4;
+		n = viewY * 32 + viewX;
 	}
+	spr(n, offsetX, offsetY, 16, 4);
+
 	// Rectangle around the current editing sprite
-	if(ssy(selectedSprite)/4 >= buttons.current && ssy(selectedSprite)/4 < buttons.current+1){
-		var x = offsetX + ssx(selectedSprite) * cw;
-		var y = offsetY + ssy(selectedSprite) * ch - buttons.current * 4 * ch;
+	if(ssy(selectedSprite) >= viewY && ssy(selectedSprite) < viewY+ssget()){
+		var x = offsetX + (ssx(selectedSprite) - viewX) * cw;
+		var y = offsetY + (ssy(selectedSprite) - viewY) * ch;
 		rect(
 			x-1, y-1,
 			x+cw, y+ch,
@@ -1144,6 +1159,10 @@ function copySprite(from,to){
 	}
 }
 
+function mod(a,b) {
+    return ((a%b)+b)%b;
+};
+
 window.addEventListener('keydown', function(evt){
 	keysdown[evt.keyCode] = true;
 
@@ -1157,13 +1176,13 @@ window.addEventListener('keydown', function(evt){
 			case 70: if(mode === 'sprite') flipSprite(selectedSprite, true); break; // F
 			case 82: if(mode === 'sprite') rotateSprite(selectedSprite); break; // R
 			case 46: if(mode === 'sprite') clearSprite(selectedSprite); break; // delete
-			case 81: if(mode === 'sprite' || mode === 'map') selectedSprite--; break; // Q
-			case 87: if(mode === 'sprite' || mode === 'map') selectedSprite++; break; // W
+			case 81: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite-1,ssget()*ssget()); break; // Q
+			case 87: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite+1,ssget()*ssget()); break; // W
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 			case 83: save('game.json'); break;
 			case 79: openfile(); break;
 		}
-		selectedSprite = clamp(selectedSprite,0,16*16);
+		selectedSprite = clamp(selectedSprite,0,ssget()*ssget());
 	}
 	dirty = true;
 });
@@ -1250,8 +1269,8 @@ function handlePasteImage(file){
 		var imgData = tmpCanvas.getContext('2d').getImageData(0, 0, img.width, img.height);
 		var pixels = imgData.data;
 
-		for(var i=0; i<img.width && i < 16 * cellwidth(); i++){
-			for(var j=0; j<img.height && j < 16 * cellheight(); j++){
+		for(var i=0; i<img.width && i < ssget() * cellwidth(); i++){
+			for(var j=0; j<img.height && j < ssget() * cellheight(); j++){
 				// Get best matching color
 				var p = 4 * (i + j*img.width);
 				var r = pixels[p + 0];
