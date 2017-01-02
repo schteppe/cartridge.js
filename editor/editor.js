@@ -1348,6 +1348,7 @@ function loadHash(){
 }
 window._load = function(){
 	dirty = true;
+	syntaxTreeDirty = true;
 	code_run(code);
 };
 
