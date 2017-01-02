@@ -597,7 +597,7 @@ function sprites_draw(){
 	var offsetY = height() - cellheight() * 4;
 
 	var cw = min(flr(width() / 16), cellwidth());
-	var ch = min(flr(height() / 16), cellheight());
+	var ch = cw;
 
 	rectfill(offsetX, offsetY, cw * 16, height(), 0);
 
