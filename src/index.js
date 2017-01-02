@@ -38,7 +38,7 @@ var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
 var spriteSheetDirty = false;
-var spriteFlags = utils.zeros(maxSprites);
+var spriteFlags;
 var spriteSheetPixels;
 var ctx;
 var _time = 0;
@@ -215,6 +215,9 @@ function setCellSize(w,h){
 	// Reinit pixels
 	// TODO: copy over?
  	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY, spriteSheetPixels);
+
+	maxSprites = spriteSheetSizeX * spriteSheetSizeY;
+	spriteFlags = utils.zeros(maxSprites);
 
 	// (re)init spritesheet canvas
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
@@ -508,7 +511,8 @@ exports.pget = (function(){
 		y = y | 0;
 		pixelops.pget(x,y,data);
 		var col = utils.rgbToDec(data[0], data[1], data[2]);
-		return palette.indexOf(col);
+		var result = palette.indexOf(col);
+		return result === -1 ? 0 : result;
 	};
 })();
 
@@ -532,6 +536,17 @@ exports.sget = function(x, y){
 	y = y | 0;
 	var w = spriteSheetSizeX * cellsizeX;
 	return spriteSheetPixels[y * w + x];
+};
+
+// Set spritesheet size
+exports.ssset = function(n){
+	spriteSheetSizeX = spriteSheetSizeY = (n | 0);
+	setCellSize(cellsizeX, cellsizeY);
+};
+
+// Get spritesheet size
+exports.ssget = function(){
+	return spriteSheetSizeX;
 };
 
 // Set spritesheet pixel color
