@@ -55,9 +55,9 @@ You the editor takes a few query parameters to its URL. Use these to control the
   <dt>file</dt>
   <dd>Tries to load a cart/JSON-file from the given URL.</dd>
   <dt>run</dt>
-  <dd>If set to 1, the editor will start the current cart when loaded.</dd>
+  <dd>If set to 1, the editor will start the current cart when loaded. Default is 0.</dd>
   <dt>pixel_perfect</dt>
-  <dd>If set to 1, canvas will be stretched to fit the browsers' window. If zero, it will scale up the canvas by an integer number (1x, 2x, 3x etc) while fitting inside the browser window.</dd>
+  <dd>If set to 1, canvas will be stretched to fit the browsers' window. If 0, it will scale up the canvas by an integer number (1x, 2x, 3x etc) while fitting inside the browser window. Default is 0.</dd>
 </dl>
 
 For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json` will load a cart from the URL `../carts/twister.json` before starting the editor ([try here](https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json)).
