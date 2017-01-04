@@ -52,9 +52,12 @@ var transparentColors = utils.zeros(paletteSize).map(function(){ return false; }
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
+var pixelPerfectMode = 0;
+var autoFit = false;
 
 exports.cartridge = function(options){
-	var autoFit = options.autoFit !== undefined ? options.autoFit : true;
+	autoFit = options.autoFit !== undefined ? options.autoFit : true;
+	pixelPerfectMode = options.pixelPerfect !== undefined ? options.pixelPerfect : 0;
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
 	var html = '';
@@ -97,15 +100,14 @@ exports.cartridge = function(options){
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
-	fit();
-
 	if(autoFit){
+		fit(pixelPerfectMode);
 		// Resize (fit) the canvas when the container changes size
 		var resizeHandler = function(){
-			fit();
+			fit(pixelPerfectMode);
 		};
-		document.body.addEventListener('resize', resizeHandler);
-		document.body.addEventListener('mozfullscreenchange', resizeHandler);
+		window.addEventListener('resize', resizeHandler);
+		window.addEventListener('mozfullscreenchange', resizeHandler);
 	}
 
 	// Start render loop
@@ -276,7 +278,9 @@ function resizeCanvases(){
 		canvases[i].width = screensizeX;
 		canvases[i].height = screensizeY;
 	}
-	fit();
+	if(autoFit){
+		fit(pixelPerfectMode);
+	}
 	pixelops.resize(canvases[0]);
 }
 
@@ -587,10 +591,12 @@ exports.print = function(text, x, y, col){
 	font.draw(ctx, text.toUpperCase(), x, y, col);
 };
 
-exports.fit = function fit(){
+exports.fit = function fit(stretchMode){
+	stretchMode = stretchMode !== undefined ? stretchMode : 0;
+	var pixelPerfect = (stretchMode === 0);
 	var i = canvases.length;
 	while(i--){
-		utils.scaleToFit(canvases[i], container, true);
+		utils.scaleToFit(canvases[i], container, pixelPerfect);
 	}
 };
 
