@@ -2513,7 +2513,7 @@ var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
 var spriteSheetDirty = false;
-var spriteFlags = utils.zeros(maxSprites);
+var spriteFlags;
 var spriteSheetPixels;
 var ctx;
 var _time = 0;
@@ -2527,9 +2527,12 @@ var transparentColors = utils.zeros(paletteSize).map(function(){ return false; }
 transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
+var pixelPerfectMode = 0;
+var autoFit = false;
 
 exports.cartridge = function(options){
-	var autoFit = options.autoFit !== undefined ? options.autoFit : true;
+	autoFit = options.autoFit !== undefined ? options.autoFit : true;
+	pixelPerfectMode = options.pixelPerfect !== undefined ? options.pixelPerfect : 0;
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
 	var html = '';
@@ -2572,15 +2575,14 @@ exports.cartridge = function(options){
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
-	fit();
-
 	if(autoFit){
+		fit(pixelPerfectMode);
 		// Resize (fit) the canvas when the container changes size
 		var resizeHandler = function(){
-			fit();
+			fit(pixelPerfectMode);
 		};
-		document.body.addEventListener('resize', resizeHandler);
-		document.body.addEventListener('mozfullscreenchange', resizeHandler);
+		window.addEventListener('resize', resizeHandler);
+		window.addEventListener('mozfullscreenchange', resizeHandler);
 	}
 
 	// Start render loop
@@ -2691,6 +2693,9 @@ function setCellSize(w,h){
 	// TODO: copy over?
  	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY, spriteSheetPixels);
 
+	maxSprites = spriteSheetSizeX * spriteSheetSizeY;
+	spriteFlags = utils.zeros(maxSprites);
+
 	// (re)init spritesheet canvas
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
 	spriteSheetContext = spriteSheetCanvas.getContext('2d');
@@ -2748,7 +2753,9 @@ function resizeCanvases(){
 		canvases[i].width = screensizeX;
 		canvases[i].height = screensizeY;
 	}
-	fit();
+	if(autoFit){
+		fit(pixelPerfectMode);
+	}
 	pixelops.resize(canvases[0]);
 }
 
@@ -2983,7 +2990,8 @@ exports.pget = (function(){
 		y = y | 0;
 		pixelops.pget(x,y,data);
 		var col = utils.rgbToDec(data[0], data[1], data[2]);
-		return palette.indexOf(col);
+		var result = palette.indexOf(col);
+		return result === -1 ? 0 : result;
 	};
 })();
 
@@ -3007,6 +3015,17 @@ exports.sget = function(x, y){
 	y = y | 0;
 	var w = spriteSheetSizeX * cellsizeX;
 	return spriteSheetPixels[y * w + x];
+};
+
+// Set spritesheet size
+exports.ssset = function(n){
+	spriteSheetSizeX = spriteSheetSizeY = (n | 0);
+	setCellSize(cellsizeX, cellsizeY);
+};
+
+// Get spritesheet size
+exports.ssget = function(){
+	return spriteSheetSizeX;
 };
 
 // Set spritesheet pixel color
@@ -3047,10 +3066,12 @@ exports.print = function(text, x, y, col){
 	font.draw(ctx, text.toUpperCase(), x, y, col);
 };
 
-exports.fit = function fit(){
+exports.fit = function fit(stretchMode){
+	stretchMode = stretchMode !== undefined ? stretchMode : 0;
+	var pixelPerfect = (stretchMode === 0);
 	var i = canvases.length;
 	while(i--){
-		utils.scaleToFit(canvases[i], container, true);
+		utils.scaleToFit(canvases[i], container, pixelPerfect);
 	}
 };
 
