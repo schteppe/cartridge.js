@@ -1,14 +1,55 @@
 (function(){
 
+// Parse query vars
+function getQueryVariables(variables) {
+    var query = window.location.search.substring(1);
+    var vars = query.split('&');
+	var result = {};
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+		var varName = decodeURIComponent(pair[0]);
+		var type = variables[varName];
+        if (type === undefined) continue;
+
+		var value = decodeURIComponent(pair[1]);
+		var ok = false;
+		switch(type){
+			case 'i':
+				value = parseInt(value, 10);
+				ok = !isNaN(value);
+				break;
+			case 'b':
+				value = (value === "1");
+				ok = true;
+				break;
+			case 's':
+				ok = true;
+				break;
+		}
+		if(ok){
+			result[varName] = value;
+        }
+    }
+    return result;
+}
+
+var query = getQueryVariables({
+	pixel_perfect: 'i',
+	run: 'b',
+	file: 's'
+});
+
 var editorDraw;
 
-document.body.onresize = document.body.mozfullscreenchange = function(){
-	fit();
+function resizeHandler(){
 	dirty = true;
-};
+}
+window.addEventListener("resize", resizeHandler);
+window.addEventListener("mozfullscreenchange", resizeHandler);
 
 var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'music', 'run', 'help'];
 var mode = modes[0];
+var loading = false;
 
 var selectedSprite = 1; // Because zero is "empty sprite"
 var dirty = true;
@@ -454,6 +495,8 @@ var editorLoad = window._init = function _init(){
 };
 
 editorDraw = window._draw = function _draw(){
+	if(loading) return;
+
 	var mx = mousex();
 	var my = mousey();
 	if(!(lastmx === mx && lastmy === my)){
@@ -1331,7 +1374,10 @@ document.addEventListener('copy', function(e){
 	}
 });
 
-cartridge({ containerId: 'container' });
+cartridge({
+	containerId: 'container',
+	pixelPerfect: query.pixel_perfect
+});
 
 cellwidth(16);
 cellheight(16);
@@ -1355,20 +1401,20 @@ palset(13, 0x83769c);
 palset(14, 0xff8e7d);
 palset(15, 0xffffff);
 
+run();
 
-if(window.location.hash.length){
-	loadHash();
-} else {
-	run();
+if(query.file){
+	loading = true;
+	load(query.file);
 }
-window.onhashchange = loadHash;
-function loadHash(){
-	load('../carts/' + window.location.hash.replace("#","") + '.json');
-}
+
 window._load = function(){
+	delete window._load; // only need to load once!
+	loading = false;
 	dirty = true;
 	syntaxTreeDirty = true;
-	code_run(code);
+	if(query.run)
+		code_run(code);
 };
 
 })();
