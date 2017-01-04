@@ -9,7 +9,7 @@ See the [examples](examples/).
 
 # Editor documentation
 
-#### Sprite editor
+### Sprite editor
 
 `r` rotate
 
@@ -21,17 +21,17 @@ See the [examples](examples/).
 
 `ctrl + v` paste sprite or image
 
-#### Map editor
+### Map editor
 
 `mmb` / `space` pan
 
 `lmb` draw
 
-#### Sound editor
+### Sound editor
 
 `space` play current sound
 
-#### Code editor
+### Code editor
 
 `ctrl + v` paste
 
@@ -43,10 +43,26 @@ See the [examples](examples/).
 
 `pagedown` / `pageup` move up/down a screen
 
-#### Run mode
+### Run mode
 
 `escape` Return to editor
 
+### Editor startup parameters
+
+You the editor takes a few query parameters to its URL. Use these to control the initial behavior of the editor.
+
+<dl>
+  <dt>file</dt>
+  <dd>Tries to load a cart/JSON-file from the given URL.</dd>
+  <dt>run</dt>
+  <dd>If set to 1, the editor will start the current cart when loaded.</dd>
+  <dt>pixel_perfect</dt>
+  <dd>If set to 1, canvas will be stretched to fit the browsers' window. If zero, it will scale up the canvas by an integer number (1x, 2x, 3x etc) while fitting inside the browser window.</dd>
+</dl>
+
+For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json` will load a cart from the URL `../carts/twister.json` before starting the editor ([try here](https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json)).
+
+`https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json&run=1` will load a cart from the URL `../carts/twister.json` and run it ([try here](https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json&run=1)).
 
 # API documentation
 
