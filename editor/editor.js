@@ -123,6 +123,8 @@ var code = {
 	cursorVisible: true,
 	textColor: 7,
 	bgColor: 5,
+	errorBgColor: 4,
+	currentLineBgColor: 4,
 	keywordColor: 14,
 	literalColor: 12,
 	apiColor: 11,
@@ -803,7 +805,12 @@ function code_draw(code){
 	var y = code.y;
 	var w = code.width();
 	var h = code.height();
+	var fontHeight = code.fontHeight;
+	var fontWidth = code.fontWidth;
+	var rows = flr(h / fontHeight);
+	var cols = flr(w / fontWidth);
 
+	// Background
 	rectfill(
 		x-code.margin,
 		y-code.margin,
@@ -811,11 +818,6 @@ function code_draw(code){
 		y+h-1+code.margin,
 		code.bgColor
 	);
-
-	var fontHeight = code.fontHeight;
-	var fontWidth = code.fontWidth;
-	var rows = flr(h / fontHeight);
-	var cols = flr(w / fontWidth);
 
 	if(syntaxTreeDirty){
 		syntaxComments.length = 0;
@@ -834,6 +836,15 @@ function code_draw(code){
 	if(code.crow > code.wrow + rows - 1) code.wrow = code.crow - rows + 1;
 	if(code.ccol < code.wcol) code.wcol = code.ccol;
 	if(code.ccol > code.wcol + cols - 1) code.wcol = code.ccol - cols + 1;
+
+	// Highlight current row
+	rectfill(
+		x-code.margin,
+		y-code.margin + (code.crow-code.wrow) * fontHeight,
+		x+w-1+code.margin,
+		y-code.margin + (code.crow-code.wrow+1) * fontHeight,
+		code.currentLineBgColor
+	);
 
 	// Draw code
 	var position = 0;
@@ -924,14 +935,16 @@ function code_draw(code){
 	}
 }
 
-function extractLineNumberFromError(err) {
-	if(!err) return null;
-	if(err.lineNumber!==undefined && err.columnNumber!==undefined) return {line:err.lineNumber,column:err.columnNumber};
-	if(err.line!==undefined && err.column!==undefined) return {line:err.line,column:err.column};
-	var stack = err.stack;
-	var m = stack.match(/:(\d+):(\d+)/mg);
-	return m ? {line: parseInt(m[1].split(':')[1]), column: parseInt(m[1].split(':')[2]) } : null;
-}
+window._error = function(info){
+	console.error(info);
+	code_stop(code);
+
+	// Handle error
+	mode = 'code';
+	code.ccol = info.column - 1;
+	code.crow = info.line - 1;
+	dirty = true;
+};
 
 function code_run(code){
 	// Run code in global scope
@@ -953,9 +966,6 @@ function code_run(code){
 		}
 		code.initialized = true;
 	} catch(err){
-		var lineInfo = extractLineNumberFromError(err);
-		console.log(lineInfo)
-		console.error(err);
 		// Stop and go back!
 		code_stop(code);
 		return true;

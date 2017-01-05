@@ -129,12 +129,8 @@ exports.cartridge = function(options){
 				t0 += dt0;
 				accumulator0 -= dt0;
 				_alpha = accumulator0 / dt0;
-				if(loaded && typeof(_update) !== 'undefined'){
-					try {
-						_update();
-					} catch(err){
-						console.error(err);
-					}
+				if(loaded && typeof(_update) === 'function'){
+					runUserFunction(_update);
 				}
 			}
 			accumulator1 += frameTime;
@@ -143,12 +139,8 @@ exports.cartridge = function(options){
 				t1 += dt1;
 				accumulator1 -= dt1;
 				_alpha = accumulator1 / dt1;
-				if(loaded && typeof(_update60) !== 'undefined'){
-					try {
-						_update60();
-					} catch(err){
-						console.error(err);
-					}
+				if(loaded && typeof(_update60) === 'function'){
+					runUserFunction(_update60);
 				}
 			}
 		}
@@ -156,12 +148,8 @@ exports.cartridge = function(options){
 			_startTime = newTime;
 		}
 		_time = newTime - _startTime;
-		if(loaded && typeof(_draw) !== 'undefined'){
-			try {
-				_draw();
-			} catch(err){
-				console.error(err);
-			}
+		if(loaded && typeof(_draw) === 'function'){
+			runUserFunction(_draw);
 		}
 
 		// Flush any remaining pixelops
@@ -182,28 +170,26 @@ exports.run = function(){
 		runKill();
 	}
 	_startTime = -1;
-	code.run();
+	try {
+		code.run();
+	} catch(err){
+		if(typeof(_error) === 'function'){
+			_error(createErrorObject(err));
+		}
+	}
 	runInit();
 };
 
 function runInit(){
 	loaded = true;
-	if(typeof(_init) !== 'undefined'){
-		try {
-			_init();
-		} catch(err){
-			console.error(err);
-		}
+	if(typeof(_init) === 'function'){
+		runUserFunction(_init);
 	}
 }
 function runKill(){
 	loaded = false;
-	if(typeof(_kill) !== 'undefined'){
-		try {
-			_kill();
-		} catch(err){
-			console.error(err);
-		}
+	if(typeof(_kill) === 'function'){
+		runUserFunction(_kill);
 	}
 }
 
@@ -791,14 +777,48 @@ function loadJSON(data){
 
 	spriteSheetDirty = true;
 
-	if(typeof(_load) !== 'undefined'){
+	if(typeof(_load) === 'function'){
+		runUserFunction(_load);
+	}
+}
+
+function runUserFunction(func){
+	if(typeof(func) === 'function'){
 		try {
-			_load();
+			func();
 		} catch(err){
+			if(typeof(_error) === 'function'){
+				_error(createErrorObject(err));
+			}
 			console.error(err);
 		}
 	}
-};
+}
+
+function createErrorObject(err) {
+	var line = -1;
+	var column = -1;
+	if(err.lineNumber!==undefined && err.columnNumber!==undefined){
+		line = err.lineNumber;
+		column = err.columnNumber;
+	} else if(err.line!==undefined && err.column!==undefined){
+		line = err.line;
+		column = err.column;
+	}
+	var stack = err.stack;
+	var m = stack.match(/:(\d+):(\d+)/mg);
+	if(m){
+		var nums = m[1].split(':');
+		line = parseInt(nums[1]);
+		column = parseInt(nums[2]);
+	}
+	return {
+		message: err.message,
+		line: line,
+		column: column,
+		originalError: err
+	};
+}
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
