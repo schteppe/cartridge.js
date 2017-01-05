@@ -1,5 +1,16 @@
 (function(){
 
+// For safari
+if(Object.values === undefined){
+	Object.values = function(obj){
+		var vals = [];
+		for(var key in obj) {
+			vals.push(obj[key]);
+		}
+		return vals;
+	};
+}
+
 // Parse query vars
 function getQueryVariables(variables) {
     var query = window.location.search.substring(1);
@@ -913,6 +924,15 @@ function code_draw(code){
 	}
 }
 
+function extractLineNumberFromError(err) {
+	if(!err) return null;
+	if(err.lineNumber!==undefined && err.columnNumber!==undefined) return {line:err.lineNumber,column:err.columnNumber};
+	if(err.line!==undefined && err.column!==undefined) return {line:err.line,column:err.column};
+	var stack = err.stack;
+	var m = stack.match(/:(\d+):(\d+)/mg);
+	return m ? {line: parseInt(m[1].split(':')[1]), column: parseInt(m[1].split(':')[2]) } : null;
+}
+
 function code_run(code){
 	// Run code in global scope
 	code.previousMode = mode;
@@ -933,6 +953,8 @@ function code_run(code){
 		}
 		code.initialized = true;
 	} catch(err){
+		var lineInfo = extractLineNumberFromError(err);
+		console.log(lineInfo)
 		console.error(err);
 		// Stop and go back!
 		code_stop(code);
@@ -1107,7 +1129,7 @@ function code_keydown(code, evt){
 }
 
 function code_keypress(code, evt){
-	var char = String.fromCharCode(evt.keyCode).toUpperCase();
+	var char = String.fromCharCode(evt.charCode).toUpperCase();
 	var codeArray = codeget().split('\n');
 
 	if(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="+-{}<>!;_|&*~\'%'.indexOf(char) !== -1){
@@ -1242,12 +1264,19 @@ window.addEventListener('keydown', function(evt){
 	dirty = true;
 });
 
-// Prevent ctrl + s
 document.addEventListener('keydown', function(e){
 	if(mode === 'run') return;
-	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
+
+	// Prevent ctrl + s
+	if (e.keyCode == 83 && (isMac() ? e.metaKey : e.ctrlKey)){
 		e.preventDefault();
 	}
+
+	// Prevent backspace
+	if (mode === 'code' && e.keyCode === 8) {
+		e.preventDefault();
+	}
+
 }, false);
 
 window.addEventListener('keypress', function(evt){
