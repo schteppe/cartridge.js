@@ -68,7 +68,7 @@ For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twist
 
 #### Game loop
 
-* [_init()](#_init-) - called on game start
+* [_init()](#_init) - called on game start
 * [_update()](#_update-) - called at 30fps
 * [_update60()](#_update60-) - called at 60fps
 * [_draw()](#_draw-) - called every render frame
@@ -76,7 +76,7 @@ For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twist
 
 #### Math
 
-* [abs(x)](#abs--x-) - absolute value
+* [abs(x)](#abs) - absolute value
 * [atan2(x,y)](#atan2--x--y-)
 * [ceil(x)](#ceil--x-) - round up
 * [clamp(x,min,max)](#clamp--x-min-max-) - clamp a number
@@ -147,7 +147,9 @@ For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twist
 * [time()](#time) - get current time in seconds
 * [width([newWidth])](#width) - get or set width
 
-### _init ()
+### _init
+
+#### _init ()
 
 ```js
 function _init(){
@@ -197,7 +199,9 @@ function _kill(){
 
 ===
 
-### abs ( x )
+### abs
+
+#### abs ( x )
 
 <dl>
   <dt>x</dt>
