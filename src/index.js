@@ -523,6 +523,13 @@ exports.fset = function(n, flags, t){
 	spriteFlags[n] = newFlags;
 };
 
+exports.assert = function(condition, message){
+	if(!condition){
+		message = message !== undefined ? message : "Assertion failed";
+		throw new Error(message);
+	}
+};
+
 // Get pixel color
 exports.pget = (function(){
 	var data = new Uint8Array(3);

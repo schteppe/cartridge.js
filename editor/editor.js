@@ -732,6 +732,7 @@ var syntaxComments = [];
 var cartridgeIdentifiers = [
 	"abs",
 	"alpha",
+	"assert",
 	"atan2",
 	"btn",
 	"btnp",
