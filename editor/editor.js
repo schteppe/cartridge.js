@@ -540,7 +540,7 @@ editorDraw = window._draw = function _draw(){
 		break;
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
-		rect(mapPanX, mapPanY, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
+		rect(mapPanX-1, mapPanY-1, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		sprites_draw();
 		intsel_draw(spriteSheetPageSelector);
 		break;
