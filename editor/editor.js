@@ -72,7 +72,7 @@ var viewport = {
 	x: 1,
 	y: 8,
 	sx: function(){ return flr((width() * 0.6) / cellwidth()); },
-	sy: function(){ return flr((height() * 0.6) / cellheight()); }
+	sy: function(){ return flr(((height()-cellheight()*4-8) * 0.9) / cellheight()); }
 };
 
 var music = {
@@ -224,6 +224,28 @@ var spriteSheetPageSelector = {
 	padding: 6,
 	min: function(){ return 0; },
 	max: function(){ return ssget() === 16 ? 3 : 15; },
+	prefix: '',
+	postfix: ''
+};
+
+var resolutionSelectorX = {
+	x: function(){ return 50; },
+	y: function(){ return 80; },
+	current: width(),
+	padding: 8,
+	min: function(){ return 128; },
+	max: function(){ return 512; },
+	prefix: '',
+	postfix: ''
+};
+
+var resolutionSelectorY = {
+	x: function(){ return 50; },
+	y: function(){ return 88; },
+	current: height(),
+	padding: resolutionSelectorX.padding,
+	min: resolutionSelectorX.min,
+	max: resolutionSelectorX.max,
 	prefix: '',
 	postfix: ''
 };
@@ -478,6 +500,16 @@ window._click = function _click(){
 			dirty = true;
 			saveButtons.current = -1;
 		}
+
+		if(intsel_click(resolutionSelectorX, mx, my)){
+			width(resolutionSelectorX.current);
+			dirty = true;
+		}
+
+		if(intsel_click(resolutionSelectorY, mx, my)){
+			height(resolutionSelectorY.current);
+			dirty = true;
+		}
 	}
 }
 
@@ -558,7 +590,12 @@ editorDraw = window._draw = function _draw(){
 		print("Save to localstorage slot:", 5,35);
 		buttons_draw(saveButtons);
 		print('- Press "S" to download JSON.', 5,56);
-		print('- Press "O" to open JSON.', 5,70);
+		print('- Press "O" to open JSON.', 5,68);
+		print('Resolution:', 5,80);
+		resolutionSelectorX.current = width();
+		resolutionSelectorY.current = height();
+		intsel_draw(resolutionSelectorX);
+		intsel_draw(resolutionSelectorY);
 		break;
 	case 'help':
 		print([
@@ -568,8 +605,8 @@ editorDraw = window._draw = function _draw(){
 			"style games!",
 			"Use tabs above to get started:",
 			"",
-			"- CRT: Save/load game.",
-			"- SPR: Sprite editor.",
+			"- CRT: Save/80game.",
+			"- SPR: Sprit10 editor.",
 			"- MAP: Map editor.",
 			"- SFX: Sound effect editor.",
 			"- .JS: JavaScript editor.",
