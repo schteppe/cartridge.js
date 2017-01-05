@@ -258,6 +258,15 @@ var spriteSheetSizeButtons = {
 	padding: 2
 };
 
+var spriteSizeButtons = {
+	x: function(){ return 80; },
+	y: function(){ return 106; },
+	options: [8,16,32],
+	current: [8,16,32].indexOf(cellwidth()),
+	padding: 2
+};
+console.log([8,16,32].indexOf(cellwidth()))
+
 function intsel_draw(intsel){
 	var padding = intsel.padding;
 	var numDigits = intsel.max().toString().length;
@@ -522,6 +531,12 @@ window._click = function _click(){
 			ssset(spriteSheetSizeButtons.current === 0 ? 16 : 32);
 			dirty = true;
 		}
+		if(buttons_click(spriteSizeButtons,mx,my)){
+			var newSize = spriteSizeButtons.options[spriteSizeButtons.current];
+			cellwidth(newSize);
+			cellheight(newSize);
+			dirty = true;
+		}
 	}
 }
 
@@ -601,16 +616,24 @@ editorDraw = window._draw = function _draw(){
 		buttons_draw(slotButtons);
 		print("Save to localstorage slot:", 5,35);
 		buttons_draw(saveButtons);
+
 		print('- Press "S" to download JSON.', 5,56);
 		print('- Press "O" to open JSON.', 5,68);
+
 		print('Resolution:', 5,80);
 		resolutionSelectorX.current = width();
 		resolutionSelectorY.current = height();
 		intsel_draw(resolutionSelectorX);
 		intsel_draw(resolutionSelectorY);
+
 		print('spritesheet size:', 5,99);
 		spriteSheetSizeButtons.current = (ssget() === 16 ? 0 : 1);
 		buttons_draw(spriteSheetSizeButtons);
+
+		print('sprite size:', 5,106);
+		spriteSizeButtons.current = spriteSizeButtons.options.indexOf(cellwidth());
+		buttons_draw(spriteSizeButtons);
+
 		break;
 	case 'help':
 		print([
