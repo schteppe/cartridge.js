@@ -9,6 +9,8 @@ See the [examples](examples/).
 
 # Editor documentation
 
+`ctrl + enter` run game
+
 ### Sprite editor
 
 `r` rotate

@@ -1203,17 +1203,28 @@ function copySprite(from,to){
 	}
 }
 
-function mod(a,b) {
-    return ((a%b)+b)%b;
-};
+function mod(a,b) { return ((a%b)+b)%b; }
+function isMac(){ return navigator.platform.match("Mac"); }
 
 window.addEventListener('keydown', function(evt){
+	if(mode === 'run'){
+		if(evt.keyCode === 27){
+			code_stop(code);
+			dirty = true;
+		}
+		return;
+	}
+
 	keysdown[evt.keyCode] = true;
+
+	// ctrl+enter -> run game
+	if(evt.keyCode === 13 && (isMac() ? evt.metaKey : evt.ctrlKey)){
+		code_run(code);
+		return;
+	}
 
 	if(mode === 'code'){
 		code_keydown(code, evt);
-	} else if(mode === 'run' && evt.keyCode === 27){
-		code_stop(code);
 	} else {
 		switch(evt.keyCode){
 			case 86: if(mode === 'sprite') flipSprite(selectedSprite, false); break; // V
@@ -1233,12 +1244,14 @@ window.addEventListener('keydown', function(evt){
 
 // Prevent ctrl + s
 document.addEventListener('keydown', function(e){
-	if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)){
+	if(mode === 'run') return;
+	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
 		e.preventDefault();
 	}
 }, false);
 
 window.addEventListener('keypress', function(evt){
+	if(mode === 'run') return;
 	if(mode === 'code'){
 		code_keypress(code, evt);
 	}
@@ -1270,6 +1283,7 @@ function readSingleFile(e) {
 }
 window.addEventListener('paste', handlepaste, false);
 function handlepaste (e) {
+	if(mode === 'run') return;
 	if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
 		var types = e.clipboardData.types;
 		var handled = false;
@@ -1369,6 +1383,7 @@ function handlePasteString(str){
 }
 
 document.addEventListener('copy', function(e){
+	if(mode === 'run') return;
 	if(mode === 'sprite'){
 		e.clipboardData.setData('text/plain', 'sprite:'+selectedSprite);
 		e.preventDefault();
