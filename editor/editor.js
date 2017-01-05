@@ -250,6 +250,14 @@ var resolutionSelectorY = {
 	postfix: ''
 };
 
+var spriteSheetSizeButtons = {
+	x: function(){ return 80; },
+	y: function(){ return 98; },
+	options: [16,32],
+	current: ssget() === 16 ? 0 : 1,
+	padding: 2
+};
+
 function intsel_draw(intsel){
 	var padding = intsel.padding;
 	var numDigits = intsel.max().toString().length;
@@ -510,6 +518,10 @@ window._click = function _click(){
 			height(resolutionSelectorY.current);
 			dirty = true;
 		}
+		if(buttons_click(spriteSheetSizeButtons,mx,my)){
+			ssset(spriteSheetSizeButtons.current === 0 ? 16 : 32);
+			dirty = true;
+		}
 	}
 }
 
@@ -596,6 +608,9 @@ editorDraw = window._draw = function _draw(){
 		resolutionSelectorY.current = height();
 		intsel_draw(resolutionSelectorX);
 		intsel_draw(resolutionSelectorY);
+		print('spritesheet size:', 5,99);
+		spriteSheetSizeButtons.current = (ssget() === 16 ? 0 : 1);
+		buttons_draw(spriteSheetSizeButtons);
 		break;
 	case 'help':
 		print([
@@ -638,7 +653,7 @@ function buttons_draw(settings){
 			settings.x() + 5+padding*2 + i * (6+padding*2)-1, settings.y() + 6,
 			settings.current === i ? bgColor : textColor
 		);
-		var text = settings.options !== undefined ? settings.options[i].toUpperCase().substr(0,4) : ((i+1) + '');
+		var text = settings.options !== undefined ? (settings.options[i]+'').toUpperCase().substr(0,4) : ((i+1) + '');
 		var x1 = settings.x()+1+padding + i * (6 + padding*2);
 		print(
 			text,
