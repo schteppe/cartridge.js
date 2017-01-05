@@ -38,6 +38,10 @@ exports.decToB = function(c){
 
 function isSafari(){
 	return navigator.userAgent.indexOf('Safari') !== -1 && navigator.userAgent.indexOf('Chrome') === -1;
+}
+
+exports.isMac = function(){
+	return navigator.platform.match("Mac");
 };
 
 exports.makeGlobal = function(obj){
