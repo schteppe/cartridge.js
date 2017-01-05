@@ -498,13 +498,29 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 };
 
 // Get sprite flags
-exports.fget = function(n){
-	return spriteFlags[n];
+exports.fget = function(n,bitPosition){
+	var flags = spriteFlags[n];
+	if(bitPosition !== undefined){
+		return !!(flags & (1 << bitPosition));
+	}
+	return flags;
 };
 
 // Set sprite flags
-exports.fset = function(n, flags){
-	spriteFlags[n] = flags;
+exports.fset = function(n, flags, t){
+	var newFlags;
+	if(t !== undefined){
+		newFlags = spriteFlags[n];
+		var bit = (1 << flags);
+		if(t){
+			newFlags |= bit;
+		} else {
+			newFlags &= (~bit);
+		}
+	} else {
+		newFlags = flags;
+	}
+	spriteFlags[n] = newFlags;
 };
 
 // Get pixel color
