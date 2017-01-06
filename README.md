@@ -1,4 +1,4 @@
-	cartridge.js
+cartridge.js
 ============
 
 Create a full game containing your own sprites, maps, sounds and code in the [editor](https://schteppe.github.io/cartridge.js/editor/).
