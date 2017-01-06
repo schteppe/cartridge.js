@@ -8,6 +8,12 @@ Create a full game containing your own sprites, maps, sounds and code in the [ed
 ![cartridge-sfx](https://cloud.githubusercontent.com/assets/1063152/21720210/3121a6b4-d422-11e6-934d-53ec301d5d10.png)
 ![cartridge-code](https://cloud.githubusercontent.com/assets/1063152/21720207/2e36373a-d422-11e6-9d71-9d021ba08e6f.png)
 
+## Demos
+
+[![twister](https://cloud.githubusercontent.com/assets/1063152/21720721/06ad239c-d425-11e6-99c3-e0ae6fb37739.png)](https://schteppe.github.io/cartridge.js/editor/?file=../carts/twister.json&run=1)
+[![megaman-intro](https://cloud.githubusercontent.com/assets/1063152/21720795/6fa28680-d425-11e6-8530-f516e8697b5d.png)](https://schteppe.github.io/cartridge.js/editor/?file=../carts/megaman-intro.json&run=1)
+
+
 # Editor documentation
 
 `ctrl + enter` run game
