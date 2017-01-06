@@ -1,7 +1,7 @@
 cartridge.js
 ============
 
-Create a full game containing your own sprites, maps, sounds and code in the [editor](https://schteppe.github.io/cartridge.js/editor/).
+Create a full game containing your own sprites, maps, sounds, gamepad input, music, and code in the [editor](https://schteppe.github.io/cartridge.js/editor/).
 
 ![cartridge-spr](https://cloud.githubusercontent.com/assets/1063152/21720212/3147227c-d422-11e6-9484-149fb534830e.png)
 ![cartridge-map](https://cloud.githubusercontent.com/assets/1063152/21720211/3138b93a-d422-11e6-837e-708bb0742084.png)
