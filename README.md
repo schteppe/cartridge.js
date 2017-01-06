@@ -1,4 +1,4 @@
-cartridge.js
+	cartridge.js
 ============
 
 Retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.php). Create a full game in the [editor](https://schteppe.github.io/cartridge.js/editor/), or use it as a library.
@@ -71,61 +71,61 @@ For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twist
 #### Game loop
 
 * [_init()](#_init) - called on game start
-* [_update()](#_update-) - called at 30fps
-* [_update60()](#_update60-) - called at 60fps
-* [_draw()](#_draw-) - called every render frame
-* [_kill()](#_kill-) - called on game end
+* [_update()](#_update) - called at 30fps
+* [_update60()](#_update60) - called at 60fps
+* [_draw()](#_draw) - called every render frame
+* [_kill()](#_kill) - called on game end
 
 #### Math
 
 * [abs(x)](#abs) - absolute value
-* [atan2(x,y)](#atan2--x--y-)
-* [ceil(x)](#ceil--x-) - round up
-* [clamp(x,min,max)](#clamp--x-min-max-) - clamp a number
-* [cos(x)](#cos--x-) - cosine
-* [flr(x)](#flr--x-) - floor
+* [atan2(x,y)](#atan2)
+* [ceil(x)](#ceil) - round up
+* [clamp(x,min,max)](#clamp) - clamp a number
+* [cos(x)](#cos) - cosine
+* [flr(x)](#flr) - floor
 * [inf](#inf) - infinity
-* [max(x,y)](#max--x--y-) - maximum of two numbers
-* [mid(x,y,z)](#mid--x--y--z-) - middle of three numbers
-* [min(x,y)](#min--x--y-) - minimum
-* [mix(a,b,alpha)](#mix--a--b--alpha-) - linear interpolation
-* [nan(x)](#nan--x-) - check for NaN
-* [rnd(n)](#rnd--n-) - generate floating point random number between 0 and n
-* [sgn(x)](#sgn--x-) - sign
-* [sin(x)](#sin--x-) - sine
-* [sqrt(x)](#sqrt--x-) - square root
+* [max(x,y)](#max) - maximum of two numbers
+* [mid(x,y,z)](#mid) - middle of three numbers
+* [min(x,y)](#min) - minimum
+* [mix(a,b,alpha)](#mix) - linear interpolation
+* [nan(x)](#nan) - check for NaN
+* [rnd(n)](#rnd) - generate floating point random number between 0 and n
+* [sgn(x)](#sgn) - sign
+* [sin(x)](#sin) - sine
+* [sqrt(x)](#sqrt) - square root
 
 #### Input
 
-* [btn(n,[p])](#btn--n--player-) - get button state
-* [btnp(n,[p])](#btnp--n--player-) - get previous button state
-* [_click](#_click-) - called upon click
-* [mousebtn(n)](#mousebtn--n-) - get mousebutton state
-* [mousex()](#mousex-) - get mouse x position
-* [mousey()](#mousey-) - get mouse x position
+* [btn(n,[p])](#btn) - get button state
+* [btnp(n,[p])](#btnp) - get previous button state
+* [_click](#_click) - called upon click
+* [mousebtn(n)](#mousebtn) - get mousebutton state
+* [mousex()](#mousex) - get mouse x position
+* [mousey()](#mousey) - get mouse x position
 
 #### Audio
 
-* [sfx(n,[channel],[offset])](#sfx--n--channel--offset-) - play sound effect
+* [sfx(n,[channel],[offset])](#sfx) - play sound effect
 
 #### Graphics
 
-* [camera(x,y)](#camera--x--y-)
-* [clip(x,y,w,h)](#clip--x--y--w--h-) - only allow rendering within a rectangle
-* [cls()](#cls-) - clear screen
-* [color(col)](#color--col-) - set default color
-* [fget(n)](#fget--n-) - get flags for a map cell
-* [fset(n,flags)](#fset--n--flags-) - set flags for a map cell
-* [palget(n)](#palget--col-) - get palette color in decimal form
-* [palset(n,col)](#palset--col--dec-) - set palette color
-* [palt(col,t)](#palt--col--t-) - set transparency color
-* [pget(x,y)](#pget--x--y-) - get screen pixel color
+* [camera(x,y)](#camera)
+* [clip(x,y,w,h)](#clip) - only allow rendering within a rectangle
+* [cls()](#cls) - clear screen
+* [color(col)](#color) - set default color
+* [fget(n)](#fget) - get flags for a map cell
+* [fset(n,flags)](#fset) - set flags for a map cell
+* [palget(n)](#palget) - get palette color in decimal form
+* [palset(n,col)](#palset) - set palette color
+* [palt(col,t)](#palt) - set transparency color
+* [pget(x,y)](#pget) - get screen pixel color
 * [print(text,x,y,[col])](#print) - draw text
 * [pset(x,y,col)](#pset) - set pixel color
 * [rect(x0,y0,x1,y1,[col])](#rect) - draw rectangle
 * [rectfill(x0,y0,x1,y1,[col])](#rectfill) - draw filled rectangle
 * [sget(x,y)](#sget) - get spritesheet pixel color
-* [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr--n--x--y--w--h--flip_x--flip_y-) - draw sprite
+* [spr(n,x,y,[w],[h],[flip_x],[flip_y])](#spr) - draw sprite
 * [sset(x,y,col)](#sset) - set pixel color in spritesheet
 
 #### Map
@@ -165,7 +165,9 @@ function _init(){
 
 ===
 
-### _update ()
+### _update
+
+#### _update ()
 
 ```js
 function _update(){
@@ -175,7 +177,9 @@ function _update(){
 
 ===
 
-### _update60 ()
+### _update60
+
+#### _update60 ()
 
 ```js
 function _update60(){
@@ -185,7 +189,9 @@ function _update60(){
 
 ===
 
-### _draw ()
+### _draw
+
+#### _draw ()
 
 ```js
 function _draw(){
@@ -195,7 +201,9 @@ function _draw(){
 
 ===
 
-### _kill ()
+### _kill
+
+#### _kill ()
 
 ```js
 function _kill(){
@@ -223,7 +231,9 @@ var b = abs(5.6); // 5.6
 
 ===
 
-### atan2 ( x , y )
+### atan2
+
+#### atan2 ( x , y )
 
 <dl>
   <dt>x</dt>
@@ -240,7 +250,9 @@ var angle = atan2(x,y);
 
 ===
 
-### btn ( n , [player] )
+### btn
+
+#### btn ( n , [player] )
 
 <dl>
 	<dt>n</dt>
@@ -259,7 +271,9 @@ if(btn(0)){
 
 ===
 
-### btnp ( n , [player] )
+### btnp
+
+#### btnp ( n , [player] )
 
 <dl>
 	<dt>n</dt>
@@ -278,7 +292,9 @@ if(btnp(0)){
 
 ===
 
-### camera ( x , y )
+### camera
+
+#### camera ( x , y )
 
 <dl>
 	<dt>x</dt>
@@ -293,7 +309,9 @@ camera(x, y);
 
 ===
 
-### cartridge ( options )
+### cartridge
+
+#### cartridge ( options )
 
 Initialize the library.
 
@@ -303,7 +321,9 @@ cartridge({ containerId: 'myContainerElementId' });
 
 ===
 
-### ceil ( x )
+### ceil
+
+#### ceil ( x )
 
 Round up a number
 
@@ -320,7 +340,9 @@ var y = ceil(1.34); // 2
 
 ===
 
-### clamp ( x, min, max )
+### clamp
+
+#### clamp ( x, min, max )
 
 Clamp a number
 
@@ -343,7 +365,9 @@ var c = clamp(0.11, 1, 2); // 1
 
 ===
 
-### _click ()
+### _click
+
+#### _click ()
 
 Click handler.
 
@@ -355,7 +379,9 @@ function _click(){
 
 ===
 
-### cls ()
+### cls
+
+#### cls ()
 
 Clear the whole screen.
 
@@ -365,7 +391,9 @@ cls();
 
 ===
 
-### clip ( x , y , w , h )
+### clip
+
+#### clip ( x , y , w , h )
 
 Set drawing area for draw operations. Similar to "scissor test" in other rendering engines.
 
@@ -386,7 +414,9 @@ clip(0,0,20,30);
 
 ===
 
-### color ( col )
+### color
+
+#### color ( col )
 
 <dl>
 	<dt>col</dt>
@@ -399,7 +429,9 @@ color(2); // new default color is 2
 
 ===
 
-### cos ( x )
+### cos
+
+#### cos ( x )
 
 <dl>
 	<dt>x</dt>
@@ -417,7 +449,9 @@ var c = cos(0.5); // -1
 
 ===
 
-### fget ( n )
+### fget
+
+#### fget ( n )
 
 <dl>
 	<dt>n</dt>
@@ -432,7 +466,9 @@ var flags = fget(0); // get flags for sprite 0
 
 ===
 
-### fit ()
+### fit
+
+#### fit ()
 
 Fit the canvas to the container element.
 
@@ -442,7 +478,9 @@ fit();
 
 ===
 
-### flr ( x )
+### flr
+
+#### flr ( x )
 
 Floor a number
 
@@ -459,7 +497,9 @@ var y = flr(1.34); // 1
 
 ===
 
-### inf
+### in
+
+#### inf
 
 A number, set to `Infinity`.
 
@@ -471,7 +511,9 @@ if(x < inf){
 
 ===
 
-### fset ( n , flags )
+### fset
+
+#### fset ( n , flags )
 
 Set flags for a sprite
 
@@ -488,7 +530,9 @@ fset(1, 1|2|4); // set first, second and third flag for sprite 1
 
 ===
 
-### fullscreen ()
+### fullscreen
+
+#### fullscreen ()
 
 Enable full screen.
 
@@ -498,7 +542,9 @@ fullscreen();
 
 ===
 
-### map ( cel_x , cel_y , sx , sy , cel_w , cel_h , [layer] )
+### map
+
+#### map ( cel_x , cel_y , sx , sy , cel_w , cel_h , [layer] )
 
 Draw a portion of the map to the canvas.
 
@@ -525,7 +571,9 @@ map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer);
 
 ===
 
-### max ( x , y )
+### max
+
+#### max ( x , y )
 
 <dl>
 	<dt>x</dt>
@@ -542,7 +590,9 @@ var z = max(x, y);
 
 ===
 
-### mget ( x , y )
+### mget
+
+#### mget ( x , y )
 
 Get a cell from the map, as a sprite index.
 
@@ -561,7 +611,9 @@ var sprite = mget(1, 2); // get sprite at position 1,2 in the map
 
 ===
 
-### mid ( x , y , z )
+### mid
+
+#### mid ( x , y , z )
 
 Get the middle number of three numbers
 
@@ -582,7 +634,9 @@ var a = mid(1, 2, 3); // 2
 
 ===
 
-### min ( x , y )
+### min
+
+#### min ( x , y )
 
 <dl>
 	<dt>x</dt>
@@ -599,7 +653,9 @@ var z = min(1, 2); // 1
 
 ===
 
-### mix ( x , y , alpha )
+### mix
+
+#### mix ( x , y , alpha )
 
 <dl>
 	<dt>x</dt>
@@ -614,7 +670,9 @@ var z = min(1, 2); // 1
 
 ===
 
-### nan ( x )
+### nan
+
+#### nan ( x )
 
 Checks if `x` is not-a-number. Does the same job as `isNaN` in JavaScript.
 
@@ -627,7 +685,9 @@ Checks if `x` is not-a-number. Does the same job as `isNaN` in JavaScript.
 
 ===
 
-### mousebtn ( n )
+### mousebtn
+
+#### mousebtn ( n )
 
 Get mouse button state.
 
@@ -644,7 +704,9 @@ var isdown = mousebtn(1);
 
 ===
 
-### mousex ()
+### mousex
+
+#### mousex ()
 
 Returns the x position of the mouse.
 
@@ -654,7 +716,9 @@ var x = mousex();
 
 ===
 
-### mousey ()
+### mousey
+
+#### mousey ()
 
 ```js
 var y = mousey();
@@ -662,7 +726,9 @@ var y = mousey();
 
 ===
 
-### mset ( x , y , n )
+### mset
+
+#### mset ( x , y , n )
 
 Set the sprite to be rendered at a cell position in the map.
 
@@ -681,7 +747,9 @@ mset(x, y, i);
 
 ===
 
-### palget ( col )
+### palget
+
+#### palget ( col )
 
 <dl>
 	<dt>col</dt>
@@ -696,7 +764,9 @@ var dec = palget(0); // 0x000000
 
 ===
 
-### palset ( col , dec )
+### palset
+
+#### palset ( col , dec )
 
 <dl>
 	<dt>col</dt>
@@ -711,7 +781,9 @@ palset(1, 0xff0000); // Set color 1 to red
 
 ===
 
-### palt ( col , t )
+### palt
+
+#### palt ( col , t )
 
 <dl>
 	<dt>col</dt>
@@ -726,7 +798,9 @@ palt(col, t);
 
 ===
 
-### pget ( x , y )
+### pget
+
+#### pget ( x , y )
 
 Get a pixel color on the screen.
 
@@ -745,7 +819,9 @@ var color = pget(x, y);
 
 ===
 
-### print ( text , x , y , [col] )
+### print
+
+#### print ( text , x , y , [col] )
 
 Print a text on the screen.
 
@@ -766,7 +842,9 @@ print("Hello world!", 15, 10, 7);
 
 ===
 
-### pset ( x , y , col )
+### pset
+
+#### pset ( x , y , col )
 
 Set pixel color.
 
@@ -785,7 +863,9 @@ pset(5, 4, 8); // Set pixel (5,4) to color 8
 
 ===
 
-### rect ( x0 , y0 , x1 , y1 , [col] )
+### rect
+
+#### rect ( x0 , y0 , x1 , y1 , [col] )
 
 Draw a rectangle.
 
@@ -807,7 +887,9 @@ rect(x0, y0, x1, y1, col);
 
 ===
 
-### rectfill ( x0 , y0 , x1 , y1 , [col] )
+### rectfill
+
+#### rectfill ( x0 , y0 , x1 , y1 , [col] )
 
 Draw a filled rectangle.
 
@@ -829,7 +911,9 @@ rectfill(10, 10, 20, 20, 3);
 
 ===
 
-### rnd ( [n] )
+### rnd
+
+#### rnd ( [n] )
 
 Get a random number.
 
@@ -848,7 +932,9 @@ var c = rnd(2); // a random number between 0 and 2
 
 ===
 
-### sfx ( n , [channel] , [offset] )
+### sfx
+
+#### sfx ( n , [channel] , [offset] )
 
 <dl>
 	<dt>n</dt>
@@ -865,7 +951,9 @@ sfx(0); // play sound effect 0
 
 ===
 
-### sget ( x , y )
+### sget
+
+#### sget ( x , y )
 
 Get a sprite sheet pixel color.
 
@@ -884,7 +972,9 @@ var color = sget(4, 3);
 
 ===
 
-### sgn ( x )
+### sgn
+
+#### sgn ( x )
 
 Returns the sign of a number
 
@@ -904,7 +994,9 @@ var d = sgn(0); // 0
 
 ===
 
-### sin ( x )
+### sin
+
+#### sin ( x )
 
 Calculates the sine of x.
 
@@ -925,7 +1017,9 @@ var e = sin(1); // 0
 
 ===
 
-### spr ( n , x , y , [w] , [h] , [flip_x] , [flip_y] )
+### spr
+
+#### spr ( n , x , y , [w] , [h] , [flip_x] , [flip_y] )
 
 Draws a sprite.
 
@@ -952,7 +1046,9 @@ spr(1, 10, 20); // draw sprite 1 at coordinate (10,20)
 
 ===
 
-### sqrt ( x )
+### sqrt
+
+#### sqrt ( x )
 
 Square root.
 
@@ -970,7 +1066,9 @@ var y = sqrt(25); // 5
 
 ===
 
-### sset ( x , y , col )
+### sset
+
+#### sset ( x , y , col )
 
 Set sprite sheet pixel color.
 
@@ -991,7 +1089,9 @@ sset(10, 5, 3);
 
 ===
 
-### time ()
+### time
+
+#### time ()
 
 Get current time in seconds.
 
@@ -1001,7 +1101,9 @@ var t = time();
 
 ===
 
-### log ( message )
+### log
+
+#### log ( message )
 
 Log something to the JavaScript console. Equivalent to `console.log`.
 
@@ -1011,7 +1113,9 @@ log("hello world!");
 
 ===
 
-### def ( value )
+### def
+
+#### def ( value )
 
 Check if a value is defined. Equivalent to `value !== undefined`.
 
