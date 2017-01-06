@@ -1,11 +1,12 @@
 	cartridge.js
 ============
 
-Retro game engine inspired by [Pico-8](http://www.lexaloffle.com/pico-8.php). Create a full game in the [editor](https://schteppe.github.io/cartridge.js/editor/), or use it as a library.
+Create a full game containing your own sprites, maps, sounds and code in the [editor](https://schteppe.github.io/cartridge.js/editor/).
 
-# Usage
-
-See the [examples](examples/).
+![cartridge-spr](https://cloud.githubusercontent.com/assets/1063152/21720212/3147227c-d422-11e6-9484-149fb534830e.png)
+![cartridge-map](https://cloud.githubusercontent.com/assets/1063152/21720211/3138b93a-d422-11e6-837e-708bb0742084.png)
+![cartridge-sfx](https://cloud.githubusercontent.com/assets/1063152/21720210/3121a6b4-d422-11e6-934d-53ec301d5d10.png)
+![cartridge-code](https://cloud.githubusercontent.com/assets/1063152/21720207/2e36373a-d422-11e6-9d71-9d021ba08e6f.png)
 
 # Editor documentation
 
@@ -55,7 +56,7 @@ You the editor takes a few query parameters to its URL. Use these to control the
 
 <dl>
   <dt>file</dt>
-  <dd>Tries to load a cart/JSON-file from the given URL.</dd>
+  <dd>Tries to load a cart/JSON-file from the given URL.</dd>Usage
   <dt>run</dt>
   <dd>If set to 1, the editor will start the current cart when loaded. Default is 0.</dd>
   <dt>pixel_perfect</dt>
@@ -65,6 +66,10 @@ You the editor takes a few query parameters to its URL. Use these to control the
 For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json` will load a cart from the URL `../carts/twister.json` before starting the editor ([try here](https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json)).
 
 `https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json&run=1` will load a cart from the URL `../carts/twister.json` and run it ([try here](https://schteppe.github.io/cartridge.js/editor?file=../carts/twister.json&run=1)).
+
+# Library usage
+
+See the [examples](examples/);
 
 # API documentation
 
