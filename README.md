@@ -18,6 +18,8 @@ Create a full game containing your own sprites, maps, sounds, gamepad input, mus
 
 `ctrl + enter` run game
 
+`alt + left` / `alt + right` switch between editors
+
 ### Sprite editor
 
 `r` rotate

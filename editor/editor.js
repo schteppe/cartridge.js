@@ -1367,6 +1367,16 @@ window.addEventListener('keydown', function(evt){
 
 	keysdown[evt.keyCode] = true;
 
+	// alt + left or right, switch editor
+	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
+		var delta = evt.keyCode === 37 ? -1 : 1;
+		mode = modes[mod(modes.indexOf(mode)+delta, modes.length)];
+		if(mode === 'run')
+			mode = modes[mod(modes.indexOf(mode)+delta, modes.length)];
+		dirty = true;
+		return;
+	}
+
 	// ctrl+enter -> run game
 	if(evt.keyCode === 13 && (isMac() ? evt.metaKey : evt.ctrlKey)){
 		code_run(code);
