@@ -435,7 +435,7 @@ function mousemovehandler(forceMouseDown){
 function scrollhandler(delta){
 	switch(mode){
 		case 'code':
-			code.crow += delta;
+			code.crow -= delta;
 			code_clamp_crow(code);
 			code_clamp_ccol(code);
 	}
