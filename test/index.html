@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <title>Cartridge unit tests</title>
+    <link rel="stylesheet" href="../lib/nodeunit.css" type="text/css" />
+    <script src="../lib/nodeunit.js"></script>
+    <script src="../build/cartridge.js"></script>
+    <script src="suite1.js"></script>
+  </head>
+  <body>
+    <div id="container" style="display:none"></div>
+    <h1 id="nodeunit-header">Cartridge.js unit tests</h1>
+    <script>
+      nodeunit.run({
+        'Suite One': suite1
+      });
+    </script>
+  </body>
+</html>
