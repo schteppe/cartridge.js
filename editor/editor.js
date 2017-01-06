@@ -1174,6 +1174,7 @@ function code_keydown(code, evt){
 				var amount = 1;
 				if(evt.altKey){
 					var rowStr = codeArray[code.crow];
+					while(code.ccol - amount > 0 && rowStr[code.ccol-amount-1].match(/[\s]/)) amount++;
 					while(code.ccol - amount > 0 && rowStr[code.ccol-amount-1].match(/[a-z\d]/)) amount++;
 				}
 				code.ccol -= amount;
@@ -1189,6 +1190,7 @@ function code_keydown(code, evt){
 				var amount = 1;
 				if(evt.altKey){
 					var rowStr = codeArray[code.crow];
+					while(rowStr.length > code.ccol + amount && rowStr[code.ccol+amount].match(/[\s]/)) amount++;
 					while(rowStr.length > code.ccol + amount && rowStr[code.ccol+amount].match(/[a-z\d]/)) amount++;
 				}
 				code.ccol += amount;
