@@ -1497,10 +1497,17 @@ function handlePasteString(str){
 }
 
 document.addEventListener('copy', function(e){
-	if(mode === 'run') return;
-	if(mode === 'sprite'){
+	switch(mode){
+	case 'run':
+		return;
+	case 'sprite':
 		e.clipboardData.setData('text/plain', 'sprite:'+selectedSprite);
 		e.preventDefault();
+		break;
+	case 'code':
+		e.clipboardData.setData('text/plain', codeget()); // until selection is supported
+		e.preventDefault();
+		break;
 	}
 });
 
