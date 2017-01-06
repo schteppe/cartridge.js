@@ -381,6 +381,7 @@ exports.camera = function camera(x, y){
 	y = y | 0;
 	if(camX === x && camY === y) return;
 
+	pixelops.beforeChange();
 	ctx.translate(x - camX, y - camY);
 	camX = x;
 	camY = y;
@@ -798,37 +799,13 @@ function runUserFunction(func){
 			func();
 		} catch(err){
 			if(typeof(_error) === 'function'){
-				_error(createErrorObject(err));
+				_error(utils.getErrorInfo(err));
 			}
 			console.error(err);
 		}
 	}
 }
 
-function createErrorObject(err) {
-	var line = -1;
-	var column = -1;
-	if(err.lineNumber!==undefined && err.columnNumber!==undefined){
-		line = err.lineNumber;
-		column = err.columnNumber;
-	} else if(err.line!==undefined && err.column!==undefined){
-		line = err.line;
-		column = err.column;
-	}
-	var stack = err.stack;
-	var m = stack.match(/:(\d+):(\d+)/mg);
-	if(m){
-		var nums = m[1].split(':');
-		line = parseInt(nums[1]);
-		column = parseInt(nums[2]);
-	}
-	return {
-		message: err.message,
-		line: line,
-		column: column,
-		originalError: err
-	};
-}
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);

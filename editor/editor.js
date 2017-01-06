@@ -1093,6 +1093,7 @@ function code_stop(code){
 	codeset("");
 	run();
 	codeset(oldCode);
+	camera(0,0);
 }
 
 function code_click(code,x,y){

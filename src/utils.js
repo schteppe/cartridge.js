@@ -155,3 +155,29 @@ exports.createCanvasFromAscii = function(asciiArray, charToColorMap){
 	ctx.putImageData(imageData, 0, 0);
 	return canvas;
 };
+
+// Get the line and column of an error. Works in all major browsers.
+exports.getErrorInfo = function(err) {
+	var line = -1;
+	var column = -1;
+	if(err.lineNumber!==undefined && err.columnNumber!==undefined){
+		line = err.lineNumber;
+		column = err.columnNumber;
+	} else if(err.line!==undefined && err.column!==undefined){
+		line = err.line;
+		column = err.column;
+	}
+	var stack = err.stack;
+	var m = stack.match(/:(\d+):(\d+)/mg);
+	if(m){
+		var nums = m[1].split(':');
+		line = parseInt(nums[1]);
+		column = parseInt(nums[2]);
+	}
+	return {
+		message: err.message,
+		line: line,
+		column: column,
+		originalError: err
+	};
+};

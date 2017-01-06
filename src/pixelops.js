@@ -33,10 +33,12 @@ exports.beforeChange = function(){
 
 exports.pset = function(x,y,r,g,b){
 	var p = (y * width + x) * 4;
-	writeData.data[p + 0] = r;
-	writeData.data[p + 1] = g;
-	writeData.data[p + 2] = b;
-	writeData.data[p + 3] = 255;
+	var data = writeData.data;
+	if(p < 0 || p+3 > data.length) return;
+	data[p + 0] = r;
+	data[p + 1] = g;
+	data[p + 2] = b;
+	data[p + 3] = 255;
 	pixelsQueued++;
 };
 
