@@ -84,10 +84,12 @@ For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twist
 * [clamp(x,min,max)](#clamp--x-min-max-) - clamp a number
 * [cos(x)](#cos--x-) - cosine
 * [flr(x)](#flr--x-) - floor
+* [inf](#inf) - infinity
 * [max(x,y)](#max--x--y-) - maximum of two numbers
 * [mid(x,y,z)](#mid--x--y--z-) - middle of three numbers
 * [min(x,y)](#min--x--y-) - minimum
 * [mix(a,b,alpha)](#mix--a--b--alpha-) - linear interpolation
+* [nan(x)](#nan--x-) - check for NaN
 * [rnd(n)](#rnd--n-) - generate floating point random number between 0 and n
 * [sgn(x)](#sgn--x-) - sign
 * [sin(x)](#sin--x-) - sine
@@ -141,10 +143,12 @@ For example, `https://schteppe.github.io/cartridge.js/editor?file=../carts/twist
 * [cellwidth([newCellWidth])](#cellwidth) - get or set cell width
 * [codeget()](#codeget) - get code
 * [codeset(codeString)](#codeset) - set code
+* [def()](#def) - check if a value is defined
 * [fit()](#fit) - fit canvas to the container
 * [fullscreen()](#fullscreen) - enter fullscreen mode
 * [height([newHeight])](#height) - get or set height
 * [load(str)](#load) - load cartridge
+* [log()](#log) - log to console
 * [save(str)](#save) - save cartridge
 * [time()](#time) - get current time in seconds
 * [width([newWidth])](#width) - get or set width
@@ -455,6 +459,18 @@ var y = flr(1.34); // 1
 
 ===
 
+### inf
+
+A number, set to `Infinity`.
+
+```js
+if(x < inf){
+	dosomething();
+}
+```
+
+===
+
 ### fset ( n , flags )
 
 Set flags for a sprite
@@ -580,6 +596,34 @@ var a = mid(1, 2, 3); // 2
 ```js
 var z = min(1, 2); // 1
 ```
+
+===
+
+### mix ( x , y , alpha )
+
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>y</dt>
+	<dd></dd>
+	<dt>alpha</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd></dd>
+</dl>
+
+===
+
+### nan ( x )
+
+Checks if `x` is not-a-number. Does the same job as `isNaN` in JavaScript.
+
+<dl>
+	<dt>x</dt>
+	<dd></dd>
+	<dt>Return value</dt>
+	<dd>True or false</dd>
+</dl>
 
 ===
 
@@ -953,4 +997,26 @@ Get current time in seconds.
 
 ```js
 var t = time();
+```
+
+===
+
+### log ( message )
+
+Log something to the JavaScript console. Equivalent to `console.log`.
+
+```js
+log("hello world!");
+```
+
+===
+
+### def ( value )
+
+Check if a value is defined. Equivalent to `value !== undefined`.
+
+```js
+def(1);         // true
+def(null);      // true
+def(undefined); // false
 ```

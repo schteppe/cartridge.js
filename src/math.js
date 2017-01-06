@@ -12,6 +12,8 @@ module.exports = {
 	abs: Math.abs,
 	max: Math.max,
 	min: Math.min,
+	nan: isNaN,
+	inf: Infinity,
 	mix: function(a,b,alpha){
 		return a * alpha + b * ( 1.0 - alpha );
 	},

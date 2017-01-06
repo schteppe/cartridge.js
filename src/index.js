@@ -582,6 +582,16 @@ exports.fullscreen = function fullscreen(){
 	utils.fullscreen(container);
 };
 
+// Is x defined?
+exports.def = function(x){
+	return x !== undefined;
+};
+
+// Console log
+exports.log = function(){
+	console.log.apply(null, arguments);
+};
+
 exports.print = function(text, x, y, col){
 	pixelops.beforeChange();
 	if(Array.isArray(text)){

@@ -892,7 +892,11 @@ var cartridgeIdentifiers = [
 	"sqrt",
 	"sset",
 	"time",
-	"width"
+	"width",
+	"inf",
+	"log",
+	"nan",
+	"def"
 ];
 
 function code_draw(code){
