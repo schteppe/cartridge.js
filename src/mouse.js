@@ -3,6 +3,7 @@ var utils = require('./utils');
 
 var _mousex = 0;
 var _mousey = 0;
+var _mousescroll = 0;
 var _mousebtns = {};
 
 exports.init = function(canvases){
@@ -11,6 +12,7 @@ exports.init = function(canvases){
 
 exports.mousex = function mousex(){ return _mousex; };
 exports.mousey = function mousey(){ return _mousey; };
+exports.mousescroll = function mousescroll(){ return _mousescroll; };
 
 exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
@@ -37,9 +39,16 @@ function addListeners(canvases){
 		mouseleave: function(evt){
 			_mousebtns[evt.which] = false;
 			updateMouseCoords(evt, canvases);
+		},
+		mousewheel: function(evt){
+			var delta = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
+			_mousescroll += delta;
 		}
 	};
-	for(var key in canvasListeners){
+	canvasListeners.DOMMouseScroll = canvasListeners.mousewheel;
+
+	var key;
+	for(key in canvasListeners){
 		canvases[0].addEventListener(key, canvasListeners[key]);
 	}
 
@@ -48,7 +57,7 @@ function addListeners(canvases){
 			updateMouseCoords(evt, canvases);
 		}
 	};
-	for(var key in bodyListeners){
+	for(key in bodyListeners){
 		document.body.addEventListener(key, bodyListeners[key]);
 	}
 }
@@ -79,5 +88,6 @@ exports.mouseyNormalized = function(){ return _mousey; };
 
 exports.global = {
 	mousebtn: exports.mousebtn,
-	click: exports.click
+	click: exports.click,
+	mousescroll: exports.mousescroll
 };

@@ -66,6 +66,7 @@ var selectedSprite = 1; // Because zero is "empty sprite"
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
+var previousScroll = 0;
 var keysdown = {};
 
 var viewport = {
@@ -431,6 +432,15 @@ function mousemovehandler(forceMouseDown){
 	}
 }
 
+function scrollhandler(delta){
+	switch(mode){
+		case 'code':
+			code.crow += delta;
+			code_clamp_crow(code);
+			code_clamp_ccol(code);
+	}
+}
+
 window._click = function _click(){
 	var mx = mousex();
 	var my = mousey();
@@ -569,6 +579,7 @@ var editorLoad = window._init = function _init(){
 editorDraw = window._draw = function _draw(){
 	if(loading) return;
 
+	// Mouse move
 	var mx = mousex();
 	var my = mousey();
 	if(!(lastmx === mx && lastmy === my)){
@@ -577,6 +588,15 @@ editorDraw = window._draw = function _draw(){
 	}
 	lastmx = mx;
 	lastmy = my;
+
+	// mouse scroll
+	var currentScroll = mousescroll();
+	if(currentScroll !== previousScroll){
+		var delta = currentScroll - previousScroll;
+		scrollhandler(delta);
+		dirty = true;
+	}
+	previousScroll = currentScroll;
 
 	if(!dirty) return;
 	dirty = false;
@@ -1088,10 +1108,16 @@ function code_click(code,x,y){
 }
 
 function code_clamp_ccol(code, codeArray){
+	if(codeArray === undefined){
+		codeArray = codeget().split('\n');
+	}
 	code.ccol = clamp(code.ccol, 0, codeArray[code.crow].length);
 }
 
 function code_clamp_crow(code, codeArray){
+	if(codeArray === undefined){
+		codeArray = codeget().split('\n');
+	}
 	code.crow = clamp(code.crow, 0, codeArray.length-1);
 }
 
