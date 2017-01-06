@@ -1171,7 +1171,12 @@ function code_keydown(code, evt){
 				code.crow--;
 				code.ccol = codeArray[code.crow].length;
 			} else {
-				code.ccol--;
+				var amount = 1;
+				if(evt.altKey){
+					var rowStr = codeArray[code.crow];
+					while(code.ccol - amount > 0 && rowStr[code.ccol-amount-1].match(/[a-z\d]/)) amount++;
+				}
+				code.ccol -= amount;
 				code_clamp_ccol(code, codeArray);
 			}
 			break;
@@ -1181,7 +1186,12 @@ function code_keydown(code, evt){
 				code.crow++;
 				code_clamp_crow(code, codeArray);
 			} else {
-				code.ccol++;
+				var amount = 1;
+				if(evt.altKey){
+					var rowStr = codeArray[code.crow];
+					while(rowStr.length > code.ccol + amount && rowStr[code.ccol+amount].match(/[a-z\d]/)) amount++;
+				}
+				code.ccol += amount;
 				code_clamp_ccol(code, codeArray);
 			}
 			break;
