@@ -2604,12 +2604,8 @@ exports.cartridge = function(options){
 				t0 += dt0;
 				accumulator0 -= dt0;
 				_alpha = accumulator0 / dt0;
-				if(loaded && typeof(_update) !== 'undefined'){
-					try {
-						_update();
-					} catch(err){
-						console.error(err);
-					}
+				if(loaded && typeof(_update) === 'function'){
+					runUserFunction(_update);
 				}
 			}
 			accumulator1 += frameTime;
@@ -2618,12 +2614,8 @@ exports.cartridge = function(options){
 				t1 += dt1;
 				accumulator1 -= dt1;
 				_alpha = accumulator1 / dt1;
-				if(loaded && typeof(_update60) !== 'undefined'){
-					try {
-						_update60();
-					} catch(err){
-						console.error(err);
-					}
+				if(loaded && typeof(_update60) === 'function'){
+					runUserFunction(_update60);
 				}
 			}
 		}
@@ -2631,12 +2623,8 @@ exports.cartridge = function(options){
 			_startTime = newTime;
 		}
 		_time = newTime - _startTime;
-		if(loaded && typeof(_draw) !== 'undefined'){
-			try {
-				_draw();
-			} catch(err){
-				console.error(err);
-			}
+		if(loaded && typeof(_draw) === 'function'){
+			runUserFunction(_draw);
 		}
 
 		// Flush any remaining pixelops
@@ -2657,28 +2645,26 @@ exports.run = function(){
 		runKill();
 	}
 	_startTime = -1;
-	code.run();
+	try {
+		code.run();
+	} catch(err){
+		if(typeof(_error) === 'function'){
+			_error(createErrorObject(err));
+		}
+	}
 	runInit();
 };
 
 function runInit(){
 	loaded = true;
-	if(typeof(_init) !== 'undefined'){
-		try {
-			_init();
-		} catch(err){
-			console.error(err);
-		}
+	if(typeof(_init) === 'function'){
+		runUserFunction(_init);
 	}
 }
 function runKill(){
 	loaded = false;
-	if(typeof(_kill) !== 'undefined'){
-		try {
-			_kill();
-		} catch(err){
-			console.error(err);
-		}
+	if(typeof(_kill) === 'function'){
+		runUserFunction(_kill);
 	}
 }
 
@@ -2870,6 +2856,7 @@ exports.camera = function camera(x, y){
 	y = y | 0;
 	if(camX === x && camY === y) return;
 
+	pixelops.beforeChange();
 	ctx.translate(x - camX, y - camY);
 	camX = x;
 	camY = y;
@@ -2973,13 +2960,36 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 };
 
 // Get sprite flags
-exports.fget = function(n){
-	return spriteFlags[n];
+exports.fget = function(n,bitPosition){
+	var flags = spriteFlags[n];
+	if(bitPosition !== undefined){
+		return !!(flags & (1 << bitPosition));
+	}
+	return flags;
 };
 
 // Set sprite flags
-exports.fset = function(n, flags){
-	spriteFlags[n] = flags;
+exports.fset = function(n, flags, t){
+	var newFlags;
+	if(t !== undefined){
+		newFlags = spriteFlags[n];
+		var bit = (1 << flags);
+		if(t){
+			newFlags |= bit;
+		} else {
+			newFlags &= (~bit);
+		}
+	} else {
+		newFlags = flags;
+	}
+	spriteFlags[n] = newFlags;
+};
+
+exports.assert = function(condition, message){
+	if(!condition){
+		message = message !== undefined ? message : "Assertion failed";
+		throw new Error(message);
+	}
 };
 
 // Get pixel color
@@ -3046,6 +3056,16 @@ exports.sset = function(x, y, col){
 
 exports.fullscreen = function fullscreen(){
 	utils.fullscreen(container);
+};
+
+// Is x defined?
+exports.def = function(x){
+	return x !== undefined;
+};
+
+// Console log
+exports.log = function(){
+	console.log.apply(null, arguments);
 };
 
 exports.print = function(text, x, y, col){
@@ -3243,14 +3263,24 @@ function loadJSON(data){
 
 	spriteSheetDirty = true;
 
-	if(typeof(_load) !== 'undefined'){
+	if(typeof(_load) === 'function'){
+		runUserFunction(_load);
+	}
+}
+
+function runUserFunction(func){
+	if(typeof(func) === 'function'){
 		try {
-			_load();
+			func();
 		} catch(err){
+			if(typeof(_error) === 'function'){
+				_error(utils.getErrorInfo(err));
+			}
 			console.error(err);
 		}
 	}
-};
+}
+
 
 function updateMapCacheCanvas(x,y){
 	var n = mget(x, y);
@@ -3406,6 +3436,8 @@ module.exports = {
 	abs: Math.abs,
 	max: Math.max,
 	min: Math.min,
+	nan: isNaN,
+	inf: Infinity,
 	mix: function(a,b,alpha){
 		return a * alpha + b * ( 1.0 - alpha );
 	},
@@ -3432,6 +3464,7 @@ var utils = require('./utils');
 
 var _mousex = 0;
 var _mousey = 0;
+var _mousescroll = 0;
 var _mousebtns = {};
 
 exports.init = function(canvases){
@@ -3440,6 +3473,7 @@ exports.init = function(canvases){
 
 exports.mousex = function mousex(){ return _mousex; };
 exports.mousey = function mousey(){ return _mousey; };
+exports.mousescroll = function mousescroll(){ return _mousescroll; };
 
 exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
@@ -3466,9 +3500,16 @@ function addListeners(canvases){
 		mouseleave: function(evt){
 			_mousebtns[evt.which] = false;
 			updateMouseCoords(evt, canvases);
+		},
+		mousewheel: function(evt){
+			var delta = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
+			_mousescroll += delta;
 		}
 	};
-	for(var key in canvasListeners){
+	canvasListeners.DOMMouseScroll = canvasListeners.mousewheel;
+
+	var key;
+	for(key in canvasListeners){
 		canvases[0].addEventListener(key, canvasListeners[key]);
 	}
 
@@ -3477,7 +3518,7 @@ function addListeners(canvases){
 			updateMouseCoords(evt, canvases);
 		}
 	};
-	for(var key in bodyListeners){
+	for(key in bodyListeners){
 		document.body.addEventListener(key, bodyListeners[key]);
 	}
 }
@@ -3508,7 +3549,8 @@ exports.mouseyNormalized = function(){ return _mousey; };
 
 exports.global = {
 	mousebtn: exports.mousebtn,
-	click: exports.click
+	click: exports.click,
+	mousescroll: exports.mousescroll
 };
 
 },{"./math":8,"./utils":13}],10:[function(require,module,exports){
@@ -3774,10 +3816,12 @@ exports.beforeChange = function(){
 
 exports.pset = function(x,y,r,g,b){
 	var p = (y * width + x) * 4;
-	writeData.data[p + 0] = r;
-	writeData.data[p + 1] = g;
-	writeData.data[p + 2] = b;
-	writeData.data[p + 3] = 255;
+	var data = writeData.data;
+	if(p < 0 || p+3 > data.length) return;
+	data[p + 0] = r;
+	data[p + 1] = g;
+	data[p + 2] = b;
+	data[p + 3] = 255;
 	pixelsQueued++;
 };
 
@@ -4137,6 +4181,10 @@ exports.decToB = function(c){
 
 function isSafari(){
 	return navigator.userAgent.indexOf('Safari') !== -1 && navigator.userAgent.indexOf('Chrome') === -1;
+}
+
+exports.isMac = function(){
+	return navigator.platform.match("Mac");
 };
 
 exports.makeGlobal = function(obj){
@@ -4249,5 +4297,31 @@ exports.createCanvasFromAscii = function(asciiArray, charToColorMap){
 	}
 	ctx.putImageData(imageData, 0, 0);
 	return canvas;
+};
+
+// Get the line and column of an error. Works in all major browsers.
+exports.getErrorInfo = function(err) {
+	var line = -1;
+	var column = -1;
+	if(err.lineNumber!==undefined && err.columnNumber!==undefined){
+		line = err.lineNumber;
+		column = err.columnNumber;
+	} else if(err.line!==undefined && err.column!==undefined){
+		line = err.line;
+		column = err.column;
+	}
+	var stack = err.stack;
+	var m = stack.match(/:(\d+):(\d+)/mg);
+	if(m){
+		var nums = m[1].split(':');
+		line = parseInt(nums[1]);
+		column = parseInt(nums[2]);
+	}
+	return {
+		message: err.message,
+		line: line,
+		column: column,
+		originalError: err
+	};
 };
 },{}]},{},[6]);
