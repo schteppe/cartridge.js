@@ -20,8 +20,6 @@ var spriteSheetSizeX = 16; // sprites
 var spriteSheetSizeY = 16; // sprites
 var paletteSize = 16; // colors
 
-var maxSprites = spriteSheetSizeX * spriteSheetSizeY; // sprites
-
 // DOM elements
 var container;
 var canvases = [];
@@ -79,7 +77,7 @@ exports.cartridge = function(options){
 		utils.disableImageSmoothing(c.getContext('2d'));
 	}
 
-	setCellSize(cellsizeX, cellsizeY);
+	setCellSize(cellsizeX, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
 	setPalette(options.palette || colors.defaultPalette());
 
 	// Add style tag
@@ -193,19 +191,40 @@ function runKill(){
 	}
 }
 
-function setCellSize(w,h){
-	w = w | 0;
-	h = h | 0;
+function setCellSize(
+	newCellWidth,
+	newCellHeight,
+	newSpriteSheetWidth,
+	newSpriteSheetHeight
+){
+	newCellWidth = newCellWidth | 0;
+	newCellHeight = newCellHeight | 0;
+	newSpriteSheetWidth = newSpriteSheetWidth | 0;
+	newSpriteSheetHeight = newSpriteSheetHeight | 0;
 
-	cellsizeX = w;
-	cellsizeY = h;
+	var newSpriteSheetPixels = utils.zeros(newSpriteSheetWidth * newSpriteSheetHeight * newCellWidth * newCellHeight);
+	if(spriteSheetPixels){
+		// Copy pixel data to new dimensions
+		var minWidth = Math.min(spriteSheetSizeX*cellsizeX, newSpriteSheetWidth*newCellWidth);
+		var minHeight = Math.min(spriteSheetSizeY*cellsizeY, newSpriteSheetHeight*newCellHeight);
+		for(var i=0; i<minWidth; i++){
+			for(var j=0; j<minHeight; j++){
+				newSpriteSheetPixels[i+j*newSpriteSheetWidth*newCellWidth] = spriteSheetPixels[i+j*spriteSheetSizeX*cellsizeX];
+			}
+		}
+	}
+	spriteSheetPixels = newSpriteSheetPixels;
 
-	// Reinit pixels
-	// TODO: copy over?
- 	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY, spriteSheetPixels);
+	cellsizeX = newCellWidth;
+	cellsizeY = newCellHeight;
 
-	maxSprites = spriteSheetSizeX * spriteSheetSizeY;
-	spriteFlags = utils.zeros(maxSprites);
+	spriteSheetSizeX = newSpriteSheetWidth;
+	spriteSheetSizeY = newSpriteSheetHeight;
+
+	var maxSprites = spriteSheetSizeX * spriteSheetSizeY;
+	if(!spriteFlags) spriteFlags = utils.zeros(maxSprites);
+	while(spriteFlags.length < maxSprites) spriteFlags.push(0);
+	while(spriteFlags.length > maxSprites) spriteFlags.pop();
 
 	// (re)init spritesheet canvas
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
@@ -214,6 +233,8 @@ function setCellSize(w,h){
 	// (re)init map cache
 	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
+
+	spriteSheetDirty = true;
 }
 
 function redrawSpriteSheet(){
@@ -293,7 +314,7 @@ exports.height = function(newHeight){
 // TODO: rename to cwget/set() ?
 exports.cellwidth = function(newCellWidth){
 	if(newCellWidth !== undefined){
-		setCellSize(newCellWidth, cellsizeY);
+		setCellSize(newCellWidth, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeX;
 	}
@@ -302,7 +323,7 @@ exports.cellwidth = function(newCellWidth){
 // TODO: rename to chget/set() ?
 exports.cellheight = function(newCellHeight){
 	if(newCellHeight !== undefined){
-		setCellSize(cellsizeX, newCellHeight);
+		setCellSize(cellsizeX, newCellHeight, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeY;
 	}
@@ -554,8 +575,7 @@ exports.sget = function(x, y){
 
 // Set spritesheet size
 exports.ssset = function(n){
-	spriteSheetSizeX = spriteSheetSizeY = (n | 0);
-	setCellSize(cellsizeX, cellsizeY);
+	setCellSize(cellsizeX, cellsizeY, n, n);
 };
 
 // Get spritesheet size
