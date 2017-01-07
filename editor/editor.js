@@ -1390,7 +1390,7 @@ window.addEventListener('keydown', function(evt){
 
 	if(mode === 'code'){
 		code_keydown(code, evt);
-	} else {
+	} else if(!evt.altKey && !evt.metaKey && !evt.ctrlKey){
 		switch(evt.keyCode){
 			case 86: if(mode === 'sprite') flipSprite(selectedSprite, false); break; // V
 			case 70: if(mode === 'sprite') flipSprite(selectedSprite, true); break; // F
