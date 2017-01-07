@@ -58,7 +58,7 @@ function resizeHandler(){
 window.addEventListener("resize", resizeHandler);
 window.addEventListener("mozfullscreenchange", resizeHandler);
 
-var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'music', 'run', 'help'];
+var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'music', 'help', 'run'];
 var mode = modes[0];
 var loading = false;
 
@@ -181,11 +181,11 @@ var waveformButtons = {
 var topButtons = {
 	x: function(){ return 0; },
 	y: function(){ return 0; },
-	options: ['CRT', 'SPR', 'MAP', 'SFX', '.JS', 'MUS', 'RUN', '?'],
+	options: ['CRT', 'SPR', 'MAP', 'SFX', '.JS', 'MUS', 'HLP', 'RUN'],
 	current: 0,
 	bgColor: 7,
 	textColor: 0,
-	padding: 6
+	padding: 5
 };
 
 var toolButtons = {
