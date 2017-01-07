@@ -721,12 +721,14 @@ function download(key){
 }
 
 function toJSON(){
+	var i,j;
 	var data = {
-		version: 4,
-		width: screensizeX, // added in v3
-		height: screensizeY, // added in v3
+		version: 5,
+		width: width(), // added in v3
+		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
 		cellheight: cellheight(), // added in v4
+		spritesheetsize: ssget(), // added in v5
 		map: [],
 		sprites: [],
 		flags: [],
@@ -737,17 +739,27 @@ function toJSON(){
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
 	}
-	for(var i=0; i<spriteSheetSizeX*cellwidth(); i++){
-		for(var j=0; j<spriteSheetSizeY*cellheight(); j++){
-			data.sprites[j*spriteSheetSizeX*cellwidth()+i] = sget(i,j);
+
+	// Spite data
+	for(i=0; i<ssget()*cellwidth(); i++){
+		for(j=0; j<ssget()*cellheight(); j++){
+			data.sprites[j*ssget()*cellwidth()+i] = sget(i,j);
 		}
 	}
-	for(var i=0; i<mapSizeX; i++){
-		for(var j=0; j<mapSizeY; j++){
+	// Don't store trailing zeros
+	while(data.sprites[data.sprites.length-1] === 0){ data.sprites.pop(); }
+
+	// Map data
+	for(i=0; i<mapSizeX; i++){
+		for(j=0; j<mapSizeY; j++){
 			data.map[j*mapSizeX+i] = mget(i,j);
 		}
 	}
+	// Don't store trailing zeros
+	while(data.map[data.map.length-1] === 0){ data.map.pop(); }
 
+	// SFX data
+	// TODO: should be stored in the same way as sprites and map, just arrays of ints
 	for(var n=0; n<64; n++){
 		data.sfx[n] = {
 			speed: asget(n),
@@ -766,6 +778,7 @@ function toJSON(){
 }
 
 function loadJSON(data){
+	var i,j;
 	code.codeset(data.code || '');
 
 	if(data.width !== undefined){
@@ -782,18 +795,22 @@ function loadJSON(data){
 		cellheight(data.cellheight);
 	}
 
-	for(var i=0; i<spriteFlags.length; i++){
+	if(data.spritesheetsize !== undefined){
+		ssset(data.spritesheetsize);
+	}
+
+	for(i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
 	setPalette(data.palette);
-	for(var i=0; i<spriteSheetSizeX*cellwidth(); i++){
-		for(var j=0; j<spriteSheetSizeY*cellheight(); j++){
-			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i]);
+	for(i=0; i<spriteSheetSizeX*cellwidth(); i++){
+		for(j=0; j<spriteSheetSizeY*cellheight(); j++){
+			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i] || 0);
 		}
 	}
-	for(var i=0; i<mapSizeX; i++){
-		for(var j=0; j<mapSizeY; j++){
-			mset(i,j,data.map[j*mapSizeX+i]);
+	for(i=0; i<mapSizeX; i++){
+		for(j=0; j<mapSizeY; j++){
+			mset(i,j,data.map[j*mapSizeX+i] || 0);
 		}
 	}
 
