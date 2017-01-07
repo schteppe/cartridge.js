@@ -266,7 +266,6 @@ var spriteSizeButtons = {
 	current: [8,16,32].indexOf(cellwidth()),
 	padding: 2
 };
-console.log([8,16,32].indexOf(cellwidth()))
 
 function intsel_draw(intsel){
 	var padding = intsel.padding;
