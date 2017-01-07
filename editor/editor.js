@@ -1373,6 +1373,12 @@ window.addEventListener('keydown', function(evt){
 		if(mode === 'run')
 			mode = modes[mod(modes.indexOf(mode)+delta, modes.length)];
 		dirty = true;
+
+		// Prevent going back in history
+		evt.cancelBubble = true;
+        evt.returnValue = false;
+		evt.preventDefault();
+
 		return;
 	}
 
