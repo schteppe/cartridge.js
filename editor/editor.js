@@ -970,6 +970,14 @@ function code_draw(code){
 		// Any syntax highlighting on this row?
 		var queue = syntaxTree.body.slice(0);
 		queue.push.apply(queue, syntaxComments);
+		function add(prop){
+			if(!prop) return;
+			if(prop instanceof acorn.Node){
+				queue.push(prop);
+			} else if(Array.isArray(prop)){
+				prop.forEach(add);
+			}
+		}
 		while(queue.length){
 			var node = queue.pop();
 			if(node.end < rowstart || node.start > rowend){
@@ -1006,14 +1014,6 @@ function code_draw(code){
 				case "Line":
 					print("//" + node.value, nodeX, rowY, code.commentColor);
 					break;
-			}
-			function add(prop){
-				if(!prop) return;
-				if(prop instanceof acorn.Node){
-					queue.push(prop);
-				} else if(Array.isArray(prop)){
-					prop.forEach(add);
-				}
 			}
 			Object.values(node).forEach(add);
 		}
