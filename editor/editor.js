@@ -77,16 +77,42 @@ var viewport = {
 };
 
 var music = {
-	x: 1,
-	y: 8,
+	x: function(){ return 1; },
+	y: function(){ return 8; },
 	width: function(){ return width() - 3; },
 	height: function(){ return height() - 9; },
-	row: 0,
-	col: 0
+	note: 0
 };
 
-function music_draw(){
+function music_draw(music){
+	var x = music.x();
+	var y = music.y();
+	var fontWidth = 4;
+	var fontHeight = 8;
+	for(var i=0; i<4; i++){
+		var w = 6*fontWidth + 1;
+		var x0 = x+i*(w+1);
+		rectfill(x0,y,x+(i+1)*(w+1)-2,y+8*8);
 
+		for(var j=0; j<8; j++){
+			var y0 = y + j*fontHeight;
+
+			// Pitch, 2 chars
+			print('G#', x0+1, y0+1,7);
+
+			// octave
+			print('3', x0+1+fontWidth*2, y0+1,6);
+
+			// Instrument
+			print('4', x0+1+fontWidth*3, y0+1,14);
+
+			// Volume
+			print('7', x0+1+fontWidth*4, y0+1,12);
+
+			// Effect (not yet supported)
+			print('5', x0+1+fontWidth*5, y0+1,13);
+		}
+	}
 }
 
 function viewport_draw(viewport){
@@ -655,6 +681,9 @@ editorDraw = window._draw = function _draw(){
 		spriteSizeButtons.current = spriteSizeButtons.options.indexOf(cellwidth());
 		buttons_draw(spriteSizeButtons);
 
+		break;
+	case 'music':
+		music_draw(music);
 		break;
 	case 'help':
 		print([
