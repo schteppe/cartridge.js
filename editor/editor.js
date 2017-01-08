@@ -517,6 +517,7 @@ window._click = function _click(){
 				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
 			}
 			dirty = true;
+			syntaxTreeDirty = true;
 			slotButtons.current = -1;
 		}
 
@@ -573,6 +574,7 @@ var editorLoad = window._init = function _init(){
 	}
 
 	dirty = true;
+	syntaxTreeDirty = true;
 };
 
 editorDraw = window._draw = function _draw(){
@@ -1446,6 +1448,7 @@ function readSingleFile(e) {
 		try {
 			var json = JSON.parse(e.target.result);
 			load(json);
+			syntaxTreeDirty = true;
 			dirty = true;
 		} catch(err){
 			console.error("Could not open file.");
