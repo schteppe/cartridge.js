@@ -78,7 +78,7 @@ var viewport = {
 
 var music = {
 	x: function(){ return 1; },
-	y: function(){ return 8; },
+	y: function(){ return 8+16+16; },
 	width: function(){ return width() - 3; },
 	height: function(){ return height() - 9; },
 	note: 0
@@ -89,6 +89,7 @@ function music_draw(music){
 	var y = music.y();
 	var fontWidth = 4;
 	var fontHeight = 8;
+	var n = 0;
 	for(var i=0; i<4; i++){
 		var w = 6*fontWidth + 1;
 		var x0 = x+i*(w+1);
@@ -97,20 +98,33 @@ function music_draw(music){
 		for(var j=0; j<8; j++){
 			var y0 = y + j*fontHeight;
 
+			var pitch = npget(musicGroupSelector.current, n);
+			var volume = nvget(musicGroupSelector.current, n);
+			var octave = noget(musicGroupSelector.current, n);
+			var instrument = niget(musicGroupSelector.current, n);
+
+			// Highlight selected
+			if(music.note === n){
+				rectfill(x0, y0, x0+w-1, y0+fontHeight-1, 5);
+			}
+
 			// Pitch, 2 chars
-			print('G#', x0+1, y0+1,7);
+			var noteName = volume === 0 ? '-' : nnget(pitch);
+			print(noteName, x0+1, y0+1,7);
 
 			// octave
-			print('3', x0+1+fontWidth*2, y0+1,6);
+			print(volume === 0 ? '-' : octave, x0+1+fontWidth*2, y0+1,6);
 
 			// Instrument
-			print('4', x0+1+fontWidth*3, y0+1,14);
+			print(volume === 0 ? '-' : instrument, x0+1+fontWidth*3, y0+1,14);
 
 			// Volume
-			print('7', x0+1+fontWidth*4, y0+1,12);
+			print(volume || '-', x0+1+fontWidth*4, y0+1,12);
 
 			// Effect (not yet supported)
-			print('5', x0+1+fontWidth*5, y0+1,13);
+			print('-', x0+1+fontWidth*5, y0+1,13);
+
+			n++;
 		}
 	}
 }
@@ -204,6 +218,22 @@ var waveformButtons = {
 	padding: 2
 };
 
+var octaveButtons = {
+	x: function(){ return width() - 24; },
+	y: function(){ return 16; },
+	num: 4,
+	current: 0,
+	padding: 0
+};
+
+var musicVolumeButtons = {
+	x: function(){ return width() - 48; },
+	y: function(){ return 16+8; },
+	num: 8,
+	current: 0,
+	padding: 0
+};
+
 var topButtons = {
 	x: function(){ return 0; },
 	y: function(){ return 0; },
@@ -233,6 +263,17 @@ var speedSelector = {
 	postfix: 'X'
 };
 
+var musicSpeedSelector = {
+	x: function(){ return 1; },
+	y: function(){ return 16; },
+	current: 16,
+	padding: 6,
+	min: function(){ return 1; },
+	max: function(){ return 64; },
+	prefix: '',
+	postfix: 'X'
+};
+
 var sfxSelector = {
 	x: function(){ return 1; },
 	y: function(){ return 8; },
@@ -240,6 +281,17 @@ var sfxSelector = {
 	padding: 6,
 	min: function(){ return 0; },
 	max: function(){ return 63; },
+	prefix: '',
+	postfix: ''
+};
+
+var musicGroupSelector = {
+	x: function(){ return 1; },
+	y: function(){ return 8; },
+	current: 0,
+	padding: 6,
+	min: function(){ return 0; },
+	max: function(){ return 7; },
 	prefix: '',
 	postfix: ''
 };
@@ -479,10 +531,8 @@ window._click = function _click(){
 			// tool switcher
 			dirty = true;
 		}
-	}
-
-	// Sprite select
-	if(mode === 'sprite' || mode === 'map'){
+	} else if(mode === 'sprite' || mode === 'map'){
+		// Sprite select
 		var spritesHeight = height() - cellheight() * 4;
 		if(my >= height() - cellheight() * 4){
 			var cw = cellwidth();
@@ -505,9 +555,7 @@ window._click = function _click(){
 		} else if(intsel_click(spriteSheetPageSelector, mx, my)){
 			dirty = true;
 		}
-	}
-
-	if(mode === 'sfx'){
+	} else if(mode === 'sfx'){
 		if(buttons_click(waveformButtons,mx,my)){
 			dirty = true;
 		}
@@ -520,7 +568,7 @@ window._click = function _click(){
 		}
 	}
 
-	// mode switcher
+	// top mode switcher
 	if(buttons_click(topButtons,mx,my)){
 		if(modes[topButtons.current] === 'run'){
 			code_run(code);
@@ -533,9 +581,7 @@ window._click = function _click(){
 
 	if(mode === 'code' && code_click(code,mx,my)){
 		dirty = true;
-	}
-
-	if(mode === 'game'){
+	} else if(mode === 'game'){
 		if(buttons_click(slotButtons,mx,my)){
 			if(load('slot' + slotButtons.current)){
 				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
@@ -571,6 +617,19 @@ window._click = function _click(){
 			var newSize = spriteSizeButtons.options[spriteSizeButtons.current];
 			cellwidth(newSize);
 			cellheight(newSize);
+			dirty = true;
+		}
+	} else if(mode === 'music'){
+		if(intsel_click(musicSpeedSelector, mx, my)){
+			gsset(musicGroupSelector.current, musicSpeedSelector.current);
+			dirty = true;
+		} else if(intsel_click(musicGroupSelector, mx, my)){
+			dirty = true;
+		} else if(buttons_click(waveformButtons,mx,my)){
+			dirty = true;
+		} else if(buttons_click(octaveButtons,mx,my)){
+			dirty = true;
+		} else if(buttons_click(musicVolumeButtons,mx,my)){
 			dirty = true;
 		}
 	}
@@ -684,6 +743,13 @@ editorDraw = window._draw = function _draw(){
 		break;
 	case 'music':
 		music_draw(music);
+		intsel_draw(musicGroupSelector);
+		intsel_draw(musicSpeedSelector);
+		buttons_draw(waveformButtons);
+		print("octave", width() - 60, 17);
+		buttons_draw(octaveButtons);
+		print("vol", width() - 60, 25);
+		buttons_draw(musicVolumeButtons);
 		break;
 	case 'help':
 		print([
@@ -1429,9 +1495,12 @@ window.addEventListener('keydown', function(evt){
 			case 46: if(mode === 'sprite') clearSprite(selectedSprite); break; // delete
 			case 81: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite-1,ssget()*ssget()); break; // Q
 			case 87: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite+1,ssget()*ssget()); break; // W
-			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 			case 83: save('game.json'); break;
 			case 79: openfile(); break;
+			case 32:
+				if(mode === 'sfx') sfx(sfxSelector.current);
+				else if(mode === 'music') group(musicGroupSelector.current);
+				break;
 		}
 		selectedSprite = clamp(selectedSprite,0,ssget()*ssget());
 	}
