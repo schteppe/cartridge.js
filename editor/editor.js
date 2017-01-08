@@ -113,19 +113,44 @@ function music_draw(music){
 			print(noteName, x0+1, y0+1,7);
 
 			// octave
-			print(volume === 0 ? '-' : octave, x0+1+fontWidth*2, y0+1,6);
+			print(volume === 0 ? '-' : (octave+1), x0+1+fontWidth*2, y0+1,6);
 
 			// Instrument
-			print(volume === 0 ? '-' : instrument, x0+1+fontWidth*3, y0+1,14);
+			print(volume === 0 ? '-' : (instrument+1), x0+1+fontWidth*3, y0+1,14);
 
 			// Volume
-			print(volume || '-', x0+1+fontWidth*4, y0+1,12);
+			print(volume === 0 ? '-' : (volume+1), x0+1+fontWidth*4, y0+1,12);
 
 			// Effect (not yet supported)
 			print('-', x0+1+fontWidth*5, y0+1,13);
 
 			n++;
 		}
+	}
+}
+
+function music_keypress(code, evt){
+	if(evt.ctrlKey || evt.metaKey || evt.altKey) return;
+
+	var char = String.fromCharCode(evt.charCode).toUpperCase();
+	if(evt.keyCode === 32){ // space
+		group(musicGroupSelector.current);
+	} else if('QWERTYZXCVBNM'.indexOf(char) !== -1){
+		var octave = octaveButtons.current;
+		var pitch1 = 'ZXCVBNM'.indexOf(char);
+		var pitch2 = 'QWERTYU'.indexOf(char);
+		var pitch = pitch1;
+		if(octave < 4 && pitch2 !== -1){
+			octave++;
+			pitch = pitch2;
+		}
+
+		console.log(nnget(pitch));
+		npset(musicGroupSelector.current, music.note, pitch);
+		niset(musicGroupSelector.current, music.note, waveformButtons.current);
+		nvset(musicGroupSelector.current, music.note, musicVolumeButtons.current);
+		noset(musicGroupSelector.current, music.note, octave);
+		music.note = (music.note+1)%32;
 	}
 }
 
@@ -230,7 +255,7 @@ var musicVolumeButtons = {
 	x: function(){ return width() - 48; },
 	y: function(){ return 16+8; },
 	num: 8,
-	current: 0,
+	current: 7,
 	padding: 0
 };
 
@@ -1497,10 +1522,7 @@ window.addEventListener('keydown', function(evt){
 			case 87: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite+1,ssget()*ssget()); break; // W
 			case 83: save('game.json'); break;
 			case 79: openfile(); break;
-			case 32:
-				if(mode === 'sfx') sfx(sfxSelector.current);
-				else if(mode === 'music') group(musicGroupSelector.current);
-				break;
+			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 		}
 		selectedSprite = clamp(selectedSprite,0,ssget()*ssget());
 	}
@@ -1526,6 +1548,8 @@ window.addEventListener('keypress', function(evt){
 	if(mode === 'run') return;
 	if(mode === 'code'){
 		code_keypress(code, evt);
+	} else if(mode === 'music'){
+		music_keypress(music, evt);
 	}
 });
 
