@@ -628,7 +628,7 @@ exports.print = function(text, x, y, col){
 	x = x | 0;
 	y = y | 0;
 
-	font.draw(ctx, text.toUpperCase(), x, y, col);
+	font.draw(ctx, text.toString().toUpperCase(), x, y, col);
 };
 
 exports.fit = function fit(stretchMode){
