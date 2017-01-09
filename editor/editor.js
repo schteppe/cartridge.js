@@ -1541,8 +1541,8 @@ window.addEventListener('keydown', function(evt){
 			case 46: if(mode === 'sprite') clearSprite(selectedSprite); break; // delete
 			case 81: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite-1,ssget()*ssget()); break; // Q
 			case 87: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite+1,ssget()*ssget()); break; // W
-			case 83: save('game.json'); break;
-			case 79: openfile(); break;
+			case 83: if(mode === 'game') save('game.json'); break; // S
+			case 79: if(mode === 'game') openfile(); break; // O
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 		}
 		selectedSprite = clamp(selectedSprite,0,ssget()*ssget());
