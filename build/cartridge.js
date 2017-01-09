@@ -2690,6 +2690,18 @@ function setCellSize(
 	}
 	spriteSheetPixels = newSpriteSheetPixels;
 
+	// Map references sprites, which are now wrong. Need to fix!
+	for(var i=0; i<mapSizeX; i++){
+		for(var j=0; j<mapSizeY; j++){
+			var oldSpriteIndex = mget(i, j);
+			var oldX = ssx(oldSpriteIndex);
+			var oldY = ssy(oldSpriteIndex);
+			var newSpriteIndex = oldX + oldY * newSpriteSheetWidth;
+			if(newSpriteIndex >= newSpriteSheetWidth * newSpriteSheetHeight) continue;
+			mset(i, j, newSpriteIndex);
+		}
+	}
+
 	cellsizeX = newCellWidth;
 	cellsizeY = newCellHeight;
 
@@ -2710,6 +2722,7 @@ function setCellSize(
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 
 	spriteSheetDirty = true;
+	mapDirty = true;
 }
 
 function redrawSpriteSheet(){
