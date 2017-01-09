@@ -84,6 +84,21 @@ var music = {
 	note: 0
 };
 
+function music_click(music, mx, my){
+	var x = music.x();
+	var y = music.y();
+	var fontWidth = 4;
+	var fontHeight = 8;
+	var w = 6*fontWidth + 1;
+	var column = Math.floor((mx - x) / w);
+	var row = Math.floor((my - y) / fontHeight);
+	if(column >= 0 && column < 4 && row >= 0 && row < 8){
+		music.note = column * 8 + row;
+		return true;
+	}
+	return false;
+}
+
 function music_draw(music){
 	var x = music.x();
 	var y = music.y();
@@ -157,7 +172,7 @@ var keyToNote = {
 	"U": 17 + 16 // B
 };
 
-function music_keypress(code, evt){
+function music_keypress(music, evt){
 	if(evt.ctrlKey || evt.metaKey || evt.altKey) return;
 
 	var char = String.fromCharCode(evt.charCode).toUpperCase();
@@ -167,7 +182,6 @@ function music_keypress(code, evt){
 		var pitch = keyToNote[char] % 17;
 		var octaveAdd = Math.floor(keyToNote[char] / 17);
 		var octave = Math.min(octaveButtons.current + octaveAdd, 3);
-		console.log(nnget(pitch));
 		npset(musicGroupSelector.current, music.note, pitch);
 		niset(musicGroupSelector.current, music.note, waveformButtons.current);
 		nvset(musicGroupSelector.current, music.note, musicVolumeButtons.current);
@@ -678,6 +692,8 @@ window._click = function _click(){
 		} else if(buttons_click(octaveButtons,mx,my)){
 			dirty = true;
 		} else if(buttons_click(musicVolumeButtons,mx,my)){
+			dirty = true;
+		} else if(music_click(music,mx,my)){
 			dirty = true;
 		}
 	}
