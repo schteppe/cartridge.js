@@ -129,6 +129,26 @@ function music_draw(music){
 	}
 }
 
+var keyToNote = {
+	"Q": "C",
+	"2": "C#",
+	//"2": "Db",
+	"W": "D",
+	"3": "D#",
+	//"3": "Eb",
+	"E": "E",
+	"R": "F",
+	"5": "F#",
+	//"5": "Gb",
+	"T": "G",
+	"6": "G#",
+	//"6": "Ab",
+	"Y": "A",
+	"7": "A#",
+	//"7": "Bb",
+	"U": "B"
+};
+
 function music_keypress(code, evt){
 	if(evt.ctrlKey || evt.metaKey || evt.altKey) return;
 
@@ -137,8 +157,8 @@ function music_keypress(code, evt){
 		group(musicGroupSelector.current);
 	} else if('QWERTYZXCVBNM'.indexOf(char) !== -1){
 		var octave = octaveButtons.current;
-		var pitch1 = 'ZXCVBNM'.indexOf(char);
-		var pitch2 = 'QWERTYU'.indexOf(char);
+		var pitch1 = 'ZSXDCVGBHNJM'.indexOf(char);
+		var pitch2 = 'Q2W3ER5T6Y7U'.indexOf(char);
 		var pitch = pitch1;
 		if(octave < 4 && pitch2 !== -1){
 			octave++;
@@ -556,7 +576,9 @@ window._click = function _click(){
 			// tool switcher
 			dirty = true;
 		}
-	} else if(mode === 'sprite' || mode === 'map'){
+	}
+
+	if(mode === 'sprite' || mode === 'map'){
 		// Sprite select
 		var spritesHeight = height() - cellheight() * 4;
 		if(my >= height() - cellheight() * 4){
@@ -564,7 +586,6 @@ window._click = function _click(){
 			var ch = cellheight();
 
 			var spriteX, spriteY;
-
 
 			if(ssget() === 16){
 				spriteX = flr(mx / cw);
