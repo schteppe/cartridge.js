@@ -130,23 +130,31 @@ function music_draw(music){
 }
 
 var keyToNote = {
-	"Q": "C",
-	"2": "C#",
-	//"2": "Db",
-	"W": "D",
-	"3": "D#",
-	//"3": "Eb",
-	"E": "E",
-	"R": "F",
-	"5": "F#",
-	//"5": "Gb",
-	"T": "G",
-	"6": "G#",
-	//"6": "Ab",
-	"Y": "A",
-	"7": "A#",
-	//"7": "Bb",
-	"U": "B"
+	"Z": 0, // C
+	"S": 1, // C#
+	"X": 3, // D
+	"D": 4, // D#
+	"C": 6, // E
+	"V": 7, // F
+	"G": 8, // F#
+	"B": 10, // G
+	"H": 11, // G#
+	"N": 13, // A
+	"J": 14, // A#
+	"M": 16, // B
+
+	"Q": 17 + 0, // C
+	"2": 17 + 1, // C#
+	"W": 17 + 3, // D
+	"3": 17 + 4, // D#
+	"E": 17 + 6, // E
+	"R": 17 + 7, // F
+	"5": 17 + 8, // F#
+	"T": 17 + 10, // G
+	"6": 17 + 11, // G#
+	"Y": 17 + 13, // A
+	"7": 17 + 14, // A#
+	"U": 17 + 16 // B
 };
 
 function music_keypress(code, evt){
@@ -155,16 +163,10 @@ function music_keypress(code, evt){
 	var char = String.fromCharCode(evt.charCode).toUpperCase();
 	if(evt.keyCode === 32){ // space
 		group(musicGroupSelector.current);
-	} else if('QWERTYZXCVBNM'.indexOf(char) !== -1){
-		var octave = octaveButtons.current;
-		var pitch1 = 'ZSXDCVGBHNJM'.indexOf(char);
-		var pitch2 = 'Q2W3ER5T6Y7U'.indexOf(char);
-		var pitch = pitch1;
-		if(octave < 4 && pitch2 !== -1){
-			octave++;
-			pitch = pitch2;
-		}
-
+	} else if(keyToNote[char] !== undefined){
+		var pitch = keyToNote[char] % 17;
+		var octaveAdd = Math.floor(keyToNote[char] / 17);
+		var octave = Math.min(octaveButtons.current + octaveAdd, 3);
 		console.log(nnget(pitch));
 		npset(musicGroupSelector.current, music.note, pitch);
 		niset(musicGroupSelector.current, music.note, waveformButtons.current);
