@@ -58,7 +58,7 @@ function resizeHandler(){
 window.addEventListener("resize", resizeHandler);
 window.addEventListener("mozfullscreenchange", resizeHandler);
 
-var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'music', 'help', 'run'];
+var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
 var mode = modes[0];
 var loading = false;
 
@@ -76,7 +76,7 @@ var viewport = {
 	sy: function(){ return flr(((height()-cellheight()*4-8) * 0.9) / cellheight()); }
 };
 
-var music = {
+var track = {
 	x: function(){ return 1; },
 	y: function(){ return 8+16+16; },
 	width: function(){ return width() - 3; },
@@ -84,63 +84,74 @@ var music = {
 	note: 0
 };
 
-function music_click(music, mx, my){
-	var x = music.x();
-	var y = music.y();
+function track_click(track, mx, my){
+	var x = track.x();
+	var y = track.y();
 	var fontWidth = 4;
 	var fontHeight = 8;
 	var w = 6*fontWidth + 1;
 	var column = Math.floor((mx - x) / w);
 	var row = Math.floor((my - y) / fontHeight);
 	if(column >= 0 && column < 4 && row >= 0 && row < 8){
-		music.note = column * 8 + row;
+		track.note = column * 8 + row;
 		return true;
 	}
 	return false;
 }
 
-function music_draw(music){
-	var x = music.x();
-	var y = music.y();
+function track_draw(track){
+	var x = track.x();
+	var y = track.y();
 	var fontWidth = 4;
 	var fontHeight = 8;
 	var n = 0;
 	for(var i=0; i<4; i++){
 		var w = 6*fontWidth + 1;
 		var x0 = x+i*(w+1);
-		rectfill(x0,y,x+(i+1)*(w+1)-2,y+8*8);
 
-		for(var j=0; j<8; j++){
-			var y0 = y + j*fontHeight;
+		// 4 columns
+		track_drawpart(x0, y, track.note, trackGroupSelector.current, n*8, n*8+8);
 
-			var pitch = npget(musicGroupSelector.current, n);
-			var volume = nvget(musicGroupSelector.current, n);
-			var octave = noget(musicGroupSelector.current, n);
-			var instrument = niget(musicGroupSelector.current, n);
+		n++;
+	}
+}
 
-			// Highlight selected
-			if(music.note === n){
-				rectfill(x0, y0, x0+w-1, y0+fontHeight-1, 5);
-			}
+function track_drawpart(x, y, highlightedNote, trackIndex, start, end){
+	var fontWidth = 4;
+	var fontHeight = 8;
+	var w = 6*fontWidth + 1;
 
-			// Pitch, 2 chars
-			var noteName = volume === 0 ? '-' : nnget(pitch);
-			print(noteName, x0+1, y0+1,7);
+	// Background
+	rectfill(x,y,x+w-1,y+fontHeight*(end-start));
 
-			// octave
-			print(volume === 0 ? '-' : (octave+1), x0+1+fontWidth*2, y0+1,6);
+	for(var j=start; j<end; j++){
+		var y0 = y + (j-start)*fontHeight;
 
-			// Instrument
-			print(volume === 0 ? '-' : (instrument+1), x0+1+fontWidth*3, y0+1,14);
+		var pitch = npget(trackIndex, j);
+		var volume = nvget(trackIndex, j);
+		var octave = noget(trackIndex, j);
+		var instrument = niget(trackIndex, j);
 
-			// Volume
-			print(volume === 0 ? '-' : (volume+1), x0+1+fontWidth*4, y0+1,12);
-
-			// Effect (not yet supported)
-			print('-', x0+1+fontWidth*5, y0+1,13);
-
-			n++;
+		// Highlight selected
+		if(highlightedNote === j){
+			rectfill(x, y0, x+w-1, y0+fontHeight-1, 5);
 		}
+
+		// Pitch, 2 chars
+		var noteName = volume === 0 ? '-' : nnget(pitch);
+		print(noteName, x+1, y0+1,7);
+
+		// octave
+		print(volume === 0 ? '-' : (octave+1), x+1+fontWidth*2, y0+1,6);
+
+		// Instrument
+		print(volume === 0 ? '-' : (instrument+1), x+1+fontWidth*3, y0+1,14);
+
+		// Volume
+		print(volume === 0 ? '-' : (volume+1), x+1+fontWidth*4, y0+1,12);
+
+		// Effect (not yet supported)
+		print('-', x+1+fontWidth*5, y0+1,13);
 	}
 }
 
@@ -172,21 +183,86 @@ var keyToNote = {
 	"U": 17 + 16 // B
 };
 
-function music_keypress(music, evt){
+function track_keypress(track, evt){
 	if(evt.ctrlKey || evt.metaKey || evt.altKey) return;
 
 	var char = String.fromCharCode(evt.charCode).toUpperCase();
 	if(evt.keyCode === 32){ // space
-		group(musicGroupSelector.current);
+		group(trackGroupSelector.current);
 	} else if(keyToNote[char] !== undefined){
 		var pitch = keyToNote[char] % 17;
 		var octaveAdd = Math.floor(keyToNote[char] / 17);
 		var octave = Math.min(octaveButtons.current + octaveAdd, 3);
-		npset(musicGroupSelector.current, music.note, pitch);
-		niset(musicGroupSelector.current, music.note, waveformButtons.current);
-		nvset(musicGroupSelector.current, music.note, musicVolumeButtons.current);
-		noset(musicGroupSelector.current, music.note, octave);
-		music.note = (music.note+1)%32;
+		npset(trackGroupSelector.current, track.note, pitch);
+		niset(trackGroupSelector.current, track.note, waveformButtons.current);
+		nvset(trackGroupSelector.current, track.note, trackVolumeButtons.current);
+		noset(trackGroupSelector.current, track.note, octave);
+		track.note = (track.note+1)%32;
+	}
+}
+
+var pattern = {
+	x: function(){ return 1; },
+	y: function(){ return 16+8; },
+	width: function(){ return width() - 3; },
+	height: function(){ return height() - 9; },
+	current: 0
+};
+
+var trackSelector0 = {
+	x: function(){ return 1; },
+	y: function(){ return 16; },
+	current: 0,
+	padding: 1,
+	min: function(){ return 1; },
+	max: function(){ return 64; },
+	prefix: '',
+	postfix: ''
+};
+
+var trackSelector1 = {
+	x: function(){ return 27; },
+	y: trackSelector0.y,
+	current: 0,
+	padding: trackSelector0.padding,
+	min: function(){ return 1; },
+	max: function(){ return 64; },
+	prefix: '',
+	postfix: ''
+};
+
+var trackSelector2 = {
+	x: function(){ return 53; },
+	y: trackSelector0.y,
+	current: 0,
+	padding: trackSelector0.padding,
+	min: function(){ return 1; },
+	max: function(){ return 64; },
+	prefix: '',
+	postfix: ''
+};
+
+var trackSelector3 = {
+	x: function(){ return 79; },
+	y: trackSelector0.y,
+	current: 0,
+	padding: trackSelector0.padding,
+	min: function(){ return 1; },
+	max: function(){ return 64; },
+	prefix: '',
+	postfix: ''
+};
+
+function pattern_draw(pattern){
+	var x = pattern.x();
+	var y = pattern.y();
+	var fontWidth = 4;
+	var w = 6*fontWidth + 1;
+
+	// Render the 4 channels
+	for(var channelIndex=0; channelIndex<4; channelIndex++){
+		var trackIndex = mgget(pattern.current, channelIndex);
+		track_drawpart(x + (w+1) * channelIndex, y, -1, trackIndex, 0, 8);
 	}
 }
 
@@ -287,7 +363,7 @@ var octaveButtons = {
 	padding: 0
 };
 
-var musicVolumeButtons = {
+var trackVolumeButtons = {
 	x: function(){ return width() - 48; },
 	y: function(){ return 16+8; },
 	num: 8,
@@ -298,11 +374,11 @@ var musicVolumeButtons = {
 var topButtons = {
 	x: function(){ return 0; },
 	y: function(){ return 0; },
-	options: ['CRT', 'SPR', 'MAP', 'SFX', '.JS', 'MUS', 'HLP', 'RUN'],
+	options: ['CRT', 'SPR', 'MAP', 'SFX', '.JS', 'TRK', 'MUS', 'HLP', 'RUN'],
 	current: 0,
 	bgColor: 7,
 	textColor: 0,
-	padding: 5
+	padding: 4
 };
 
 var toolButtons = {
@@ -324,7 +400,7 @@ var speedSelector = {
 	postfix: 'X'
 };
 
-var musicSpeedSelector = {
+var trackSpeedSelector = {
 	x: function(){ return 1; },
 	y: function(){ return 16; },
 	current: 16,
@@ -333,6 +409,17 @@ var musicSpeedSelector = {
 	max: function(){ return 64; },
 	prefix: '',
 	postfix: 'X'
+};
+
+var patternSelector = {
+	x: function(){ return 30; },
+	y: function(){ return 8; },
+	current: 16,
+	padding: 6,
+	min: function(){ return 1; },
+	max: function(){ return 64; },
+	prefix: '',
+	postfix: ''
 };
 
 var sfxSelector = {
@@ -346,7 +433,7 @@ var sfxSelector = {
 	postfix: ''
 };
 
-var musicGroupSelector = {
+var trackGroupSelector = {
 	x: function(){ return 1; },
 	y: function(){ return 8; },
 	current: 0,
@@ -681,19 +768,19 @@ window._click = function _click(){
 			cellheight(newSize);
 			dirty = true;
 		}
-	} else if(mode === 'music'){
-		if(intsel_click(musicSpeedSelector, mx, my)){
-			gsset(musicGroupSelector.current, musicSpeedSelector.current);
+	} else if(mode === 'track'){
+		if(intsel_click(trackSpeedSelector, mx, my)){
+			gsset(trackGroupSelector.current, trackSpeedSelector.current);
 			dirty = true;
-		} else if(intsel_click(musicGroupSelector, mx, my)){
+		} else if(intsel_click(trackGroupSelector, mx, my)){
 			dirty = true;
 		} else if(buttons_click(waveformButtons,mx,my)){
 			dirty = true;
 		} else if(buttons_click(octaveButtons,mx,my)){
 			dirty = true;
-		} else if(buttons_click(musicVolumeButtons,mx,my)){
+		} else if(buttons_click(trackVolumeButtons,mx,my)){
 			dirty = true;
-		} else if(music_click(music,mx,my)){
+		} else if(track_click(track,mx,my)){
 			dirty = true;
 		}
 	}
@@ -805,16 +892,28 @@ editorDraw = window._draw = function _draw(){
 		buttons_draw(spriteSizeButtons);
 
 		break;
-	case 'music':
-		music_draw(music);
-		intsel_draw(musicGroupSelector);
-		intsel_draw(musicSpeedSelector);
+
+	case 'track':
+		track_draw(track);
+		intsel_draw(trackGroupSelector);
+		intsel_draw(trackSpeedSelector);
 		buttons_draw(waveformButtons);
 		print("octave", width() - 60, 17);
 		buttons_draw(octaveButtons);
 		print("vol", width() - 60, 25);
-		buttons_draw(musicVolumeButtons);
+		buttons_draw(trackVolumeButtons);
 		break;
+
+	case 'pattern':
+		print("pattern",1,9);
+		pattern_draw(pattern);
+		intsel_draw(patternSelector);
+		intsel_draw(trackSelector0);
+		intsel_draw(trackSelector1);
+		intsel_draw(trackSelector2);
+		intsel_draw(trackSelector3);
+		break;
+
 	case 'help':
 		print([
 			"Cartridge.js is an open source",
@@ -1587,8 +1686,8 @@ window.addEventListener('keypress', function(evt){
 	if(mode === 'run') return;
 	if(mode === 'code'){
 		code_keypress(code, evt);
-	} else if(mode === 'music'){
-		music_keypress(music, evt);
+	} else if(mode === 'track'){
+		track_keypress(track, evt);
 	}
 });
 
