@@ -2378,7 +2378,7 @@ var coloredSpecialCharsCanvases = [];
 var fontX = 4;
 var fontY = 5;
 var paletteHex = [];
-var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%';
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,^?()[]:/\\="a+-!{}<>;_|&*~%#';
 var specialChars = "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99";
 var dirty = true; // Should redraw!
 
@@ -2404,11 +2404,11 @@ function redrawCanvases(){
 
 		// Normal font
 		coloredFontCanvases[i] = utils.createCanvasFromAscii([
-			"### ###  ## ##  ### ###  ## # # ### ### # # #   ### ##   ## ###  #  ###  ## ### # # # # # # # # # # ### ### ##  ### ### # # ### #   ### ### ###          #  ###  #   #  ##   ##       # #       # #  #           #   ## ##    # #            #   ## # #     # #",
-			"# # # # #   # # #   #   #   # #  #   #  # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   # # #  #    #   # # # #   #     # # # # #         # #   # #     # #     #  #   #   #  ### # # #    #       #   #   #   #   #    #      #  #    #    #   #",
-			"### ##  #   # # ##  ##  #   ###  #   #  ##  #   # # # # # # ### # # ##  ###  #  # # # # # #  #  ###  #  # #  #  ###  ## ### ### ###   # ### ###              ## #     # #     #      #   #              ### ###  #  #     # #     #          #   #  ### ###  # ",
-			"# # # # #   # # #   #   # # # #  #   #  # # #   # # # # # # #   ##  # #   #  #  # # ### ### # #   # #   # #  #  #     #   #   # # #   # # #   #      #          #     # #     #  #   #   #  ###          #           #   #   #   #    #      #  # #  #  #   #  ",
-			"# # ###  ## ### ### #   ### # # ### ##  # # ### # # # # ##  #    ## # # ##   #   ##  #  ### # # ### ### ### ### ### ###   # ### ###   # ###   #  #  #        #   #   #  ##   ##     #     #                      #   ## ##    # #    #  ###  #  ### # #     # #"
+			"### ###  ## ##  ### ###  ## # # ### ### # # #   ### ##   ## ###  #  ###  ## ### # # # # # # # # # # ### ### ##  ### ### # # ### #   ### ### ###          #  ###  #   #  ##   ##       # #       # #  #           #   ## ##    # #            #   ## # #     # # # #",
+			"# # # # #   # # #   #   #   # #  #   #  # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   # # #  #    #   # # # #   #     # # # # #         # #   # #     # #     #  #   #   #  ### # # #    #       #   #   #   #   #    #      #  #    #    #   # ###",
+			"### ##  #   # # ##  ##  #   ###  #   #  ##  #   # # # # # # ### # # ##  ###  #  # # # # # #  #  ###  #  # #  #  ###  ## ### ### ###   # ### ###              ## #     # #     #      #   #              ### ###  #  #     # #     #          #   #  ### ###  #  # #",
+			"# # # # #   # # #   #   # # # #  #   #  # # #   # # # # # # #   ##  # #   #  #  # # ### ### # #   # #   # #  #  #     #   #   # # #   # # #   #      #          #     # #     #  #   #   #  ###          #           #   #   #   #    #      #  # #  #  #   #   ###",
+			"# # ###  ## ### ### #   ### # # ### ##  # # ### # # # # ##  #    ## # # ##   #   ##  #  ### # # ### ### ### ### ### ###   # ### ###   # ###   #  #  #        #   #   #  ##   ##     #     #                      #   ## ##    # #    #  ###  #  ### # #     # # # #"
 		], colorMap);
 
 		// Special chars
@@ -2495,8 +2495,6 @@ var spriteSheetSizeX = 16; // sprites
 var spriteSheetSizeY = 16; // sprites
 var paletteSize = 16; // colors
 
-var maxSprites = spriteSheetSizeX * spriteSheetSizeY; // sprites
-
 // DOM elements
 var container;
 var canvases = [];
@@ -2554,7 +2552,7 @@ exports.cartridge = function(options){
 		utils.disableImageSmoothing(c.getContext('2d'));
 	}
 
-	setCellSize(cellsizeX, cellsizeY);
+	setCellSize(cellsizeX, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
 	setPalette(options.palette || colors.defaultPalette());
 
 	// Add style tag
@@ -2668,19 +2666,40 @@ function runKill(){
 	}
 }
 
-function setCellSize(w,h){
-	w = w | 0;
-	h = h | 0;
+function setCellSize(
+	newCellWidth,
+	newCellHeight,
+	newSpriteSheetWidth,
+	newSpriteSheetHeight
+){
+	newCellWidth = newCellWidth | 0;
+	newCellHeight = newCellHeight | 0;
+	newSpriteSheetWidth = newSpriteSheetWidth | 0;
+	newSpriteSheetHeight = newSpriteSheetHeight | 0;
 
-	cellsizeX = w;
-	cellsizeY = h;
+	var newSpriteSheetPixels = utils.zeros(newSpriteSheetWidth * newSpriteSheetHeight * newCellWidth * newCellHeight);
+	if(spriteSheetPixels){
+		// Copy pixel data to new dimensions
+		var minWidth = Math.min(spriteSheetSizeX*cellsizeX, newSpriteSheetWidth*newCellWidth);
+		var minHeight = Math.min(spriteSheetSizeY*cellsizeY, newSpriteSheetHeight*newCellHeight);
+		for(var i=0; i<minWidth; i++){
+			for(var j=0; j<minHeight; j++){
+				newSpriteSheetPixels[i+j*newSpriteSheetWidth*newCellWidth] = spriteSheetPixels[i+j*spriteSheetSizeX*cellsizeX];
+			}
+		}
+	}
+	spriteSheetPixels = newSpriteSheetPixels;
 
-	// Reinit pixels
-	// TODO: copy over?
- 	spriteSheetPixels = utils.zeros(spriteSheetSizeX * spriteSheetSizeY * cellsizeX * cellsizeY, spriteSheetPixels);
+	cellsizeX = newCellWidth;
+	cellsizeY = newCellHeight;
 
-	maxSprites = spriteSheetSizeX * spriteSheetSizeY;
-	spriteFlags = utils.zeros(maxSprites);
+	spriteSheetSizeX = newSpriteSheetWidth;
+	spriteSheetSizeY = newSpriteSheetHeight;
+
+	var maxSprites = spriteSheetSizeX * spriteSheetSizeY;
+	if(!spriteFlags) spriteFlags = utils.zeros(maxSprites);
+	while(spriteFlags.length < maxSprites) spriteFlags.push(0);
+	while(spriteFlags.length > maxSprites) spriteFlags.pop();
 
 	// (re)init spritesheet canvas
 	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
@@ -2689,6 +2708,8 @@ function setCellSize(w,h){
 	// (re)init map cache
 	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
+
+	spriteSheetDirty = true;
 }
 
 function redrawSpriteSheet(){
@@ -2768,7 +2789,7 @@ exports.height = function(newHeight){
 // TODO: rename to cwget/set() ?
 exports.cellwidth = function(newCellWidth){
 	if(newCellWidth !== undefined){
-		setCellSize(newCellWidth, cellsizeY);
+		setCellSize(newCellWidth, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeX;
 	}
@@ -2777,7 +2798,7 @@ exports.cellwidth = function(newCellWidth){
 // TODO: rename to chget/set() ?
 exports.cellheight = function(newCellHeight){
 	if(newCellHeight !== undefined){
-		setCellSize(cellsizeX, newCellHeight);
+		setCellSize(cellsizeX, newCellHeight, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeY;
 	}
@@ -3029,8 +3050,7 @@ exports.sget = function(x, y){
 
 // Set spritesheet size
 exports.ssset = function(n){
-	spriteSheetSizeX = spriteSheetSizeY = (n | 0);
-	setCellSize(cellsizeX, cellsizeY);
+	setCellSize(cellsizeX, cellsizeY, n, n);
 };
 
 // Get spritesheet size
@@ -3083,7 +3103,7 @@ exports.print = function(text, x, y, col){
 	x = x | 0;
 	y = y | 0;
 
-	font.draw(ctx, text.toUpperCase(), x, y, col);
+	font.draw(ctx, text.toString().toUpperCase(), x, y, col);
 };
 
 exports.fit = function fit(stretchMode){
@@ -3176,12 +3196,14 @@ function download(key){
 }
 
 function toJSON(){
+	var i,j;
 	var data = {
-		version: 4,
-		width: screensizeX, // added in v3
-		height: screensizeY, // added in v3
+		version: 5,
+		width: width(), // added in v3
+		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
 		cellheight: cellheight(), // added in v4
+		spritesheetsize: ssget(), // added in v5
 		map: [],
 		sprites: [],
 		flags: [],
@@ -3192,17 +3214,27 @@ function toJSON(){
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
 	}
-	for(var i=0; i<spriteSheetSizeX*cellwidth(); i++){
-		for(var j=0; j<spriteSheetSizeY*cellheight(); j++){
-			data.sprites[j*spriteSheetSizeX*cellwidth()+i] = sget(i,j);
+
+	// Spite data
+	for(i=0; i<ssget()*cellwidth(); i++){
+		for(j=0; j<ssget()*cellheight(); j++){
+			data.sprites[j*ssget()*cellwidth()+i] = sget(i,j);
 		}
 	}
-	for(var i=0; i<mapSizeX; i++){
-		for(var j=0; j<mapSizeY; j++){
+	// Don't store trailing zeros
+	while(data.sprites[data.sprites.length-1] === 0){ data.sprites.pop(); }
+
+	// Map data
+	for(i=0; i<mapSizeX; i++){
+		for(j=0; j<mapSizeY; j++){
 			data.map[j*mapSizeX+i] = mget(i,j);
 		}
 	}
+	// Don't store trailing zeros
+	while(data.map[data.map.length-1] === 0){ data.map.pop(); }
 
+	// SFX data
+	// TODO: should be stored in the same way as sprites and map, just arrays of ints
 	for(var n=0; n<64; n++){
 		data.sfx[n] = {
 			speed: asget(n),
@@ -3221,6 +3253,7 @@ function toJSON(){
 }
 
 function loadJSON(data){
+	var i,j;
 	code.codeset(data.code || '');
 
 	if(data.width !== undefined){
@@ -3237,18 +3270,22 @@ function loadJSON(data){
 		cellheight(data.cellheight);
 	}
 
-	for(var i=0; i<spriteFlags.length; i++){
+	if(data.spritesheetsize !== undefined){
+		ssset(data.spritesheetsize);
+	}
+
+	for(i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i]);
 	}
 	setPalette(data.palette);
-	for(var i=0; i<spriteSheetSizeX*cellwidth(); i++){
-		for(var j=0; j<spriteSheetSizeY*cellheight(); j++){
-			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i]);
+	for(i=0; i<spriteSheetSizeX*cellwidth(); i++){
+		for(j=0; j<spriteSheetSizeY*cellheight(); j++){
+			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i] || 0);
 		}
 	}
-	for(var i=0; i<mapSizeX; i++){
-		for(var j=0; j<mapSizeY; j++){
-			mset(i,j,data.map[j*mapSizeX+i]);
+	for(i=0; i<mapSizeX; i++){
+		for(j=0; j<mapSizeY; j++){
+			mset(i,j,data.map[j*mapSizeX+i] || 0);
 		}
 	}
 
@@ -3561,7 +3598,8 @@ var sfx = require('./sfx');
  * Equal Temperament Tuning
  * Source: http://www.phy.mtu.edu/~suits/notefreqs.html
  */
-var frequencies = [16.35, 17.32, 17.32, 18.35, 19.45, 19.45, 20.60, 21.83, 23.12, 23.12, 24.50, 25.96, 25.96, 27.50, 29.14, 29.14, 30.87, 32.70, 34.65, 34.65, 36.71, 38.89, 38.89, 41.20, 43.65, 46.25, 46.25, 49.00, 51.91, 51.91, 55.00, 58.27, 58.27, 61.74, 65.41, 69.30, 69.30, 73.42, 77.78, 77.78, 82.41, 87.31, 92.50, 92.50, 98.00, 103.83, 103.83, 110.00, 116.54, 116.54, 123.47, 130.81, 138.59, 138.59, 146.83, 155.56, 155.56, 164.81, 174.61, 185.00, 185.00, 196.00, 207.65, 207.65, 220.00, 233.08, 233.08, 246.94, 261.63, 277.18, 277.18, 293.66, 311.13, 311.13, 329.63, 349.23, 369.99, 369.99, 392.00, 415.30, 415.30, 440.00, 466.16, 466.16, 493.88, 523.25, 554.37, 554.37, 587.33, 622.25, 622.25, 659.26, 698.46, 739.99, 739.99, 783.99, 830.61, 830.61, 880.00, 932.33, 932.33, 987.77, 1046.50, 1108.73, 1108.73, 1174.66, 1244.51, 1244.51, 1318.51, 1396.91, 1479.98, 1479.98, 1567.98, 1661.22, 1661.22, 1760.00, 1864.66, 1864.66, 1975.53, 2093.00, 2217.46, 2217.46, 2349.32, 2489.02, 2489.02, 2637.02, 2793.83, 2959.96, 2959.96, 3135.96, 3322.44, 3322.44, 3520.00, 3729.31, 3729.31, 3951.07, 4186.01];
+var frequencies = [
+	261.63, 277.18, 277.18, 293.66, 311.13, 311.13, 329.63, 349.23, 369.99, 369.99, 392.00, 415.30, 415.30, 440.00, 466.16, 466.16, 493.88, 523.25, 554.37, 554.37, 587.33, 622.25, 622.25, 659.26, 698.46, 739.99, 739.99, 783.99, 830.61, 830.61, 880.00, 932.33, 932.33, 987.77, 1046.50, 1108.73, 1108.73, 1174.66, 1244.51, 1244.51, 1318.51, 1396.91, 1479.98, 1479.98, 1567.98, 1661.22, 1661.22, 1760.00, 1864.66, 1864.66, 1975.53, 2093.00, 2217.46, 2217.46, 2349.32, 2489.02, 2489.02, 2637.02, 2793.83, 2959.96, 2959.96, 3135.96, 3322.44, 3322.44, 3520.00, 3729.31, 3729.31, 3951.07, 4186.01];
 var noteNames = "C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B".split(' ');
 var PatternFlags = {
 	ACTIVE: 1,
@@ -3713,7 +3751,6 @@ function scheduleGroup(groupIndex, channelIndex, time){
 	var group = groups[groupIndex];
 	var channel = channels[channelIndex];
 	var speed = group.speed;
-	var n = 0;
 	for(var i=0; i < 32; i++){ // all rows in the group
 		var volume = nvget(groupIndex, i);
 		var pitch = npget(groupIndex, i);
@@ -3724,7 +3761,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		}
 		var startPosition = i;
 		var endPosition = i+1;
-		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && endPosition < 32){
+		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && npget(groupIndex, endPosition) === pitch && endPosition < 32){
 			endPosition++;
 		}
 		var startTime = time + startPosition / speed;
@@ -3737,7 +3774,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 			var frequency = getFrequency(pitch, octave);
 			osc.frequency.setValueAtTime(frequency, startTime);
 		}
-		gain.gain.setValueAtTime(volume, startTime);
+		gain.gain.setValueAtTime(volume / 7, startTime);
 		gain.gain.setValueAtTime(0, endTime);
 
 		i = endPosition - 1;
