@@ -1,4 +1,3 @@
-var help = require('./help');
 var input = require('./input');
 var mouse = require('./mouse');
 var utils = require('./utils');
@@ -870,10 +869,6 @@ function updateMapCacheCanvas(x,y){
 	);
 }
 
-exports.help = function(){
-	help.print();
-};
-
 exports.mousex = function(){
 	return Math.floor(mouse.mousexNormalized() * (screensizeX-1));
 };
@@ -889,6 +884,3 @@ utils.makeGlobal(code);
 utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
 utils.makeGlobal(mouse.global);
-
-help.hello();
-help.print();
