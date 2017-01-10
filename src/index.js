@@ -702,7 +702,7 @@ exports.load = function(key){
 	} else {
 		key = key || 'save';
 		if(key.indexOf('.json') !== -1){
-			loadJsonFromUrl(key,function(err,json){
+			utils.loadJsonFromUrl(key,function(err,json){
 				if(json){
 					loadJSON(json);
 				}
@@ -719,21 +719,6 @@ exports.load = function(key){
 		}
 	}
 };
-
-function loadJsonFromUrl(url, callback){
-	var xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = function(){
-		if (xhr.readyState === XMLHttpRequest.DONE) {
-			if (xhr.status === 200) {
-				callback(null, JSON.parse(xhr.responseText));
-			} else {
-				callback(xhr);
-			}
-		}
-	};
-	xhr.open("GET", url, true);
-	xhr.send();
-}
 
 function download(key){
 	key = key || 'export';
