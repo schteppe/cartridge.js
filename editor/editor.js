@@ -666,7 +666,7 @@ function scrollhandler(delta){
 	}
 }
 
-window._click = function _click(){
+var editorClick = window._click = function _click(){
 	var mx = mousex();
 	var my = mousey();
 	mousemovehandler(true);
@@ -1315,6 +1315,7 @@ function code_run(code){
 	delete window._init;
 	delete window._kill;
 	delete window._draw;
+	delete window._click;
 
 	try {
 		run();
@@ -1346,8 +1347,11 @@ function code_stop(code){
 	delete window._update60;
 	delete window._init;
 	delete window._kill;
+	delete window._click;
+
 	mode = code.previousMode;
 	window._draw = editorDraw;
+	window._click = editorClick;
 	var oldCode = codeget();
 	codeset("");
 	run();
