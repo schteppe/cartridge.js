@@ -2453,27 +2453,7 @@ exports.draw = function(ctx, text, x, y, col){
 	}
 };
 
-},{"./utils":13}],5:[function(require,module,exports){
-exports.hello = function(){
-	console.log([
-		'CARTRIDGE.JS',
-		'JavaScript retro game engine.',
-		'',
-		'For help, run help().'
-	].join('\n'));
-};
-
-exports.print = function(){
-	console.log([
-		'fullscreen()      Enable full screen.',
-		'help()            Print this message.',
-		'load("name")      Load sprites and map from localStorage.',
-		'save("name")      Save sprites and map to localStorage.',
-		'save("name.json") Download the contents to a JSON file.'
-	].join('\n'));
-};
-},{}],6:[function(require,module,exports){
-var help = require('./help');
+},{"./utils":12}],5:[function(require,module,exports){
 var input = require('./input');
 var mouse = require('./mouse');
 var utils = require('./utils');
@@ -2495,13 +2475,15 @@ var spriteSheetSizeX = 16; // sprites
 var spriteSheetSizeY = 16; // sprites
 var paletteSize = 16; // colors
 
+// Clip state
+var clipX0 = 0;
+var clipY0 = 0;
+var clipX1 = screensizeX;
+var clipY1 = screensizeY;
+
 // DOM elements
 var container;
 var canvases = [];
-
-// Listeners/callbacks
-var canvasListeners;
-var bodyListeners;
 
 var mapData = utils.zeros(mapSizeX * mapSizeY);
 var mapDataDirty = utils.zeros(mapSizeX * mapSizeY); // dirtiness per cell
@@ -2572,6 +2554,26 @@ exports.cartridge = function(options){
 	input.init(canvases);
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
+
+	// iOS audio fix
+	var isUnlocked = false;
+	canvases[0].ontouchend = function(){
+		if(isUnlocked) return;
+
+		// create empty buffer and play it
+		var buffer = sfx.getContext().createBuffer(1, 1, 22050);
+		var source = sfx.getContext().createBufferSource();
+		source.buffer = buffer;
+		source.connect(sfx.getContext().destination);
+		source.start();
+
+		// by checking the play state after some time, we know if we're really unlocked
+		setTimeout(function() {
+			if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
+				isUnlocked = true;
+			}
+		}, 0);
+	};
 
 	if(autoFit){
 		fit(pixelPerfectMode);
@@ -2777,6 +2779,12 @@ function resizeCanvases(){
 		fit(pixelPerfectMode);
 	}
 	pixelops.resize(canvases[0]);
+
+	// Reset clip state
+	clipX0 = 0;
+	clipY0 = 0;
+	clipX1 = screensizeX;
+	clipY1 = screensizeY;
 }
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
@@ -2839,13 +2847,20 @@ exports.palt = function(col, t){
 };
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
-	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
 	x1 = x1 | 0;
 	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
+
+	// Full clip
+	// TODO: partial clip
+	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+		return;
+	}
+
+	pixelops.beforeChange();
 
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
@@ -2854,13 +2869,20 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
-	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
 	x1 = x1 | 0;
 	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
+
+	// full clip
+	// TODO: partial clip
+	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+		return;
+	}
+
+	pixelops.beforeChange();
 
 	var w = x1 - x0;
 	var h = y1 - y0;
@@ -2877,6 +2899,13 @@ exports.clip = function(x,y,w,h){
 	w = w | 0;
 	h = h | 0;
 
+	clipX0 = x;
+	clipY0 = y;
+	clipX1 = x+w-1;
+	clipY1 = y+h-1;
+
+	// TODO: remove the canvas based clip when manual clip is done
+	ctx.beginPath();
 	ctx.rect(x,y,w,h);
 	ctx.clip();
 };
@@ -3045,6 +3074,8 @@ exports.pset = function(x, y, col){
 	y = y | 0;
 	col = col | 0;
 
+	if(x < clipX0 || y < clipY0 || x > clipX1 || y > clipY1) return;
+
 	// new style
 	var dec = palette[col];
 	var r = utils.decToR(dec);
@@ -3162,7 +3193,7 @@ exports.load = function(key){
 	} else {
 		key = key || 'save';
 		if(key.indexOf('.json') !== -1){
-			loadJsonFromUrl(key,function(err,json){
+			utils.loadJsonFromUrl(key,function(err,json){
 				if(json){
 					loadJSON(json);
 				}
@@ -3179,21 +3210,6 @@ exports.load = function(key){
 		}
 	}
 };
-
-function loadJsonFromUrl(url, callback){
-	var xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = function(){
-		if (xhr.readyState === XMLHttpRequest.DONE) {
-			if (xhr.status === 200) {
-				callback(null, JSON.parse(xhr.responseText));
-			} else {
-				callback(xhr);
-			}
-		}
-	};
-	xhr.open("GET", url, true);
-	xhr.send();
-}
 
 function download(key){
 	key = key || 'export';
@@ -3345,10 +3361,6 @@ function updateMapCacheCanvas(x,y){
 	);
 }
 
-exports.help = function(){
-	help.print();
-};
-
 exports.mousex = function(){
 	return Math.floor(mouse.mousexNormalized() * (screensizeX-1));
 };
@@ -3365,9 +3377,7 @@ utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
 utils.makeGlobal(mouse.global);
 
-help.hello();
-help.print();
-},{"./code":2,"./colors":3,"./font":4,"./help":5,"./input":7,"./math":8,"./mouse":9,"./music":10,"./pixelops":11,"./sfx":12,"./utils":13}],7:[function(require,module,exports){
+},{"./code":2,"./colors":3,"./font":4,"./input":6,"./math":7,"./mouse":8,"./music":9,"./pixelops":10,"./sfx":11,"./utils":12}],6:[function(require,module,exports){
 var math = require('./math');
 var utils = require('./utils');
 
@@ -3471,7 +3481,7 @@ exports.global = {
 	btnp: exports.btnp
 };
 
-},{"./math":8,"./utils":13}],8:[function(require,module,exports){
+},{"./math":7,"./utils":12}],7:[function(require,module,exports){
 var tau = 2 * Math.PI;
 
 module.exports = {
@@ -3508,7 +3518,7 @@ module.exports = {
 		return Math.min(Math.max(x,min), max);
 	}
 };
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var math = require('./math');
 var utils = require('./utils');
 
@@ -3603,7 +3613,7 @@ exports.global = {
 	mousescroll: exports.mousescroll
 };
 
-},{"./math":8,"./utils":13}],10:[function(require,module,exports){
+},{"./math":7,"./utils":12}],9:[function(require,module,exports){
 var utils = require('./utils');
 var sfx = require('./sfx');
 
@@ -3830,7 +3840,7 @@ function stop(fade){
 		}
 	}
 }
-},{"./sfx":12,"./utils":13}],11:[function(require,module,exports){
+},{"./sfx":11,"./utils":12}],10:[function(require,module,exports){
 var ctx;
 var writeData = null;
 var readData = null;
@@ -3914,7 +3924,7 @@ exports.flush = function(){
 		}
 	}
 };
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
 
@@ -4190,7 +4200,7 @@ exports.global = {
 	awget: exports.awget,
 	sfx: exports.sfx
 };
-},{"./utils":13,"dsp.js/dsp":1}],13:[function(require,module,exports){
+},{"./utils":12,"dsp.js/dsp":1}],12:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
@@ -4374,4 +4384,19 @@ exports.getErrorInfo = function(err) {
 		originalError: err
 	};
 };
-},{}]},{},[6]);
+
+exports.loadJsonFromUrl = function(url, callback){
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(){
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+				callback(null, JSON.parse(xhr.responseText));
+			} else {
+				callback(xhr);
+			}
+		}
+	};
+	xhr.open("GET", url, true);
+	xhr.send();
+};
+},{}]},{},[5]);
