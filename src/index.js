@@ -19,6 +19,12 @@ var spriteSheetSizeX = 16; // sprites
 var spriteSheetSizeY = 16; // sprites
 var paletteSize = 16; // colors
 
+// Clip state
+var clipX0 = 0;
+var clipY0 = 0;
+var clipX1 = screensizeX;
+var clipY1 = screensizeY;
+
 // DOM elements
 var container;
 var canvases = [];
@@ -317,6 +323,12 @@ function resizeCanvases(){
 		fit(pixelPerfectMode);
 	}
 	pixelops.resize(canvases[0]);
+
+	// Reset clip state
+	clipX0 = 0;
+	clipY0 = 0;
+	clipX1 = screensizeX;
+	clipY1 = screensizeY;
 }
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
@@ -379,13 +391,20 @@ exports.palt = function(col, t){
 };
 
 exports.rectfill = function rectfill(x0, y0, x1, y1, col){
-	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
 	x1 = x1 | 0;
 	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
+
+	// Full clip
+	// TODO: partial clip
+	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+		return;
+	}
+
+	pixelops.beforeChange();
 
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
@@ -394,13 +413,20 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
-	pixelops.beforeChange();
 	// Floor coords
 	x0 = x0 | 0;
 	y0 = y0 | 0;
 	x1 = x1 | 0;
 	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
+
+	// full clip
+	// TODO: partial clip
+	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+		return;
+	}
+
+	pixelops.beforeChange();
 
 	var w = x1 - x0;
 	var h = y1 - y0;
@@ -417,6 +443,13 @@ exports.clip = function(x,y,w,h){
 	w = w | 0;
 	h = h | 0;
 
+	clipX0 = x;
+	clipY0 = y;
+	clipX1 = x+w-1;
+	clipY1 = y+h-1;
+
+	// TODO: remove the canvas based clip when manual clip is done
+	ctx.beginPath();
 	ctx.rect(x,y,w,h);
 	ctx.clip();
 };
@@ -584,6 +617,8 @@ exports.pset = function(x, y, col){
 	x = x | 0;
 	y = y | 0;
 	col = col | 0;
+
+	if(x < clipX0 || y < clipY0 || x > clipX1 || y > clipY1) return;
 
 	// new style
 	var dec = palette[col];
