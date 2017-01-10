@@ -107,10 +107,6 @@ this.suite1 = {
             assert(1);
             test.done();
         },
-        help: function (test) {
-            help();
-            test.done();
-        },
         fit: function (test) {
             fit(0);
             fit(1);
