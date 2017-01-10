@@ -64,7 +64,7 @@ You the editor takes a few query parameters to its URL. Use these to control the
 
 <dl>
   <dt>file</dt>
-  <dd>Tries to load a cart/JSON-file from the given URL.</dd>Usage
+  <dd>Tries to load a cart/JSON-file from the given URL.</dd>
   <dt>run</dt>
   <dd>If set to 1, the editor will start the current cart when loaded. Default is 0.</dd>
   <dt>pixel_perfect</dt>
