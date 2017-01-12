@@ -336,8 +336,8 @@ var flags = {
 var saveLoadButtons = {
 	x: function(){ return 25; },
 	y: function(){ return 13; },
-	options: ['save', 'load'],
-	padding: 6
+	options: ['save', 'load', 'reset'],
+	padding: 8
 };
 
 var slotButtons = {
@@ -753,6 +753,7 @@ var editorClick = window._click = function _click(){
 			switch(saveLoadButtons.current){
 				case 0: save('game.json'); break;
 				case 1: openfile(); break;
+				case 2: reset(); break;
 			}
 			saveLoadButtons.current = -1;
 			dirty = true;
@@ -971,7 +972,7 @@ function buttons_draw(settings){
 			settings.x() + 5+padding*2 + i * (6+padding*2)-1, settings.y() + 6,
 			settings.current === i ? bgColor : textColor
 		);
-		var text = settings.options !== undefined ? (settings.options[i]+'').toUpperCase().substr(0,4) : ((i+1) + '');
+		var text = settings.options !== undefined ? (settings.options[i]+'').toUpperCase() : ((i+1) + '');
 		var x1 = settings.x()+1+padding + i * (6 + padding*2);
 		print(
 			text,
@@ -1369,9 +1370,9 @@ function code_stop(code){
 	window._draw = editorDraw;
 	window._click = editorClick;
 	var oldCode = codeget();
-	codeset("");
+	code_set("");
 	run();
-	codeset(oldCode);
+	code_set(oldCode);
 	camera(0,0);
 }
 
@@ -1407,6 +1408,8 @@ function code_clamp_crow(code, codeArray){
 
 function code_set(str){
 	codeset(str);
+	code_clamp_crow(code);
+	code_clamp_ccol(code);
 	syntaxTreeDirty = true;
 }
 
@@ -1630,6 +1633,37 @@ function copySprite(from,to){
 			sset(x1, y1, sget(x,y));
 		}
 	}
+}
+
+function reset(){
+	// Clear sprites
+	var numSprites = ssget() * ssget();
+	for(var i=0; i<numSprites; i++){
+		clearSprite(i);
+		fset(i,0);
+	}
+	// Map
+	for(var i=0; i<128; i++){
+		for(var j=0; j<32; j++){
+			mset(i,j,0);
+		}
+	}
+
+	// palette
+	for(var i=0; i<palette.length; i++)
+		palset(i);
+
+	// SFX
+	for(var i=0; i<64; i++){
+		for(var j=0; j<32; j++){
+			avset(i,j);
+			afset(i,j);
+			awset(i,j);
+		}
+	}
+
+	// Code
+	code_set("");
 }
 
 function mod(a,b) { return ((a%b)+b)%b; }
