@@ -314,16 +314,27 @@ var mapPanX = 0;
 var mapPanY = 0;
 
 var palette = {
-	sx: function(){ return flr((width() * 0.4) / 4); },
-	sy: function(){ return flr((height() * 0.3) / 4); },
-	x: function(){ return width() - palette.sx() * 4 - 1; },
+	n: function(){
+		var n = 2;
+		var palsize = 0;
+		while(palget(palsize) !== undefined) palsize++;
+		while(n*n<palsize) n *= 2;
+		return n;
+	},
+	sx: function(){
+		return flr((width() * 0.4) / this.n());
+	},
+	sy: function(){
+		return flr((height() * 0.3) / this.n());
+	},
+	x: function(){ return width() - palette.sx() * this.n() - 1; },
 	y: function(){ return 8; },
 	current: 1
 };
 
 var flags = {
 	x: function(){ return palette.x(); },
-	y: function(){ return palette.y() + palette.sy() * 4 + 1; },
+	y: function(){ return palette.y() + palette.sy() * palette.n() + 1; },
 	current: function(newFlags){
 		if(newFlags === undefined){
 			return fget(selectedSprite);
@@ -1069,14 +1080,17 @@ function palette_draw(palette){
 	var sy = palette.sy();
 	var current = palette.current;
 	var n=0;
-	for(var j=0; j<4; j++){
-		for(var i=0; i<4; i++){
+	var size = palette.n();
+	for(var j=0; j<size; j++){
+		for(var i=0; i<size; i++){
+			if(palget(n) === undefined){
+				break;
+			}
 			var rx = x+i*sx;
 			var ry = y+j*sy;
 			var rw = x+(i+1)*sx-1;
 			var rh = y+(j+1)*sy-1;
 			rectfill(rx, ry, rw, rh, n);
-			print(n.toString(), rx+2, ry+2, n === 0 ? 7 : 0);
 			if(current === n){
 				rect(rx, ry, rw, rh, current === 0 ? 7 : 0);
 			}
@@ -1086,11 +1100,15 @@ function palette_draw(palette){
 }
 
 function palette_click(palette,x,y){
-	if(inrect(x,y,palette.x(),palette.y(),palette.sx()*4,palette.sy()*4)){
+	var n = palette.n();
+	if(inrect(x,y,palette.x(),palette.y(),palette.sx()*n,palette.sy()*n)){
 		var px = flr((x-palette.x()) / palette.sx());
 		var py = flr((y-palette.y()) / palette.sy());
-		palette.current = px + 4 * py;
-		return true;
+		var newColor = px + n * py;
+		if(palget(newColor) !== undefined && palette.current !== newColor){
+			palette.current = newColor;
+			return true;
+		}
 	}
 	return false;
 }
