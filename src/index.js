@@ -299,17 +299,32 @@ function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
-	spriteSheetDirty = true;
 	font.changePalette(paletteHex);
+
+	// Check spritesheet for invalid colors
+	for(var i=0; i<spriteSheetSizeX*cellsizeX; i++){
+		for(var j=0; j<spriteSheetSizeY*cellsizeY; j++){
+			if(sget(i,j) >= p.length){
+				sset(i,j,0); // Just set it to empty
+			}
+		}
+	}
+	spriteSheetDirty = true;
 }
 
 exports.palset = function(n, hexColor){
-	if(hexColor === undefined){
-		hexColor = colors.defaultPalette()[n] || 0;
-	}
 	var newPalette = palette.slice(0);
-	while(newPalette.length < n) newPalette.push(0x000000);
-	newPalette[n] = hexColor;
+
+	if(hexColor === undefined){
+		newPalette[n] = colors.defaultPalette()[n] || 0;
+	} else if(hexColor === -1){
+		// Clamp the palette
+		newPalette = newPalette.slice(0,n);
+	} else {
+		while(newPalette.length < n) newPalette.push(0x000000);
+		newPalette[n] = hexColor;
+	}
+
 	setPalette(newPalette);
 };
 
