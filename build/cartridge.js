@@ -2755,14 +2755,32 @@ function setPalette(p){
 	palette = p.slice(0);
 	paletteHex = palette.map(colors.int2hex);
 	mapDirty = true;
-	spriteSheetDirty = true;
 	font.changePalette(paletteHex);
+
+	// Check spritesheet for invalid colors
+	for(var i=0; i<spriteSheetSizeX*cellsizeX; i++){
+		for(var j=0; j<spriteSheetSizeY*cellsizeY; j++){
+			if(sget(i,j) >= p.length){
+				sset(i,j,0); // Just set it to empty
+			}
+		}
+	}
+	spriteSheetDirty = true;
 }
 
 exports.palset = function(n, hexColor){
 	var newPalette = palette.slice(0);
-	while(newPalette.length < n) newPalette.push(0x000000);
-	newPalette[n] = hexColor;
+
+	if(hexColor === undefined){
+		newPalette[n] = colors.defaultPalette()[n] || 0;
+	} else if(hexColor === -1){
+		// Clamp the palette
+		newPalette = newPalette.slice(0,n);
+	} else {
+		while(newPalette.length < n) newPalette.push(0x000000);
+		newPalette[n] = hexColor;
+	}
+
 	setPalette(newPalette);
 };
 
@@ -3928,6 +3946,7 @@ exports.flush = function(){
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
 
+var defaultSpeed = 16;
 var minFrequency = 0;
 var maxFrequency = 1000;
 var maxEffects = 64;
@@ -4037,19 +4056,21 @@ function play(channel, types, frequencies, volumes, speed, offset){
 }
 
 // Speed is 0 to 255
-exports.asset = function(n, speed){ effects[n].speed = speed; };
+exports.asset = function(n, speed){
+	effects[n].speed = (speed === undefined ? defaultSpeed : speed);
+};
 exports.asget = function(n){ return effects[n].speed; };
 
 // volume is 0 to 255
-exports.avset = function(n, offset, volume){ effects[n].volumes[offset] = volume; };
+exports.avset = function(n, offset, volume){ effects[n].volumes[offset] = (volume !== undefined ? volume : 0); };
 exports.avget = function(n, offset){ return effects[n].volumes[offset]; };
 
 // frequency is 0 to 255
-exports.afset = function(n, offset, frequency){ effects[n].frequencies[offset] = frequency; };
+exports.afset = function(n, offset, frequency){ effects[n].frequencies[offset] = (frequency !== undefined ? frequency : 0); };
 exports.afget = function(n, offset){ return effects[n].frequencies[offset]; };
 
 // wave is 0,1,2,3,4
-exports.awset = function(n, offset, waveform){ effects[n].types[offset] = waveform; };
+exports.awset = function(n, offset, waveform){ effects[n].types[offset] = (waveform !== undefined ? waveform : 0); };
 exports.awget = function(n, offset){ return effects[n].types[offset]; };
 
 exports.sfx = function(n, channelIndex, offset){
@@ -4184,7 +4205,7 @@ for(var i=0; i<maxEffects; i++){
 		types: utils.zeros(maxEffects),
 		frequencies: utils.zeros(maxEffects),
 		volumes: utils.zeros(maxEffects),
-		speed: 16
+		speed: defaultSpeed
 	});
 }
 
