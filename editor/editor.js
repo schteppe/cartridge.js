@@ -1650,8 +1650,10 @@ function reset(){
 	}
 
 	// palette
-	for(var i=0; i<palette.length; i++)
+	for(var i=0; i<16; i++){
 		palset(i);
+	}
+	palset(16,-1);
 
 	// SFX
 	for(var i=0; i<64; i++){
