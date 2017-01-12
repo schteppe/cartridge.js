@@ -1447,6 +1447,7 @@ function code_keydown(code, evt){
 		code_clamp_ccol(code, codeArray);
 		evt.preventDefault();
 	} else {
+		var shouldJump = (evt.altKey && isMac()) || (evt.ctrlKey && !isMac());
 		switch(evt.keyCode){
 		case 37: // left
 			if(code.ccol === 0 && code.crow > 0){
@@ -1454,7 +1455,7 @@ function code_keydown(code, evt){
 				code.ccol = codeArray[code.crow].length;
 			} else {
 				var amount = 1;
-				if(evt.altKey){
+				if(shouldJump){
 					var rowStr = codeArray[code.crow];
 					while(code.ccol - amount > 0 && rowStr[code.ccol-amount-1].match(/[\s]/)) amount++;
 					while(code.ccol - amount > 0 && rowStr[code.ccol-amount-1].match(/[a-z\d]/)) amount++;
@@ -1470,7 +1471,7 @@ function code_keydown(code, evt){
 				code_clamp_crow(code, codeArray);
 			} else {
 				var amount = 1;
-				if(evt.altKey){
+				if(shouldJump){
 					var rowStr = codeArray[code.crow];
 					while(rowStr.length > code.ccol + amount && rowStr[code.ccol+amount].match(/[\s]/)) amount++;
 					while(rowStr.length > code.ccol + amount && rowStr[code.ccol+amount].match(/[a-z\d]/)) amount++;
