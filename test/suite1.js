@@ -192,5 +192,33 @@ this.suite1 = {
             test.equal(mget(0,0),1);
             test.done();
         }
-    }
+    },
+
+    palette: {
+        palset: function(test){
+            palset(0,0);
+            test.equal(palget(0),0);
+            palset(100,0); // set out of range
+            test.equal(palget(100),0);
+            test.equal(palget(101),undefined);
+            test.done();
+        },
+        palget: function(test){
+            palset(0,0);
+            test.equal(palget(0),0);
+
+            palset(1,0xff0000);
+            test.equal(palget(1),0xff0000);
+
+            // truncate
+            sset(64,64,2);
+            palset(2,-1);
+            test.equal(palget(2),undefined);
+            test.equal(palget(1),0xff0000);
+            test.equal(palget(0),0);
+            test.equal(sget(64,64),0);
+
+            test.done();
+        },
+    },
 };
