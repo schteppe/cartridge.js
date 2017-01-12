@@ -333,18 +333,25 @@ var flags = {
 	}
 };
 
+var saveLoadButtons = {
+	x: function(){ return 25; },
+	y: function(){ return 13; },
+	options: ['save', 'load'],
+	padding: 6
+};
+
 var slotButtons = {
 	x: function(){ return 5; },
-	y: function(){ return 21; },
+	y: function(){ return 38; },
 	num: 8,
-	padding: 4
+	padding: 1
 };
 
 var saveButtons = {
 	x: function(){ return 5; },
-	y: function(){ return 42; },
-	num: 8,
-	padding: 4
+	y: function(){ return 57; },
+	num: slotButtons.num,
+	padding: slotButtons.padding
 };
 
 var waveformButtons = {
@@ -459,7 +466,7 @@ var resolutionSelectorX = {
 	x: function(){ return 50; },
 	y: function(){ return 80; },
 	current: width(),
-	padding: 8,
+	padding: 4,
 	min: function(){ return 128; },
 	max: function(){ return 512; },
 	prefix: '',
@@ -742,6 +749,15 @@ var editorClick = window._click = function _click(){
 			slotButtons.current = -1;
 		}
 
+		if(buttons_click(saveLoadButtons,mx,my)){
+			switch(saveLoadButtons.current){
+				case 0: save('game.json'); break;
+				case 1: openfile(); break;
+			}
+			saveLoadButtons.current = -1;
+			dirty = true;
+		}
+
 		if(buttons_click(saveButtons,mx,my)){
 			save('slot' + saveButtons.current);
 			alert('Saved game to slot ' + (saveButtons.current + 1) + '.');
@@ -869,13 +885,13 @@ editorDraw = window._draw = function _draw(){
 		intsel_draw(sfxSelector);
 		break;
 	case 'game':
-		print("Load from localstorage slot:", 5,14);
+		print("Load slot:", 5,29);
 		buttons_draw(slotButtons);
-		print("Save to localstorage slot:", 5,35);
+		print("Save in slot:", 5,50);
 		buttons_draw(saveButtons);
 
-		print('- Press "S" to download JSON.', 5,56);
-		print('- Press "O" to open JSON.', 5,68);
+		print("file:", 5,14);
+		buttons_draw(saveLoadButtons);
 
 		print('Resolution:', 5,80);
 		resolutionSelectorX.current = width();
