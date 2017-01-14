@@ -1388,9 +1388,9 @@ function code_stop(code){
 	window._draw = editorDraw;
 	window._click = editorClick;
 	var oldCode = codeget();
-	code_set("");
+	code_set("", false);
 	run();
-	code_set(oldCode);
+	code_set(oldCode, false);
 	camera(0,0);
 	clip(); // reset clip
 }
@@ -1425,10 +1425,13 @@ function code_clamp_crow(code, codeArray){
 	code.crow = clamp(code.crow, 0, codeArray.length-1);
 }
 
-function code_set(str){
+function code_set(str, updateCursor){
+	updateCursor = updateCursor !== undefined ? updateCursor : true;
 	codeset(str);
-	code_clamp_crow(code);
-	code_clamp_ccol(code);
+	if(updateCursor){
+		code_clamp_crow(code);
+		code_clamp_ccol(code);
+	}
 	syntaxTreeDirty = true;
 }
 
