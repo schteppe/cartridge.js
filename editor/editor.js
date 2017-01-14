@@ -950,14 +950,14 @@ editorDraw = window._draw = function _draw(){
 			"style games!",
 			"Use tabs above to get started:",
 			"",
-			"- CRT: Save/80game.",
-			"- SPR: Sprit10 editor.",
+			"- CRT: Save/load game.",
+			"- SPR: Sprite editor.",
 			"- MAP: Map editor.",
 			"- SFX: Sound effect editor.",
 			"- .JS: JavaScript editor.",
 			"- RUN: Run game (Esc=quit).",
 			"",
-			"Good luck! /Schteppe"
+			"Good luck! /schteppe"
 		], 4,13);
 		break;
 	}
