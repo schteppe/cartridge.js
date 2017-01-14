@@ -199,9 +199,10 @@ exports.music = function(patternIndex, fade, channelmask){
 
 	// schedule all groups
 	var startTime = context.currentTime;
-	for(var patternIndex=0; patternIndex < patterns.length; patternIndex++){
-		var flags = mfget(patternIndex);
+	for(var patternIndex=0; patternIndex < 8; patternIndex++){
+		/*var flags = mfget(patternIndex);
 		if(!(flags & PatternFlags.ACTIVE)) continue;
+		*/
 		for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
 			var groupIndex = mgget(patternIndex, channelIndex);
 			var speed = gsget(groupIndex);

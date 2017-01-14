@@ -214,8 +214,8 @@ var trackSelector0 = {
 	y: function(){ return 16; },
 	current: 0,
 	padding: 1,
-	min: function(){ return 1; },
-	max: function(){ return 64; },
+	min: function(){ return 0; },
+	max: function(){ return 63; },
 	prefix: '',
 	postfix: ''
 };
@@ -225,8 +225,8 @@ var trackSelector1 = {
 	y: trackSelector0.y,
 	current: 0,
 	padding: trackSelector0.padding,
-	min: function(){ return 1; },
-	max: function(){ return 64; },
+	min: trackSelector0.min,
+	max: trackSelector0.max,
 	prefix: '',
 	postfix: ''
 };
@@ -236,8 +236,8 @@ var trackSelector2 = {
 	y: trackSelector0.y,
 	current: 0,
 	padding: trackSelector0.padding,
-	min: function(){ return 1; },
-	max: function(){ return 64; },
+	min: trackSelector0.min,
+	max: trackSelector0.max,
 	prefix: '',
 	postfix: ''
 };
@@ -247,8 +247,8 @@ var trackSelector3 = {
 	y: trackSelector0.y,
 	current: 0,
 	padding: trackSelector0.padding,
-	min: function(){ return 1; },
-	max: function(){ return 64; },
+	min: trackSelector0.min,
+	max: trackSelector0.max,
 	prefix: '',
 	postfix: ''
 };
@@ -263,6 +263,14 @@ function pattern_draw(pattern){
 	for(var channelIndex=0; channelIndex<4; channelIndex++){
 		var trackIndex = mgget(pattern.current, channelIndex);
 		track_drawpart(x + (w+1) * channelIndex, y, -1, trackIndex, 0, 8);
+	}
+}
+
+function pattern_keypress(track, evt){
+	if(evt.ctrlKey || evt.metaKey || evt.altKey) return;
+
+	if(evt.keyCode === 32){ // space
+		music(patternSelector.current);
 	}
 }
 
@@ -432,8 +440,8 @@ var trackSpeedSelector = {
 var patternSelector = {
 	x: function(){ return 30; },
 	y: function(){ return 8; },
-	current: 16,
-	padding: 6,
+	current: 0,
+	padding: 4,
 	min: function(){ return 1; },
 	max: function(){ return 64; },
 	prefix: '',
@@ -809,6 +817,18 @@ var editorClick = window._click = function _click(){
 		} else if(buttons_click(trackVolumeButtons,mx,my)){
 			dirty = true;
 		} else if(track_click(track,mx,my)){
+			dirty = true;
+		}
+	} else if(mode === 'pattern'){
+		if(intsel_click(patternSelector, mx, my)){
+			dirty = true;
+		} else if(intsel_click(trackSelector0, mx, my)){
+			dirty = true;
+		} else if(intsel_click(trackSelector1, mx, my)){
+			dirty = true;
+		} else if(intsel_click(trackSelector2, mx, my)){
+			dirty = true;
+		} else if(intsel_click(trackSelector3, mx, my)){
 			dirty = true;
 		}
 	}
@@ -1767,6 +1787,8 @@ window.addEventListener('keypress', function(evt){
 		code_keypress(code, evt);
 	} else if(mode === 'track'){
 		track_keypress(track, evt);
+	} else if(mode === 'pattern'){
+		pattern_keypress(track, evt);
 	}
 });
 
