@@ -1392,6 +1392,7 @@ function code_stop(code){
 	run();
 	code_set(oldCode);
 	camera(0,0);
+	clip(); // reset clip
 }
 
 function code_click(code,x,y){

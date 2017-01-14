@@ -456,6 +456,11 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 };
 
 exports.clip = function(x,y,w,h){
+	if(x === undefined){
+		x = y = 0;
+		w = screensizeX;
+		h = screensizeY;
+	}
 	x = x | 0;
 	y = y | 0;
 	w = w | 0;
@@ -465,11 +470,6 @@ exports.clip = function(x,y,w,h){
 	clipY0 = y;
 	clipX1 = x+w-1;
 	clipY1 = y+h-1;
-
-	// TODO: remove the canvas based clip when manual clip is done
-	ctx.beginPath();
-	ctx.rect(x,y,w,h);
-	ctx.clip();
 };
 
 exports.canvas = function canvas(n){
