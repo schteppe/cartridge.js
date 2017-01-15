@@ -99,25 +99,7 @@ exports.cartridge = function(options){
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
-	// iOS audio fix
-	var isUnlocked = false;
-	canvases[0].ontouchend = function(){
-		if(isUnlocked) return;
-
-		// create empty buffer and play it
-		var buffer = sfx.getContext().createBuffer(1, 1, 22050);
-		var source = sfx.getContext().createBufferSource();
-		source.buffer = buffer;
-		source.connect(sfx.getContext().destination);
-		source.start();
-
-		// by checking the play state after some time, we know if we're really unlocked
-		setTimeout(function() {
-			if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
-				isUnlocked = true;
-			}
-		}, 0);
-	};
+	utils.iosAudioFix(canvases[0]);
 
 	if(autoFit){
 		fit(pixelPerfectMode);
