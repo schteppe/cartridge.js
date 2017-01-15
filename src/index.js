@@ -789,7 +789,7 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 5,
+		version: 6,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
@@ -800,13 +800,16 @@ function toJSON(){
 		flags: [],
 		palette: palette.slice(0),
 		sfx: [],
-		code: code.codeget() // added in v2
+		code: code.codeget(), // added in v2
+		trackInfo: [], // added in v6
+		tracks: [], // added in v6
+		patterns: [] // added in v6
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
 	}
 
-	// Spite data
+	// Sprite data
 	for(i=0; i<ssget()*cellwidth(); i++){
 		for(j=0; j<ssget()*cellheight(); j++){
 			data.sprites[j*ssget()*cellwidth()+i] = sget(i,j);
@@ -839,6 +842,38 @@ function toJSON(){
 			data.sfx[n].waves.push(awget(n, offset));
 		}
 	}
+
+	// trackInfo
+	var maxGroups = 8;
+	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		var speed = gsget(groupIndex);
+		var groupFlags = 0; // todo
+		data.trackInfo.push(speed, groupFlags);
+	}
+
+	// tracks
+	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		for(var position=0; position<32; position++){
+			var pitch = npget(groupIndex, position);
+			var octave = noget(groupIndex, position);
+			var instrument = niget(groupIndex, position);
+			var volume = nvget(groupIndex, position);
+			data.tracks.push(pitch, octave, instrument, volume);
+		}
+	}
+	while(data.tracks[data.tracks.length-1] === 0){ data.tracks.pop(); }
+
+	// patterns
+	var maxPatterns = 8;
+	for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+		var flags = mfget(patternIndex);
+		data.patterns.push(flags);
+		for(var channelIndex = 0; channelIndex < 4; channelIndex++){
+			var track = mgget(patternIndex, channelIndex);
+			data.patterns.push(track);
+		}
+	}
+	while(data.patterns[data.patterns.length-1] === 0){ data.patterns.pop(); }
 
 	return data;
 }
