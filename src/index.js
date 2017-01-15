@@ -815,8 +815,7 @@ function toJSON(){
 			data.sprites[j*ssget()*cellwidth()+i] = sget(i,j);
 		}
 	}
-	// Don't store trailing zeros
-	while(data.sprites[data.sprites.length-1] === 0){ data.sprites.pop(); }
+	utils.removeTrailingZeros(data.sprites);
 
 	// Map data
 	for(i=0; i<mapSizeX; i++){
@@ -824,8 +823,7 @@ function toJSON(){
 			data.map[j*mapSizeX+i] = mget(i,j);
 		}
 	}
-	// Don't store trailing zeros
-	while(data.map[data.map.length-1] === 0){ data.map.pop(); }
+	utils.removeTrailingZeros(data.map);
 
 	// SFX data
 	// TODO: should be stored in the same way as sprites and map, just arrays of ints
@@ -863,7 +861,7 @@ function toJSON(){
 			data.tracks.push(pitch, octave, instrument, volume, effect);
 		}
 	}
-	while(data.tracks[data.tracks.length-1] === 0){ data.tracks.pop(); }
+	utils.removeTrailingZeros(data.tracks);
 
 	// patterns
 	var maxPatterns = 8;
@@ -875,7 +873,7 @@ function toJSON(){
 			data.patterns.push(track);
 		}
 	}
-	while(data.patterns[data.patterns.length-1] === 0){ data.patterns.pop(); }
+	utils.removeTrailingZeros(data.patterns);
 
 	return data;
 }

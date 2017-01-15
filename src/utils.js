@@ -196,3 +196,9 @@ exports.loadJsonFromUrl = function(url, callback){
 	xhr.open("GET", url, true);
 	xhr.send();
 };
+
+exports.removeTrailingZeros = function(arr){
+	while(arr[arr.length-1] === 0){
+		arr.pop();
+	}
+};
