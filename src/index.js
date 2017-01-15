@@ -909,38 +909,44 @@ function loadJSON(data){
 
 	// trackInfo
 	var maxGroups = 8;
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
-		var speed = data.trackInfo[groupIndex*2];
-		var flags = data.trackInfo[groupIndex*2+1];
-		gsset(groupIndex, speed);
+	if(data.trackInfo){
+		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+			var speed = data.trackInfo[groupIndex*2];
+			var flags = data.trackInfo[groupIndex*2+1];
+			gsset(groupIndex, speed);
+		}
 	}
 
 	// tracks
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
-		for(var position=0; position<32; position++){
-			var p = groupIndex * 32 * 5 + position * 5;
+	if(data.tracks){
+		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+			for(var position=0; position<32; position++){
+				var p = groupIndex * 32 * 5 + position * 5;
 
-			var pitch = data.tracks[p + 0] || 0;
-			var octave = data.tracks[p + 1] || 0;
-			var instrument = data.tracks[p + 2] || 0;
-			var volume = data.tracks[p + 3] || 0;
-			var effect = data.tracks[p + 4] || 0; // todo
+				var pitch = data.tracks[p + 0] || 0;
+				var octave = data.tracks[p + 1] || 0;
+				var instrument = data.tracks[p + 2] || 0;
+				var volume = data.tracks[p + 3] || 0;
+				var effect = data.tracks[p + 4] || 0; // todo
 
-			npset(groupIndex, position, pitch);
-			noset(groupIndex, position, octave);
-			niset(groupIndex, position, instrument);
-			nvset(groupIndex, position, volume);
+				npset(groupIndex, position, pitch);
+				noset(groupIndex, position, octave);
+				niset(groupIndex, position, instrument);
+				nvset(groupIndex, position, volume);
+			}
 		}
 	}
 
 	// patterns
 	var maxPatterns = 8;
-	for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
-		var flags = data.patterns[patternIndex * 5] || 0;
-		mfset(patternIndex, flags);
-		for(var channelIndex = 0; channelIndex < 4; channelIndex++){
-			var track = data.patterns[patternIndex * 5 + channelIndex + 1] || 0;
-			mgset(patternIndex, channelIndex, track);
+	if(data.patterns){
+		for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+			var flags = data.patterns[patternIndex * 5] || 0;
+			mfset(patternIndex, flags);
+			for(var channelIndex = 0; channelIndex < 4; channelIndex++){
+				var track = data.patterns[patternIndex * 5 + channelIndex + 1] || 0;
+				mgset(patternIndex, channelIndex, track);
+			}
 		}
 	}
 
