@@ -228,8 +228,10 @@ exports.music = function(patternIndex, fade, channelmask){
 
 // TODO: fade
 function stop(fade){
+	fade = fade !== undefined ? fade : 0;
+
 	playState.pattern = -1;
-	playState.bufferedNext = false;
+	playState.nextPattern = -1;
 
 	var currentTime = context.currentTime;
 	for(var channelIndex=0; channelIndex<channels.length; channelIndex++){
@@ -238,10 +240,10 @@ function stop(fade){
 			var instrument = channel.instruments[allTypes[i]];
 			var gain = channel.gains[allTypes[i]];
 			if(instrument.frequency){
-				instrument.frequency.cancelScheduledValues(currentTime);
+				instrument.frequency.cancelScheduledValues(currentTime + fade);
 			}
-			gain.gain.cancelScheduledValues(currentTime);
-			gain.gain.setValueAtTime(0, currentTime);
+			gain.gain.cancelScheduledValues(currentTime + fade);
+			gain.gain.linearRampToValueAtTime(0, currentTime + fade);
 		}
 	}
 }
