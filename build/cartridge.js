@@ -2555,25 +2555,7 @@ exports.cartridge = function(options){
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
-	// iOS audio fix
-	var isUnlocked = false;
-	canvases[0].ontouchend = function(){
-		if(isUnlocked) return;
-
-		// create empty buffer and play it
-		var buffer = sfx.getContext().createBuffer(1, 1, 22050);
-		var source = sfx.getContext().createBufferSource();
-		source.buffer = buffer;
-		source.connect(sfx.getContext().destination);
-		source.start();
-
-		// by checking the play state after some time, we know if we're really unlocked
-		setTimeout(function() {
-			if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
-				isUnlocked = true;
-			}
-		}, 0);
-	};
+	utils.iosAudioFix(canvases[0]);
 
 	if(autoFit){
 		fit(pixelPerfectMode);
@@ -2632,6 +2614,7 @@ exports.cartridge = function(options){
 
 		currentTime = newTime;
 		input.update();
+		music.update();
 		requestAnimationFrame(render);
 	}
 	requestAnimationFrame(render);
@@ -3382,38 +3365,44 @@ function loadJSON(data){
 
 	// trackInfo
 	var maxGroups = 8;
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
-		var speed = data.trackInfo[groupIndex*2];
-		var flags = data.trackInfo[groupIndex*2+1];
-		gsset(groupIndex, speed);
+	if(data.trackInfo){
+		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+			var speed = data.trackInfo[groupIndex*2];
+			var flags = data.trackInfo[groupIndex*2+1];
+			gsset(groupIndex, speed);
+		}
 	}
 
 	// tracks
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
-		for(var position=0; position<32; position++){
-			var p = groupIndex * 32 * 5 + position * 5;
+	if(data.tracks){
+		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+			for(var position=0; position<32; position++){
+				var p = groupIndex * 32 * 5 + position * 5;
 
-			var pitch = data.tracks[p + 0] || 0;
-			var octave = data.tracks[p + 1] || 0;
-			var instrument = data.tracks[p + 2] || 0;
-			var volume = data.tracks[p + 3] || 0;
-			var effect = data.tracks[p + 4] || 0; // todo
+				var pitch = data.tracks[p + 0] || 0;
+				var octave = data.tracks[p + 1] || 0;
+				var instrument = data.tracks[p + 2] || 0;
+				var volume = data.tracks[p + 3] || 0;
+				var effect = data.tracks[p + 4] || 0; // todo
 
-			npset(groupIndex, position, pitch);
-			noset(groupIndex, position, octave);
-			niset(groupIndex, position, instrument);
-			nvset(groupIndex, position, volume);
+				npset(groupIndex, position, pitch);
+				noset(groupIndex, position, octave);
+				niset(groupIndex, position, instrument);
+				nvset(groupIndex, position, volume);
+			}
 		}
 	}
 
 	// patterns
 	var maxPatterns = 8;
-	for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
-		var flags = data.patterns[patternIndex * 5] || 0;
-		mfset(patternIndex, flags);
-		for(var channelIndex = 0; channelIndex < 4; channelIndex++){
-			var track = data.patterns[patternIndex * 5 + channelIndex + 1] || 0;
-			mgset(patternIndex, channelIndex, track);
+	if(data.patterns){
+		for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+			var flags = data.patterns[patternIndex * 5] || 0;
+			mfset(patternIndex, flags);
+			for(var channelIndex = 0; channelIndex < 4; channelIndex++){
+				var track = data.patterns[patternIndex * 5 + channelIndex + 1] || 0;
+				mgset(patternIndex, channelIndex, track);
+			}
 		}
 	}
 
@@ -3715,10 +3704,9 @@ var frequencies = [
 	261.63, 277.18, 277.18, 293.66, 311.13, 311.13, 329.63, 349.23, 369.99, 369.99, 392.00, 415.30, 415.30, 440.00, 466.16, 466.16, 493.88, 523.25, 554.37, 554.37, 587.33, 622.25, 622.25, 659.26, 698.46, 739.99, 739.99, 783.99, 830.61, 830.61, 880.00, 932.33, 932.33, 987.77, 1046.50, 1108.73, 1108.73, 1174.66, 1244.51, 1244.51, 1318.51, 1396.91, 1479.98, 1479.98, 1567.98, 1661.22, 1661.22, 1760.00, 1864.66, 1864.66, 1975.53, 2093.00, 2217.46, 2217.46, 2349.32, 2489.02, 2489.02, 2637.02, 2793.83, 2959.96, 2959.96, 3135.96, 3322.44, 3322.44, 3520.00, 3729.31, 3729.31, 3951.07, 4186.01];
 var noteNames = "C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B".split(' ');
 var PatternFlags = {
-	ACTIVE: 1,
-	THROW: 2,
-	CATCH: 4,
-	STOP: 8
+	CONTINUE: 1,
+	JUMP: 2,
+	STOP: 4
 };
 
 // pitch: 0-16. Octave: 0-8
@@ -3727,7 +3715,15 @@ function getFrequency(pitch, octave){
 }
 
 var groups = [];
-var patterns = utils.zeros(8 * (4 + 1)); // 4 channels (pointing to groups), 1 bitfield/flags
+var maxPatterns = 8;
+var patterns = utils.zeros(maxPatterns * (4 + 1)); // 4 channels (pointing to groups), 1 bitfield/flags
+
+var playState = {
+	pattern: -1,
+	nextPattern: -1,
+	bufferedUntil: 0,
+	patternLength: 0
+};
 
 while(groups.length < 8){
 	var group = {
@@ -3771,6 +3767,13 @@ exports.noget = function(group, position){
 // volume for a note
 exports.nvset = function(group, position, volume){
 	groups[group].notes[5 * position + 3] = volume;
+
+	// If volume is zero, set the other data to zero
+	if(volume === 0){
+		exports.npset(group, position, 0);
+		exports.noset(group, position, 0);
+		exports.niset(group, position, 0);
+	}
 };
 
 exports.nvget = function(group, position){
@@ -3903,33 +3906,102 @@ exports.music = function(patternIndex, fade, channelmask){
 		return;
 	}
 
-	// schedule all groups
 	var startTime = context.currentTime;
-	for(var patternIndex=0; patternIndex < 8; patternIndex++){
-		/*var flags = mfget(patternIndex);
-		if(!(flags & PatternFlags.ACTIVE)) continue;
-		*/
-		for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
-			var groupIndex = mgget(patternIndex, channelIndex);
-			var speed = gsget(groupIndex);
-			scheduleGroup(groupIndex, channelIndex, startTime);
-		}
+
+	playState.pattern = patternIndex;
+	playState.nextPattern = getNextPattern(patternIndex);
+	playState.patternLength = getPatternLength(patternIndex);
+	playState.startTime = startTime;
+	playState.bufferedUntil = startTime + playState.patternLength;
+
+	// schedule groups in all channels
+	for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
+		var groupIndex = mgget(patternIndex, channelIndex);
+		scheduleGroup(groupIndex, channelIndex, startTime);
 	}
 };
 
+// TODO: fade
 function stop(fade){
+	fade = fade !== undefined ? fade : 0;
+
+	playState.pattern = -1;
+	playState.nextPattern = -1;
+
 	var currentTime = context.currentTime;
 	for(var channelIndex=0; channelIndex<channels.length; channelIndex++){
 		var channel = channels[channelIndex];
 		for(var i=0; i<allTypes.length; i++){
 			var instrument = channel.instruments[allTypes[i]];
+			var gain = channel.gains[allTypes[i]];
 			if(instrument.frequency){
-				instrument.frequency.cancelAllScheduledValues();
+				instrument.frequency.cancelScheduledValues(currentTime + fade);
 			}
-			instrument.gain.cancelAllScheduledValues();
-			instrument.gain.setValueAtTime(0, currentTime);
+			gain.gain.cancelScheduledValues(currentTime + fade);
+			gain.gain.linearRampToValueAtTime(0, currentTime + fade);
 		}
 	}
+}
+
+exports.update = function(){
+	if(playState.pattern === -1){
+		// Not playing
+		return;
+	}
+
+	if(playState.nextPattern === -1){
+		// No next pattern to buffer
+		return;
+	}
+
+	var currentTime = context.currentTime;
+
+	if(currentTime < playState.bufferedUntil - playState.patternLength * 0.5){
+		// Already buffered enough
+		return;
+	}
+
+	// schedule groups in all channels for the next 32 notes
+	for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
+		var groupIndex = mgget(playState.nextPattern, channelIndex);
+		scheduleGroup(groupIndex, channelIndex, playState.startTime + playState.patternLength);
+	}
+
+	// Update playState, set next pattern as current
+	var prevPatternLength = playState.patternLength;
+	playState.pattern = playState.nextPattern;
+	playState.patternLength = getPatternLength(playState.pattern);
+	playState.startTime += prevPatternLength;
+	playState.bufferedUntil = playState.startTime + playState.patternLength;
+	playState.nextPattern = getNextPattern(playState.pattern);
+};
+
+function getNextPattern(currentPattern){
+	var nextPattern = (currentPattern + 1) % maxPatterns;
+	var flags = mfget(currentPattern);
+	if(flags & PatternFlags.JUMP){
+		var i = currentPattern-1;
+		while(!(mfget(i) & PatternFlags.CONTINUE)){
+			i--;
+		}
+		nextPattern = Math.max(0,i);
+	} else if(flags & PatternFlags.STOP){
+		nextPattern = -1;
+	} else if(playState.nextPattern !== -1 && getPatternLength(playState.nextPattern) === 0){
+		nextPattern = -1;
+	}
+	return nextPattern;
+}
+
+function getPatternLength(patternIndex){
+	var totalLength = 0;
+	for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
+		var groupIndex = mgget(patternIndex, channelIndex);
+		if(groupIndex === 0) continue;
+		var speed = gsget(groupIndex);
+		totalLength = Math.max(totalLength, 32/speed);
+	}
+	return totalLength;
 }
 },{"./sfx":11,"./utils":12}],10:[function(require,module,exports){
 var ctx;
@@ -4498,5 +4570,27 @@ exports.removeTrailingZeros = function(arr){
 	while(arr[arr.length-1] === 0){
 		arr.pop();
 	}
+};
+
+// iOS audio fix, to allow playing sounds from the first touch
+exports.iosAudioFix = function(element){
+	var isUnlocked = false;
+	element.ontouchend = function(){
+		if(isUnlocked) return;
+
+		// create empty buffer and play it
+		var buffer = sfx.getContext().createBuffer(1, 1, 22050);
+		var source = sfx.getContext().createBufferSource();
+		source.buffer = buffer;
+		source.connect(sfx.getContext().destination);
+		source.start();
+
+		// by checking the play state after some time, we know if we're really unlocked
+		setTimeout(function() {
+			if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
+				isUnlocked = true;
+			}
+		}, 0);
+	};
 };
 },{}]},{},[5]);
