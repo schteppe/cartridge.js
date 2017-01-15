@@ -20,9 +20,11 @@ Create a full game containing your own sprites, maps, sounds, gamepad input, mus
 
 `alt + left` / `alt + right` switch between editors
 
-### Sprite editor
+### Sprite editor (SPR)
 
 `r` rotate
+
+`del` clear sprite
 
 `f` / `v` flip left / right
 
@@ -32,17 +34,21 @@ Create a full game containing your own sprites, maps, sounds, gamepad input, mus
 
 `ctrl + v` paste sprite or image
 
-### Map editor
+### Map editor (MAP)
 
 `mmb` / `space` pan
 
 `lmb` draw
 
-### Sound editor
+### Sound editor (SFX)
 
 `space` play current sound
 
-### Code editor
+`lmb` add sound
+
+`rmb + drag` remove sound(s)
+
+### Code editor (.JS)
 
 `ctrl + v` paste
 
@@ -53,6 +59,18 @@ Create a full game containing your own sprites, maps, sounds, gamepad input, mus
 `ctrl + k` remove characters on the right on the line
 
 `pagedown` / `pageup` move up/down a screen
+
+### Track editor (TRK)
+
+`space` play current track
+
+`ZSXDCVGBHNJM` C C# D D# E F F# G G# A A# B
+
+`Q2W3ER5T6Y7U` C C# D D# E F F# G G# A A# B, in the next octave
+
+### Music editor (MUS)
+
+`space` play current pattern
 
 ### Run mode
 
