@@ -2912,6 +2912,11 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 };
 
 exports.clip = function(x,y,w,h){
+	if(x === undefined){
+		x = y = 0;
+		w = screensizeX;
+		h = screensizeY;
+	}
 	x = x | 0;
 	y = y | 0;
 	w = w | 0;
@@ -2921,11 +2926,6 @@ exports.clip = function(x,y,w,h){
 	clipY0 = y;
 	clipX1 = x+w-1;
 	clipY1 = y+h-1;
-
-	// TODO: remove the canvas based clip when manual clip is done
-	ctx.beginPath();
-	ctx.rect(x,y,w,h);
-	ctx.clip();
 };
 
 exports.canvas = function canvas(n){
@@ -3245,7 +3245,7 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 5,
+		version: 6,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
@@ -3256,20 +3256,22 @@ function toJSON(){
 		flags: [],
 		palette: palette.slice(0),
 		sfx: [],
-		code: code.codeget() // added in v2
+		code: code.codeget(), // added in v2
+		trackInfo: [], // added in v6
+		tracks: [], // added in v6
+		patterns: [] // added in v6
 	};
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
 	}
 
-	// Spite data
+	// Sprite data
 	for(i=0; i<ssget()*cellwidth(); i++){
 		for(j=0; j<ssget()*cellheight(); j++){
 			data.sprites[j*ssget()*cellwidth()+i] = sget(i,j);
 		}
 	}
-	// Don't store trailing zeros
-	while(data.sprites[data.sprites.length-1] === 0){ data.sprites.pop(); }
+	utils.removeTrailingZeros(data.sprites);
 
 	// Map data
 	for(i=0; i<mapSizeX; i++){
@@ -3277,8 +3279,7 @@ function toJSON(){
 			data.map[j*mapSizeX+i] = mget(i,j);
 		}
 	}
-	// Don't store trailing zeros
-	while(data.map[data.map.length-1] === 0){ data.map.pop(); }
+	utils.removeTrailingZeros(data.map);
 
 	// SFX data
 	// TODO: should be stored in the same way as sprites and map, just arrays of ints
@@ -3295,6 +3296,40 @@ function toJSON(){
 			data.sfx[n].waves.push(awget(n, offset));
 		}
 	}
+
+	// trackInfo
+	var maxGroups = 8;
+	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		var speed = gsget(groupIndex);
+		var groupFlags = 0; // todo
+		data.trackInfo.push(speed, groupFlags);
+	}
+
+	// tracks
+	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		for(var position=0; position<32; position++){
+			var pitch = npget(groupIndex, position);
+			var octave = noget(groupIndex, position);
+			var instrument = niget(groupIndex, position);
+			var volume = nvget(groupIndex, position);
+			// TODO: effect
+			var effect = 0;
+			data.tracks.push(pitch, octave, instrument, volume, effect);
+		}
+	}
+	utils.removeTrailingZeros(data.tracks);
+
+	// patterns
+	var maxPatterns = 8;
+	for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+		var flags = mfget(patternIndex);
+		data.patterns.push(flags);
+		for(var channelIndex = 0; channelIndex < 4; channelIndex++){
+			var track = mgget(patternIndex, channelIndex);
+			data.patterns.push(track);
+		}
+	}
+	utils.removeTrailingZeros(data.patterns);
 
 	return data;
 }
@@ -3342,6 +3377,43 @@ function loadJSON(data){
 			avset(n, offset, data.sfx[n].volumes[offset]);
 			afset(n, offset, data.sfx[n].pitches[offset]);
 			awset(n, offset, data.sfx[n].waves[offset]);
+		}
+	}
+
+	// trackInfo
+	var maxGroups = 8;
+	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		var speed = data.trackInfo[groupIndex*2];
+		var flags = data.trackInfo[groupIndex*2+1];
+		gsset(groupIndex, speed);
+	}
+
+	// tracks
+	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		for(var position=0; position<32; position++){
+			var p = groupIndex * 32 * 5 + position * 5;
+
+			var pitch = data.tracks[p + 0] || 0;
+			var octave = data.tracks[p + 1] || 0;
+			var instrument = data.tracks[p + 2] || 0;
+			var volume = data.tracks[p + 3] || 0;
+			var effect = data.tracks[p + 4] || 0; // todo
+
+			npset(groupIndex, position, pitch);
+			noset(groupIndex, position, octave);
+			niset(groupIndex, position, instrument);
+			nvset(groupIndex, position, volume);
+		}
+	}
+
+	// patterns
+	var maxPatterns = 8;
+	for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+		var flags = data.patterns[patternIndex * 5] || 0;
+		mfset(patternIndex, flags);
+		for(var channelIndex = 0; channelIndex < 4; channelIndex++){
+			var track = data.patterns[patternIndex * 5 + channelIndex + 1] || 0;
+			mgset(patternIndex, channelIndex, track);
 		}
 	}
 
@@ -3833,9 +3905,10 @@ exports.music = function(patternIndex, fade, channelmask){
 
 	// schedule all groups
 	var startTime = context.currentTime;
-	for(var patternIndex=0; patternIndex < patterns.length; patternIndex++){
-		var flags = mfget(patternIndex);
+	for(var patternIndex=0; patternIndex < 8; patternIndex++){
+		/*var flags = mfget(patternIndex);
 		if(!(flags & PatternFlags.ACTIVE)) continue;
+		*/
 		for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
 			var groupIndex = mgget(patternIndex, channelIndex);
 			var speed = gsget(groupIndex);
@@ -4419,5 +4492,11 @@ exports.loadJsonFromUrl = function(url, callback){
 	};
 	xhr.open("GET", url, true);
 	xhr.send();
+};
+
+exports.removeTrailingZeros = function(arr){
+	while(arr[arr.length-1] === 0){
+		arr.pop();
+	}
 };
 },{}]},{},[5]);
