@@ -210,8 +210,7 @@ var pattern = {
 	x: function(){ return 1; },
 	y: function(){ return 16+8; },
 	width: function(){ return width() - 3; },
-	height: function(){ return height() - 9; },
-	current: 0
+	height: function(){ return height() - 9; }
 };
 
 var trackSelector0 = {
@@ -262,12 +261,14 @@ function pattern_draw(pattern){
 	var x = pattern.x();
 	var y = pattern.y();
 	var fontWidth = 4;
+	var fontHeight = 8;
 	var w = 6*fontWidth + 1;
+	var numRows = Math.floor((pattern.height()-y) / fontHeight);
 
 	// Render the 4 channels
 	for(var channelIndex=0; channelIndex<4; channelIndex++){
-		var trackIndex = mgget(pattern.current, channelIndex);
-		track_drawpart(x + (w+1) * channelIndex, y, -1, trackIndex, 0, 8);
+		var trackIndex = mgget(patternSelector.current, channelIndex);
+		track_drawpart(x + (w+1) * channelIndex, y, -1, trackIndex, 0, numRows);
 	}
 }
 
@@ -447,8 +448,8 @@ var patternSelector = {
 	y: function(){ return 8; },
 	current: 0,
 	padding: 4,
-	min: function(){ return 1; },
-	max: function(){ return 64; },
+	min: function(){ return 0; },
+	max: function(){ return	7; },
 	prefix: '',
 	postfix: ''
 };
@@ -467,9 +468,9 @@ var sfxSelector = {
 var trackGroupSelector = {
 	x: function(){ return 1; },
 	y: function(){ return 8; },
-	current: 0,
+	current: 1,
 	padding: 6,
-	min: function(){ return 0; },
+	min: function(){ return 1; },
 	max: function(){ return 7; },
 	prefix: '',
 	postfix: ''
@@ -828,12 +829,16 @@ var editorClick = window._click = function _click(){
 		if(intsel_click(patternSelector, mx, my)){
 			dirty = true;
 		} else if(intsel_click(trackSelector0, mx, my)){
+			mgset(patternSelector.current, 0, trackSelector0.current);
 			dirty = true;
 		} else if(intsel_click(trackSelector1, mx, my)){
+			mgset(patternSelector.current, 1, trackSelector1.current);
 			dirty = true;
 		} else if(intsel_click(trackSelector2, mx, my)){
+			mgset(patternSelector.current, 2, trackSelector2.current);
 			dirty = true;
 		} else if(intsel_click(trackSelector3, mx, my)){
+			mgset(patternSelector.current, 3, trackSelector3.current);
 			dirty = true;
 		}
 	}
@@ -961,6 +966,10 @@ editorDraw = window._draw = function _draw(){
 		print("pattern",1,9);
 		pattern_draw(pattern);
 		intsel_draw(patternSelector);
+		trackSelector0.current = mgget(patternSelector.current, 0);
+		trackSelector1.current = mgget(patternSelector.current, 1);
+		trackSelector2.current = mgget(patternSelector.current, 2);
+		trackSelector3.current = mgget(patternSelector.current, 3);
 		intsel_draw(trackSelector0);
 		intsel_draw(trackSelector1);
 		intsel_draw(trackSelector2);
