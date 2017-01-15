@@ -62,12 +62,17 @@ var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help',
 var mode = modes[0];
 var loading = false;
 
-var selectedSprite = 1; // Because zero is "empty sprite"
 var dirty = true;
 var lastmx = 0;
 var lastmy = 0;
 var previousScroll = 0;
 var keysdown = {};
+
+var sprites = {
+	current: 1, // Because zero is "empty sprite"
+	panx: 0,
+	pany: 0
+};
 
 var viewport = {
 	x: 1,
@@ -275,8 +280,8 @@ function pattern_keypress(track, evt){
 }
 
 function viewport_draw(viewport){
-	var sx = ssx(selectedSprite);
-	var sy = ssy(selectedSprite);
+	var sx = ssx(sprites.current);
+	var sy = ssy(sprites.current);
 	var x = sx * cellwidth();
 	var y = sy * cellheight();
 	for(var i=0; i<cellwidth(); i++){
@@ -345,9 +350,9 @@ var flags = {
 	y: function(){ return palette.y() + palette.sy() * palette.n() + 1; },
 	current: function(newFlags){
 		if(newFlags === undefined){
-			return fget(selectedSprite);
+			return fget(sprites.current);
 		} else {
-			fset(selectedSprite, newFlags);
+			fset(sprites.current, newFlags);
 		}
 	}
 };
@@ -605,15 +610,15 @@ function mousemovehandler(forceMouseDown){
 				if(toolButtons.current === 0){
 					// Draw!
 					sset(
-						ssx(selectedSprite) * cellwidth() + x,
-						ssy(selectedSprite) * cellheight() + y,
+						ssx(sprites.current) * cellwidth() + x,
+						ssy(sprites.current) * cellheight() + y,
 						palette.current
 					);
 					dirty = true;
 				} else if(toolButtons.current === 1){
 					// Fill!
-					var x0 = ssx(selectedSprite) * cellwidth();
-					var y0 = ssy(selectedSprite) * cellheight();
+					var x0 = ssx(sprites.current) * cellwidth();
+					var y0 = ssy(sprites.current) * cellheight();
 					var fillx = x0 + x;
 					var filly = y0 + y;
 					floodfill(
@@ -646,7 +651,7 @@ function mousemovehandler(forceMouseDown){
 			mset(
 				flr((mousex() - mapPanX) / cellwidth()),
 				flr((mousey() - mapPanY) / cellheight()),
-				selectedSprite
+				sprites.current
 			);
 			dirty = true;
 		}
@@ -724,7 +729,7 @@ var editorClick = window._click = function _click(){
 				spriteY = flr((my-spritesHeight) / ch) + flr(spriteSheetPageSelector.current / 2) * 4;
 			}
 			if(spriteX < ssget() && spriteY < ssget()){
-				selectedSprite = spriteX + spriteY * ssget();
+				sprites.current = spriteX + spriteY * ssget();
 				dirty = true;
 			}
 		} else if(intsel_click(spriteSheetPageSelector, mx, my)){
@@ -1082,9 +1087,9 @@ function sprites_draw(){
 	spr(n, offsetX, offsetY, 16, 4);
 
 	// Rectangle around the current editing sprite
-	if(ssy(selectedSprite) >= viewY && ssy(selectedSprite) < viewY+ssget()){
-		var x = offsetX + (ssx(selectedSprite) - viewX) * cw;
-		var y = offsetY + (ssy(selectedSprite) - viewY) * ch;
+	if(ssy(sprites.current) >= viewY && ssy(sprites.current) < viewY+ssget()){
+		var x = offsetX + (ssx(sprites.current) - viewX) * cw;
+		var y = offsetY + (ssy(sprites.current) - viewY) * ch;
 		rect(
 			x-1, y-1,
 			x+cw, y+ch,
@@ -1751,17 +1756,17 @@ window.addEventListener('keydown', function(evt){
 		code_keydown(code, evt);
 	} else if(!evt.altKey && !evt.metaKey && !evt.ctrlKey){
 		switch(evt.keyCode){
-			case 86: if(mode === 'sprite') flipSprite(selectedSprite, false); break; // V
-			case 70: if(mode === 'sprite') flipSprite(selectedSprite, true); break; // F
-			case 82: if(mode === 'sprite') rotateSprite(selectedSprite); break; // R
-			case 46: if(mode === 'sprite') clearSprite(selectedSprite); break; // delete
-			case 81: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite-1,ssget()*ssget()); break; // Q
-			case 87: if(mode === 'sprite' || mode === 'map') selectedSprite=mod(selectedSprite+1,ssget()*ssget()); break; // W
+			case 86: if(mode === 'sprite') flipSprite(sprites.current, false); break; // V
+			case 70: if(mode === 'sprite') flipSprite(sprites.current, true); break; // F
+			case 82: if(mode === 'sprite') rotateSprite(sprites.current); break; // R
+			case 46: if(mode === 'sprite') clearSprite(sprites.current); break; // delete
+			case 81: if(mode === 'sprite' || mode === 'map') sprites.current=mod(sprites.current-1,ssget()*ssget()); break; // Q
+			case 87: if(mode === 'sprite' || mode === 'map') sprites.current=mod(sprites.current+1,ssget()*ssget()); break; // W
 			case 83: if(mode === 'game') save('game.json'); break; // S
 			case 79: if(mode === 'game') openfile(); break; // O
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 		}
-		selectedSprite = clamp(selectedSprite,0,ssget()*ssget());
+		sprites.current = clamp(sprites.current,1,ssget()*ssget());
 	}
 	dirty = true;
 });
@@ -1888,8 +1893,8 @@ function handlePasteImage(file){
 				}
 
 				// write to spritesheet at current position
-				var x = (ssx(selectedSprite) * cellwidth() + i);
-				var y = (ssy(selectedSprite) * cellheight() + j);
+				var x = (ssx(sprites.current) * cellwidth() + i);
+				var y = (ssy(sprites.current) * cellheight() + j);
 				sset(x, y, bestColor);
 				dirty = true;
 			}
@@ -1905,7 +1910,7 @@ function handlePasteString(str){
 	case 'sprite':
 		var m = str.match(/sprite:([\d]+)/);
 		if(m){
-			copySprite(parseInt(m[1]), selectedSprite);
+			copySprite(parseInt(m[1]), sprites.current);
 			dirty = true;
 		}
 		break;
@@ -1923,7 +1928,7 @@ document.addEventListener('copy', function(e){
 	case 'run':
 		return;
 	case 'sprite':
-		e.clipboardData.setData('text/plain', 'sprite:'+selectedSprite);
+		e.clipboardData.setData('text/plain', 'sprite:'+sprites.current);
 		e.preventDefault();
 		break;
 	case 'code':
