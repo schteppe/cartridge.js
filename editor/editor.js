@@ -358,6 +358,14 @@ var flags = {
 	}
 };
 
+var patternEndButtons = {
+	x: function(){ return 56; },
+	y: function(){ return 8; },
+	options: ['none', 'cont', 'back', 'stop'],
+	current: 0,
+	padding: 6
+};
+
 var saveLoadButtons = {
 	x: function(){ return 25; },
 	y: function(){ return 13; },
@@ -447,7 +455,7 @@ var patternSelector = {
 	x: function(){ return 30; },
 	y: function(){ return 8; },
 	current: 0,
-	padding: 4,
+	padding: 0,
 	min: function(){ return 0; },
 	max: function(){ return	7; },
 	prefix: '',
@@ -826,7 +834,10 @@ var editorClick = window._click = function _click(){
 			dirty = true;
 		}
 	} else if(mode === 'pattern'){
-		if(intsel_click(patternSelector, mx, my)){
+		if(buttons_click(patternEndButtons, mx, my)){
+			mfset(patternSelector.current, patternEndButtons.current);
+			dirty = true;
+		} else if(intsel_click(patternSelector, mx, my)){
 			dirty = true;
 		} else if(intsel_click(trackSelector0, mx, my)){
 			mgset(patternSelector.current, 0, trackSelector0.current);
@@ -967,6 +978,8 @@ editorDraw = window._draw = function _draw(){
 		print("pattern",1,9);
 		pattern_draw(pattern);
 		intsel_draw(patternSelector);
+		patternEndButtons.current = mfget(patternSelector.current);
+		buttons_draw(patternEndButtons);
 		trackSelector0.current = mgget(patternSelector.current, 0);
 		trackSelector1.current = mgget(patternSelector.current, 1);
 		trackSelector2.current = mgget(patternSelector.current, 2);
