@@ -10,7 +10,7 @@ var effects = [];
 
 var context = new createAudioContext();
 var masterGain = context.createGain();
-masterGain.gain.value = 1;
+masterGain.gain.value = 0.5;
 masterGain.connect(context.destination);
 
 exports.getContext = function(){
