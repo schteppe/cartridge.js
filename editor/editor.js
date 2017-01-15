@@ -954,6 +954,7 @@ editorDraw = window._draw = function _draw(){
 	case 'track':
 		track_draw(track);
 		intsel_draw(trackGroupSelector);
+		trackSpeedSelector.current = gsget(trackGroupSelector.current);
 		intsel_draw(trackSpeedSelector);
 		buttons_draw(waveformButtons);
 		print("octave", width() - 60, 17);
