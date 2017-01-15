@@ -65,6 +65,13 @@ exports.noget = function(group, position){
 // volume for a note
 exports.nvset = function(group, position, volume){
 	groups[group].notes[5 * position + 3] = volume;
+
+	// If volume is zero, set the other data to zero
+	if(volume === 0){
+		exports.npset(group, position, 0);
+		exports.noset(group, position, 0);
+		exports.niset(group, position, 0);
+	}
 };
 
 exports.nvget = function(group, position){
