@@ -158,6 +158,7 @@ exports.cartridge = function(options){
 
 		currentTime = newTime;
 		input.update();
+		music.update();
 		requestAnimationFrame(render);
 	}
 	requestAnimationFrame(render);

@@ -835,7 +835,7 @@ var editorClick = window._click = function _click(){
 		}
 	} else if(mode === 'pattern'){
 		if(buttons_click(patternEndButtons, mx, my)){
-			mfset(patternSelector.current, patternEndButtons.current);
+			mfset(patternSelector.current, {0: 0, 1:1, 2:2, 3:4}[patternEndButtons.current]);
 			dirty = true;
 		} else if(intsel_click(patternSelector, mx, my)){
 			dirty = true;
@@ -978,8 +978,14 @@ editorDraw = window._draw = function _draw(){
 		print("pattern",1,9);
 		pattern_draw(pattern);
 		intsel_draw(patternSelector);
-		patternEndButtons.current = mfget(patternSelector.current);
+
+		var patternFlags = mfget(patternSelector.current);
+		patternEndButtons.current = 0;
+		if(patternFlags & 1) patternEndButtons.current = 1;
+		if(patternFlags & 2) patternEndButtons.current = 2;
+		if(patternFlags & 4) patternEndButtons.current = 3;
 		buttons_draw(patternEndButtons);
+
 		trackSelector0.current = mgget(patternSelector.current, 0);
 		trackSelector1.current = mgget(patternSelector.current, 1);
 		trackSelector2.current = mgget(patternSelector.current, 2);
@@ -1441,6 +1447,7 @@ function code_stop(code){
 	code_set(oldCode, false);
 	camera(0,0);
 	clip(); // reset clip
+	music(-1); // stop music
 }
 
 function code_click(code,x,y){
