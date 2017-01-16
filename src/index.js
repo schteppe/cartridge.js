@@ -99,7 +99,11 @@ exports.cartridge = function(options){
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
-	utils.iosAudioFix(canvases[0]);
+	utils.iosAudioFix(canvases[0], function(){
+		// restart sound nodes here
+		sfx.iosFix();
+		music.iosFix();
+	});
 
 	if(autoFit){
 		fit(pixelPerfectMode);

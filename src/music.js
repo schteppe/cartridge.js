@@ -162,6 +162,18 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	whiteNoise.start(context.currentTime);
 }
 
+exports.iosFix = function(){
+	channels.forEach(function(channel){
+		for(var instrumentName in channel.instruments){
+			try {
+				channel.instruments[instrumentName].start(context.currentTime);
+			} catch(err){
+				console.error(err);
+			}
+		}
+	});
+};
+
 // preview play a group
 exports.group = function(groupIndex, channelIndex){
 	scheduleGroup(groupIndex, channelIndex||0, context.currentTime);

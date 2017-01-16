@@ -255,6 +255,18 @@ for(var j=0; j<4; j++){
 	whiteNoise.start(context.currentTime);
 }
 
+exports.iosFix = function(){
+	channels.forEach(function(channel){
+		try {
+			for(var instrumentName in channel.oscillators){
+				channel.oscillators[instrumentName].start(context.currentTime);
+			}
+		} catch(err){
+			console.error(err);
+		}
+	});
+};
+
 for(var i=0; i<maxEffects; i++){
 	effects.push({
 		types: utils.zeros(maxEffects),
