@@ -27,12 +27,13 @@
 				-ms-user-select: none; /* Internet Explorer/Edge */
 					user-select: none; /* Non-prefixed version, currently not supported by any browser */
 
-		-webkit-tap-highlight-color: transparent;
+		-webkit-tap-highlight-color: transparent; /* disable iOS Safari tap effect */
 	}
 	</style>
 </head>
 <body>
 	<script>
+		// Disable "bouncy scroll" on iOS
 		document.body.addEventListener('touchmove', function(event) {
 			event.stopPropagation();
 			event.preventDefault();
