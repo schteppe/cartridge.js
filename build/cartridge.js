@@ -2555,7 +2555,11 @@ exports.cartridge = function(options){
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
 
-	utils.iosAudioFix(canvases[0]);
+	utils.iosAudioFix(canvases[0], function(){
+		// restart sound nodes here
+		sfx.iosFix();
+		music.iosFix();
+	});
 
 	if(autoFit){
 		fit(pixelPerfectMode);
@@ -3857,6 +3861,18 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	whiteNoise.start(context.currentTime);
 }
 
+exports.iosFix = function(){
+	channels.forEach(function(channel){
+		for(var instrumentName in channel.instruments){
+			try {
+				channel.instruments[instrumentName].start(context.currentTime);
+			} catch(err){
+				console.error(err);
+			}
+		}
+	});
+};
+
 // preview play a group
 exports.group = function(groupIndex, channelIndex){
 	scheduleGroup(groupIndex, channelIndex||0, context.currentTime);
@@ -4100,7 +4116,7 @@ var effects = [];
 
 var context = new createAudioContext();
 var masterGain = context.createGain();
-masterGain.gain.value = 1;
+masterGain.gain.value = 0.25;
 masterGain.connect(context.destination);
 
 exports.getContext = function(){
@@ -4345,6 +4361,18 @@ for(var j=0; j<4; j++){
 	whiteNoise.start(context.currentTime);
 }
 
+exports.iosFix = function(){
+	channels.forEach(function(channel){
+		try {
+			for(var instrumentName in channel.oscillators){
+				channel.oscillators[instrumentName].start(context.currentTime);
+			}
+		} catch(err){
+			console.error(err);
+		}
+	});
+};
+
 for(var i=0; i<maxEffects; i++){
 	effects.push({
 		types: utils.zeros(maxEffects),
@@ -4573,17 +4601,12 @@ exports.removeTrailingZeros = function(arr){
 };
 
 // iOS audio fix, to allow playing sounds from the first touch
-exports.iosAudioFix = function(element){
+exports.iosAudioFix = function(element, callback){
 	var isUnlocked = false;
 	element.ontouchend = function(){
 		if(isUnlocked) return;
 
-		// create empty buffer and play it
-		var buffer = sfx.getContext().createBuffer(1, 1, 22050);
-		var source = sfx.getContext().createBufferSource();
-		source.buffer = buffer;
-		source.connect(sfx.getContext().destination);
-		source.start();
+		if(callback) callback();
 
 		// by checking the play state after some time, we know if we're really unlocked
 		setTimeout(function() {
