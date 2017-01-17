@@ -123,7 +123,8 @@ var allTypes = sfx.getAllOscillatorTypes();
 for(var j=0; j<4; j++){ // one for each channel in the music
 	var channel = {
 		instruments: {},
-		gains: {}
+		gains: {},
+		volumeMultipliers: {}
 	};
 	channels.push(channel);
 
@@ -140,6 +141,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 		osc.connect(gain);
 		channel.instruments[type] = osc;
 		channel.gains[type] = gain;
+		channel.volumeMultipliers[type] = 1;
 		osc.start(context.currentTime);
 	}
 
@@ -150,6 +152,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	var square25 = sfx.createPulse(gain);
 	channel.instruments.square25 = square25;
 	channel.gains.square25 = gain;
+	channel.volumeMultipliers.square25 = 1;
 	square25.start(context.currentTime);
 
 	// Add white noise
@@ -159,6 +162,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	var whiteNoise = sfx.createWhiteNoise(gain);
 	channel.instruments.white = whiteNoise;
 	channel.gains.white = gain;
+	channel.volumeMultipliers.white = 1;
 	whiteNoise.start(context.currentTime);
 }
 
@@ -202,12 +206,13 @@ function scheduleGroup(groupIndex, channelIndex, time){
 
 		var osc = channel.instruments[allTypes[instrument]];
 		var gain = channel.gains[allTypes[instrument]];
+		var volumeMultiplier = channel.volumeMultipliers[allTypes[instrument]];
 
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = getFrequency(pitch, octave);
 			osc.frequency.setValueAtTime(frequency, startTime);
 		}
-		gain.gain.setValueAtTime(volume / 7, startTime);
+		gain.gain.setValueAtTime(volumeMultiplier * volume / 7, startTime);
 		gain.gain.setValueAtTime(0, endTime);
 
 		i = endPosition - 1;
