@@ -102,7 +102,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 				if(osc.frequency){ // noise doesn't have frequency
 					osc.frequency.setValueAtTime(frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency, startTime);
 				}
-				var vol = volumes[i] / 255;
+				var vol = volumes[i] / 255 * (1 / exports.rms[allTypes[j]]);
 				gain.gain.setValueAtTime(vol, startTime);
 			}
 		}
