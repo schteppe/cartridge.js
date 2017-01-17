@@ -141,7 +141,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 		osc.connect(gain);
 		channel.instruments[type] = osc;
 		channel.gains[type] = gain;
-		channel.volumeMultipliers[type] = 1;
+		channel.volumeMultipliers[type] = 1 / sfx.rms[type];
 		osc.start(context.currentTime);
 	}
 
@@ -152,7 +152,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	var square25 = sfx.createPulse(gain);
 	channel.instruments.square25 = square25;
 	channel.gains.square25 = gain;
-	channel.volumeMultipliers.square25 = 1;
+	channel.volumeMultipliers.square25 = 1 / sfx.rms.square25;
 	square25.start(context.currentTime);
 
 	// Add white noise
@@ -162,7 +162,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	var whiteNoise = sfx.createWhiteNoise(gain);
 	channel.instruments.white = whiteNoise;
 	channel.gains.white = gain;
-	channel.volumeMultipliers.white = 1;
+	channel.volumeMultipliers.white = 1 / sfx.rms.white;
 	whiteNoise.start(context.currentTime);
 }
 

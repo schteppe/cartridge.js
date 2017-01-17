@@ -10,7 +10,7 @@ var effects = [];
 
 var context = new createAudioContext();
 var masterGain = context.createGain();
-masterGain.gain.value = 0.25;
+masterGain.gain.value = 0.1;
 masterGain.connect(context.destination);
 
 exports.getContext = function(){
@@ -27,6 +27,15 @@ var oscillatorTypes = [
 	'triangle',
 	'sawtooth'
 ];
+
+exports.rms = {
+	sine: 1 / Math.sqrt(2),
+	square: 1,
+	triangle: 1 / Math.sqrt(3),
+	sawtooth: 1 / Math.sqrt(3),
+	square25: 1 * Math.sqrt(0.25),
+	white: 1 // ?
+};
 
 var allTypes = oscillatorTypes.concat([
 	'square25',
