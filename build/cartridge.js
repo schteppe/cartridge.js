@@ -1,4 +1,11 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = function a (f) {
+	var f2 = f*f;
+	return 1.2588966 * 148840000 * f2*f2 /
+	((f2 + 424.36) * Math.sqrt((f2 + 11599.29) * (f2 + 544496.41)) * (f2 + 148840000));
+};
+
+},{}],2:[function(require,module,exports){
 /* 
  *  DSP.js - a comprehensive digital signal processing  library for javascript
  * 
@@ -2321,7 +2328,7 @@ if (module && typeof module.exports !== 'undefined') {
     Reverb: Reverb
   };
 }
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 var code = '';
 
 exports.codeset = function(codeString){
@@ -2335,7 +2342,7 @@ exports.codeget = function(){
 exports.run = function(){
 	eval.call(null, code);
 };
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 exports.defaultPalette = function(){
 	return [
 		0x000000, // 0
@@ -2370,7 +2377,7 @@ exports.int2hex = function(int){
 
 	return hex;
 }
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var utils = require('./utils');
 
 var coloredFontCanvases = [];
@@ -2453,7 +2460,7 @@ exports.draw = function(ctx, text, x, y, col){
 	}
 };
 
-},{"./utils":12}],5:[function(require,module,exports){
+},{"./utils":13}],6:[function(require,module,exports){
 var input = require('./input');
 var mouse = require('./mouse');
 var utils = require('./utils');
@@ -2636,7 +2643,7 @@ exports.run = function(){
 		code.run();
 	} catch(err){
 		if(typeof(_error) === 'function'){
-			_error(createErrorObject(err));
+			_error(utils.getErrorInfo(err));
 		}
 	}
 	runInit();
@@ -2714,28 +2721,28 @@ function setCellSize(
 	mapDirty = true;
 }
 
+// Redraw the whole spritesheet
 function redrawSpriteSheet(){
 	var w = spriteSheetSizeX*cellsizeX;
 	var h = spriteSheetSizeY*cellsizeY;
+	spriteSheetContext.clearRect(0, 0, w, h);
+	var imageData = spriteSheetContext.createImageData(w,h);
 	for(var i=0; i<w; i++){
 		for(var j=0; j<h; j++){
-			redrawSpriteSheetPixel(i,j);
+			var p = j * w + i;
+			var col = spriteSheetPixels[p];
+			var dec = palette[col];
+			var r = utils.decToR(dec);
+			var g = utils.decToG(dec);
+			var b = utils.decToB(dec);
+			imageData.data[4*(p) + 0] = utils.decToR(dec);
+			imageData.data[4*(p) + 1] = utils.decToG(dec);
+			imageData.data[4*(p) + 2] = utils.decToB(dec);
+			imageData.data[4*(p) + 3] = transparentColors[col] ? 0 : 255;
 		}
 	}
+	spriteSheetContext.putImageData(imageData, 0, 0);
 	spriteSheetDirty = false;
-}
-
-function redrawSpriteSheetPixel(x,y){
-	var w = spriteSheetSizeX*cellsizeX;
-	var h = spriteSheetSizeY*cellsizeY;
-	var col = spriteSheetPixels[y * w + x];
-
-	if(transparentColors[col]){
-		spriteSheetContext.clearRect(x, y, 1, 1);
-	} else {
-		spriteSheetContext.fillStyle = paletteHex[col % palette.length];
-		spriteSheetContext.fillRect(x, y, 1, 1);
-	}
 }
 
 function setPalette(p){
@@ -2946,9 +2953,10 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	if(layer === 0){
 		// Update invalidated map cache
 		if(mapDirty){
+			clearMapCacheCanvas();
 			for(i=0; i<mapSizeX; i++){
 				for(j=0; j<mapSizeY; j++){
-					updateMapCacheCanvas(i,j);
+					updateMapCacheCanvas(i,j,false);
 				}
 			}
 			mapDirty = false;
@@ -2956,7 +2964,7 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 		for(i=0; i<mapSizeX; i++){
 			for(j=0; j<mapSizeY; j++){
 				if(mapDataDirty[j * mapSizeX + i]){
-					updateMapCacheCanvas(i,j);
+					updateMapCacheCanvas(i,j,true);
 					mapDataDirty[j * mapSizeX + i] = 0;
 				}
 			}
@@ -3115,10 +3123,7 @@ exports.sset = function(x, y, col){
 
 	var w = spriteSheetSizeX * cellsizeX;
 	spriteSheetPixels[y * w + x] = col;
-
-	if(spriteSheetDirty) redrawSpriteSheet();
-	redrawSpriteSheetPixel(x,y);
-	//spriteSheetDirty = true;
+	spriteSheetDirty = true;
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
@@ -3430,10 +3435,19 @@ function runUserFunction(func){
 	}
 }
 
+function clearMapCacheCanvas(){
+	mapCacheContext.clearRect(0, 0, cellsizeX*mapSizeX, cellsizeY*mapSizeY);
+}
 
-function updateMapCacheCanvas(x,y){
+function updateMapCacheCanvas(x,y,doClear){
+	if(doClear){
+		mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
+	}
 	var n = mget(x, y);
-	mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
+	if(n === 0){
+		// Sprite 0 is empty
+		return;
+	}
 	if(spriteSheetDirty) redrawSpriteSheet();
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
@@ -3460,7 +3474,7 @@ utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
 utils.makeGlobal(mouse.global);
 
-},{"./code":2,"./colors":3,"./font":4,"./input":6,"./math":7,"./mouse":8,"./music":9,"./pixelops":10,"./sfx":11,"./utils":12}],6:[function(require,module,exports){
+},{"./code":3,"./colors":4,"./font":5,"./input":7,"./math":8,"./mouse":9,"./music":10,"./pixelops":11,"./sfx":12,"./utils":13}],7:[function(require,module,exports){
 var math = require('./math');
 var utils = require('./utils');
 
@@ -3564,7 +3578,7 @@ exports.global = {
 	btnp: exports.btnp
 };
 
-},{"./math":7,"./utils":12}],7:[function(require,module,exports){
+},{"./math":8,"./utils":13}],8:[function(require,module,exports){
 var tau = 2 * Math.PI;
 
 module.exports = {
@@ -3601,7 +3615,7 @@ module.exports = {
 		return Math.min(Math.max(x,min), max);
 	}
 };
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var math = require('./math');
 var utils = require('./utils');
 
@@ -3696,9 +3710,10 @@ exports.global = {
 	mousescroll: exports.mousescroll
 };
 
-},{"./math":7,"./utils":12}],9:[function(require,module,exports){
+},{"./math":8,"./utils":13}],10:[function(require,module,exports){
 var utils = require('./utils');
 var sfx = require('./sfx');
+var aWeight = require('a-weighting/a');
 
 /**
  * Equal Temperament Tuning
@@ -3822,7 +3837,8 @@ var allTypes = sfx.getAllOscillatorTypes();
 for(var j=0; j<4; j++){ // one for each channel in the music
 	var channel = {
 		instruments: {},
-		gains: {}
+		gains: {},
+		volumeMultipliers: {}
 	};
 	channels.push(channel);
 
@@ -3839,6 +3855,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 		osc.connect(gain);
 		channel.instruments[type] = osc;
 		channel.gains[type] = gain;
+		channel.volumeMultipliers[type] = 1 / sfx.rms[type];
 		osc.start(context.currentTime);
 	}
 
@@ -3849,6 +3866,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	var square25 = sfx.createPulse(gain);
 	channel.instruments.square25 = square25;
 	channel.gains.square25 = gain;
+	channel.volumeMultipliers.square25 = 1 / sfx.rms.square25;
 	square25.start(context.currentTime);
 
 	// Add white noise
@@ -3858,6 +3876,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	var whiteNoise = sfx.createWhiteNoise(gain);
 	channel.instruments.white = whiteNoise;
 	channel.gains.white = gain;
+	channel.volumeMultipliers.white = 1 / sfx.rms.white;
 	whiteNoise.start(context.currentTime);
 }
 
@@ -3901,12 +3920,14 @@ function scheduleGroup(groupIndex, channelIndex, time){
 
 		var osc = channel.instruments[allTypes[instrument]];
 		var gain = channel.gains[allTypes[instrument]];
+		var volumeMultiplier = channel.volumeMultipliers[allTypes[instrument]];
 
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = getFrequency(pitch, octave);
 			osc.frequency.setValueAtTime(frequency, startTime);
+			if(frequency !== 0) volumeMultiplier /= aWeight(frequency);
 		}
-		gain.gain.setValueAtTime(volume / 7, startTime);
+		gain.gain.setValueAtTime(volumeMultiplier * volume / 7, startTime);
 		gain.gain.setValueAtTime(0, endTime);
 
 		i = endPosition - 1;
@@ -4019,7 +4040,8 @@ function getPatternLength(patternIndex){
 	}
 	return totalLength;
 }
-},{"./sfx":11,"./utils":12}],10:[function(require,module,exports){
+
+},{"./sfx":12,"./utils":13,"a-weighting/a":1}],11:[function(require,module,exports){
 var ctx;
 var writeData = null;
 var readData = null;
@@ -4103,9 +4125,10 @@ exports.flush = function(){
 		}
 	}
 };
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
+var aWeight = require('a-weighting/a');
 
 var defaultSpeed = 16;
 var minFrequency = 0;
@@ -4116,7 +4139,7 @@ var effects = [];
 
 var context = new createAudioContext();
 var masterGain = context.createGain();
-masterGain.gain.value = 0.25;
+masterGain.gain.value = 0.1;
 masterGain.connect(context.destination);
 
 exports.getContext = function(){
@@ -4133,6 +4156,15 @@ var oscillatorTypes = [
 	'triangle',
 	'sawtooth'
 ];
+
+exports.rms = {
+	sine: 1 / Math.sqrt(2),
+	square: 1,
+	triangle: 1 / Math.sqrt(3),
+	sawtooth: 1 / Math.sqrt(3),
+	square25: 1 * Math.sqrt(0.25),
+	white: 1 // ?
+};
 
 var allTypes = oscillatorTypes.concat([
 	'square25',
@@ -4196,10 +4228,12 @@ function play(channel, types, frequencies, volumes, speed, offset){
 			if(allTypes[j] !== type){
 				gain.gain.setValueAtTime(0, startTime);
 			} else {
+				var vol = volumes[i] / 255 * (1 / exports.rms[allTypes[j]]);
 				if(osc.frequency){ // noise doesn't have frequency
-					osc.frequency.setValueAtTime(frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency, startTime);
+					var frequency = frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency;
+					osc.frequency.setValueAtTime(frequency, startTime);
+					if(frequency !== 0) vol /= aWeight(frequency);
 				}
-				var vol = volumes[i] / 255;
 				gain.gain.setValueAtTime(vol, startTime);
 			}
 		}
@@ -4394,7 +4428,7 @@ exports.global = {
 	awget: exports.awget,
 	sfx: exports.sfx
 };
-},{"./utils":12,"dsp.js/dsp":1}],12:[function(require,module,exports){
+},{"./utils":13,"a-weighting/a":1,"dsp.js/dsp":2}],13:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
@@ -4616,4 +4650,4 @@ exports.iosAudioFix = function(element, callback){
 		}, 0);
 	};
 };
-},{}]},{},[5]);
+},{}]},{},[6]);
