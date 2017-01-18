@@ -258,6 +258,7 @@ function setCellSize(
 	mapDirty = true;
 }
 
+// TODO: just use an imageData
 function redrawSpriteSheet(){
 	var w = spriteSheetSizeX*cellsizeX;
 	var h = spriteSheetSizeY*cellsizeY;
@@ -490,9 +491,10 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	if(layer === 0){
 		// Update invalidated map cache
 		if(mapDirty){
+			clearMapCacheCanvas();
 			for(i=0; i<mapSizeX; i++){
 				for(j=0; j<mapSizeY; j++){
-					updateMapCacheCanvas(i,j);
+					updateMapCacheCanvas(i,j,false);
 				}
 			}
 			mapDirty = false;
@@ -500,7 +502,7 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 		for(i=0; i<mapSizeX; i++){
 			for(j=0; j<mapSizeY; j++){
 				if(mapDataDirty[j * mapSizeX + i]){
-					updateMapCacheCanvas(i,j);
+					updateMapCacheCanvas(i,j,true);
 					mapDataDirty[j * mapSizeX + i] = 0;
 				}
 			}
@@ -662,7 +664,6 @@ exports.sset = function(x, y, col){
 
 	if(spriteSheetDirty) redrawSpriteSheet();
 	redrawSpriteSheetPixel(x,y);
-	//spriteSheetDirty = true;
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
@@ -974,10 +975,19 @@ function runUserFunction(func){
 	}
 }
 
+function clearMapCacheCanvas(){
+	mapCacheContext.clearRect(0, 0, cellsizeX*mapSizeX, cellsizeY*mapSizeY);
+}
 
-function updateMapCacheCanvas(x,y){
+function updateMapCacheCanvas(x,y,doClear){
+	if(doClear){
+		mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
+	}
 	var n = mget(x, y);
-	mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
+	if(n === 0){
+		// Sprite 0 is empty
+		return;
+	}
 	if(spriteSheetDirty) redrawSpriteSheet();
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
