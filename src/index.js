@@ -258,29 +258,28 @@ function setCellSize(
 	mapDirty = true;
 }
 
-// TODO: just use an imageData
+// Redraw the whole spritesheet
 function redrawSpriteSheet(){
 	var w = spriteSheetSizeX*cellsizeX;
 	var h = spriteSheetSizeY*cellsizeY;
+	spriteSheetContext.clearRect(0, 0, w, h);
+	var imageData = spriteSheetContext.createImageData(w,h);
 	for(var i=0; i<w; i++){
 		for(var j=0; j<h; j++){
-			redrawSpriteSheetPixel(i,j);
+			var p = j * w + i;
+			var col = spriteSheetPixels[p];
+			var dec = palette[col];
+			var r = utils.decToR(dec);
+			var g = utils.decToG(dec);
+			var b = utils.decToB(dec);
+			imageData.data[4*(p) + 0] = utils.decToR(dec);
+			imageData.data[4*(p) + 1] = utils.decToG(dec);
+			imageData.data[4*(p) + 2] = utils.decToB(dec);
+			imageData.data[4*(p) + 3] = transparentColors[col] ? 0 : 255;
 		}
 	}
+	spriteSheetContext.putImageData(imageData, 0, 0);
 	spriteSheetDirty = false;
-}
-
-function redrawSpriteSheetPixel(x,y){
-	var w = spriteSheetSizeX*cellsizeX;
-	var h = spriteSheetSizeY*cellsizeY;
-	var col = spriteSheetPixels[y * w + x];
-
-	if(transparentColors[col]){
-		spriteSheetContext.clearRect(x, y, 1, 1);
-	} else {
-		spriteSheetContext.fillStyle = paletteHex[col % palette.length];
-		spriteSheetContext.fillRect(x, y, 1, 1);
-	}
 }
 
 function setPalette(p){
@@ -661,9 +660,7 @@ exports.sset = function(x, y, col){
 
 	var w = spriteSheetSizeX * cellsizeX;
 	spriteSheetPixels[y * w + x] = col;
-
-	if(spriteSheetDirty) redrawSpriteSheet();
-	redrawSpriteSheetPixel(x,y);
+	spriteSheetDirty = true;
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
