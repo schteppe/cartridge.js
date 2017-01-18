@@ -4,6 +4,7 @@
   "description": "Retro game engine",
   "main": "index.js",
   "dependencies": {
+    "a-weighting": "^1.0.0",
     "dsp.js": "git+https://github.com/corbanbrook/dsp.js.git"
   },
   "devDependencies": {

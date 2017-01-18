@@ -1,5 +1,6 @@
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
+var aWeight = require('a-weighting/a');
 
 var defaultSpeed = 16;
 var minFrequency = 0;
@@ -99,10 +100,12 @@ function play(channel, types, frequencies, volumes, speed, offset){
 			if(allTypes[j] !== type){
 				gain.gain.setValueAtTime(0, startTime);
 			} else {
-				if(osc.frequency){ // noise doesn't have frequency
-					osc.frequency.setValueAtTime(frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency, startTime);
-				}
 				var vol = volumes[i] / 255 * (1 / exports.rms[allTypes[j]]);
+				if(osc.frequency){ // noise doesn't have frequency
+					var frequency = frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency;
+					osc.frequency.setValueAtTime(frequency, startTime);
+					vol /= aWeight(frequency);
+				}
 				gain.gain.setValueAtTime(vol, startTime);
 			}
 		}

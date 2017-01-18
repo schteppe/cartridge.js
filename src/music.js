@@ -1,5 +1,6 @@
 var utils = require('./utils');
 var sfx = require('./sfx');
+var aWeight = require('a-weighting/a');
 
 /**
  * Equal Temperament Tuning
@@ -211,6 +212,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = getFrequency(pitch, octave);
 			osc.frequency.setValueAtTime(frequency, startTime);
+			volumeMultiplier /= aWeight(frequency);
 		}
 		gain.gain.setValueAtTime(volumeMultiplier * volume / 7, startTime);
 		gain.gain.setValueAtTime(0, endTime);
