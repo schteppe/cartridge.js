@@ -486,10 +486,10 @@ var trackGroupSelector = {
 };
 
 var spriteSheetPageSelector = {
-	x: function(){ return width() - 54; },
+	x: function(){ return width() - 30; },
 	y: function(){ return height() - 4 * cellheight() - 7; },
 	current: 0,
-	padding: 6,
+	padding: 2,
 	min: function(){ return 0; },
 	max: function(){ return ssget() === 16 ? 3 : 15; },
 	prefix: '',
@@ -922,6 +922,8 @@ editorDraw = window._draw = function _draw(){
 		palette_draw(palette);
 		buttons_draw(toolButtons);
 		intsel_draw(spriteSheetPageSelector);
+		var currentText = "sprite "+sprites.current;
+		print(currentText, spriteSheetPageSelector.x()-currentText.length*4-1, spriteSheetPageSelector.y()+1, 0);
 		flags_draw(flags);
 		break;
 	case 'map':
