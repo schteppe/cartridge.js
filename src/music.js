@@ -212,7 +212,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = getFrequency(pitch, octave);
 			osc.frequency.setValueAtTime(frequency, startTime);
-			volumeMultiplier /= aWeight(frequency);
+			if(frequency !== 0) volumeMultiplier /= aWeight(frequency);
 		}
 		gain.gain.setValueAtTime(volumeMultiplier * volume / 7, startTime);
 		gain.gain.setValueAtTime(0, endTime);
