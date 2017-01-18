@@ -180,7 +180,7 @@ exports.run = function(){
 		code.run();
 	} catch(err){
 		if(typeof(_error) === 'function'){
-			_error(createErrorObject(err));
+			_error(utils.getErrorInfo(err));
 		}
 	}
 	runInit();
