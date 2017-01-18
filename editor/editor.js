@@ -322,7 +322,7 @@ var code = {
 	apiColor: 11,
 	commentColor: 13,
 	identifierColor: 6,
-	message: ''
+	errorMessage: ''
 };
 
 var mapPanX = 0;
@@ -1383,15 +1383,25 @@ function code_draw(code){
 	}
 
 	// bottom info row
+	var bottomColor = 0;
+	var bottomTextColor = 7;
+	var bottomText = "L" + (code.crow+1) + " C" + (code.ccol+1);
+	if(code.errorMessage !== ''){
+		bottomColor = 8;
+		bottomTextColor = 0;
+		bottomText = code.errorMessage;
+		if(time() - code.errorTime > 3){
+			code.errorMessage = '';
+		}
+	}
 	rectfill(
 		x-code.margin,
 		y + h - fontHeight,
 		x+w-1+code.margin,
 		y + h,
-		0
+		bottomColor
 	);
-
-	print("L" + (code.crow+1) + " C" + (code.ccol+1), x-code.margin+1, y + h - fontHeight+1, 7);
+	print(bottomText, x-code.margin+1, y + h - fontHeight+1, bottomTextColor);
 }
 
 window._error = function(info){
@@ -1402,7 +1412,8 @@ window._error = function(info){
 	mode = 'code';
 	code.ccol = info.column - 1;
 	code.crow = info.line - 1;
-	code.message = info.message;
+	code.errorMessage = 'L' + info.column + ' C' + info.line + ' ' + info.message;
+	code.errorTime = time();
 	dirty = true;
 };
 
