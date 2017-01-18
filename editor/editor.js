@@ -321,7 +321,8 @@ var code = {
 	literalColor: 12,
 	apiColor: 11,
 	commentColor: 13,
-	identifierColor: 6
+	identifierColor: 6,
+	message: ''
 };
 
 var mapPanX = 0;
@@ -1250,10 +1251,10 @@ var cartridgeIdentifiers = [
 function code_draw(code){
 	var x = code.x;
 	var y = code.y;
-	var w = code.width();
-	var h = code.height();
 	var fontHeight = code.fontHeight;
 	var fontWidth = code.fontWidth;
+	var w = code.width();
+	var h = code.height();
 	var rows = flr(h / fontHeight);
 	var cols = flr(w / fontWidth);
 
@@ -1380,6 +1381,17 @@ function code_draw(code){
 			0
 		);
 	}
+
+	// bottom info row
+	rectfill(
+		x-code.margin,
+		y + h - fontHeight,
+		x+w-1+code.margin,
+		y + h,
+		0
+	);
+
+	print("L" + (code.crow+1) + " C" + (code.ccol+1), x-code.margin+1, y + h - fontHeight+1, 7);
 }
 
 window._error = function(info){
@@ -1390,6 +1402,7 @@ window._error = function(info){
 	mode = 'code';
 	code.ccol = info.column - 1;
 	code.crow = info.line - 1;
+	code.message = info.message;
 	dirty = true;
 };
 
