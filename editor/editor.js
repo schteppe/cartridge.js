@@ -616,7 +616,7 @@ function mousemovehandler(forceMouseDown){
 			var x = flr((mousex()-viewport.x) / viewport.sx());
 			var y = flr((mousey()-viewport.y) / viewport.sy());
 
-			if(inrect(x, y, 0, 0, cellwidth(), cellheight())){
+			if(sprites.current !== 0 && inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				if(toolButtons.current === 0){
 					// Draw!
 					sset(
@@ -817,6 +817,7 @@ var editorClick = window._click = function _click(){
 			var newSize = spriteSizeButtons.options[spriteSizeButtons.current];
 			cellwidth(newSize);
 			cellheight(newSize);
+			clearSprite(0);
 			dirty = true;
 		}
 	} else if(mode === 'track'){
@@ -1727,6 +1728,8 @@ function flipSprite(spriteNumber, flipX){
 }
 
 function copySprite(from,to){
+	if(sprites.current === 0) return;
+
 	var i,j;
 	for(i=0; i<cellwidth(); i++){
 		for(j=0; j<cellheight(); j++){
@@ -1822,7 +1825,6 @@ window.addEventListener('keydown', function(evt){
 			case 79: if(mode === 'game') openfile(); break; // O
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 		}
-		sprites.current = clamp(sprites.current,1,ssget()*ssget());
 	}
 	dirty = true;
 });
@@ -1951,7 +1953,9 @@ function handlePasteImage(file){
 				// write to spritesheet at current position
 				var x = (ssx(sprites.current) * cellwidth() + i);
 				var y = (ssy(sprites.current) * cellheight() + j);
-				sset(x, y, bestColor);
+				if(sprites.current !== 0){
+					sset(x, y, bestColor);
+				}
 				dirty = true;
 			}
 		}
