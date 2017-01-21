@@ -28,7 +28,10 @@ var playState = {
 	pattern: -1,
 	nextPattern: -1,
 	bufferedUntil: 0,
-	patternLength: 0
+	bufferedUntilLowRes: 0, // Use low res timer if possible, because context.currentTime is slow on some devices
+	patternLength: 0,
+	startTime: 0,
+	startTimeLowRes: 0
 };
 
 while(groups.length < 8){
@@ -121,6 +124,7 @@ var masterGain = sfx.getMasterGain();
 var channels = [];
 var oscillatorTypes = sfx.getOscillatorTypes();
 var allTypes = sfx.getAllOscillatorTypes();
+var cTime = context.currentTime;
 for(var j=0; j<4; j++){ // one for each channel in the music
 	var channel = {
 		instruments: {},
@@ -143,7 +147,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 		channel.instruments[type] = osc;
 		channel.gains[type] = gain;
 		channel.volumeMultipliers[type] = 1 / sfx.rms[type];
-		osc.start(context.currentTime);
+		osc.start(cTime);
 	}
 
 	// Add square25 / pulse
@@ -154,7 +158,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	channel.instruments.square25 = square25;
 	channel.gains.square25 = gain;
 	channel.volumeMultipliers.square25 = 1 / sfx.rms.square25;
-	square25.start(context.currentTime);
+	square25.start(cTime);
 
 	// Add white noise
 	gain = context.createGain();
@@ -164,7 +168,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	channel.instruments.white = whiteNoise;
 	channel.gains.white = gain;
 	channel.volumeMultipliers.white = 1 / sfx.rms.white;
-	whiteNoise.start(context.currentTime);
+	whiteNoise.start(cTime);
 }
 
 exports.iosFix = function(){
@@ -236,7 +240,9 @@ exports.music = function(patternIndex, fade, channelmask){
 	playState.nextPattern = getNextPattern(patternIndex);
 	playState.patternLength = getPatternLength(patternIndex);
 	playState.startTime = startTime;
+	playState.startTimeLowRes = Date.now()/1000;
 	playState.bufferedUntil = startTime + playState.patternLength;
+	playState.bufferedUntilLowRes = Date.now()/1000 + playState.patternLength;
 
 	// schedule groups in all channels
 	for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
@@ -278,9 +284,9 @@ exports.update = function(){
 		return;
 	}
 
-	var currentTime = context.currentTime;
+	var currentTime = Date.now()/1000;
 
-	if(currentTime < playState.bufferedUntil - playState.patternLength * 0.5){
+	if(currentTime < playState.bufferedUntilLowRes - playState.patternLength * 0.5){
 		// Already buffered enough
 		return;
 	}
@@ -296,7 +302,9 @@ exports.update = function(){
 	playState.pattern = playState.nextPattern;
 	playState.patternLength = getPatternLength(playState.pattern);
 	playState.startTime += prevPatternLength;
+	playState.startTimeLowRes += prevPatternLength;
 	playState.bufferedUntil = playState.startTime + playState.patternLength;
+	playState.bufferedUntilLowRes = playState.startTimeLowRes + playState.patternLength;
 	playState.nextPattern = getNextPattern(playState.pattern);
 };
 
