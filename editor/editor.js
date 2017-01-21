@@ -71,14 +71,18 @@ var keysdown = {};
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
 	panx: 0,
-	pany: 0
+	pany: 0,
+	x: function(){ return 0; },
+	y: function(){ return flr(3 * height() / 4); },
+	w: function(){ return width(); },
+	h: function(){ return flr(height() / 4); }
 };
 
 var viewport = {
 	x: 1,
 	y: 8,
 	sx: function(){ return flr((width() * 0.6) / cellwidth()); },
-	sy: function(){ return flr(((height()-cellheight()*4-8) * 0.9) / cellheight()); }
+	sy: function(){ return flr(((height()-sprites.h()-8) * 0.9) / cellheight()); }
 };
 
 var track = {
@@ -486,8 +490,8 @@ var trackGroupSelector = {
 };
 
 var spriteSheetPageSelector = {
-	x: function(){ return width() - 30; },
-	y: function(){ return height() - 4 * cellheight() - 7; },
+	x: function(){ return sprites.x() + sprites.w() - 1 - 30; },
+	y: function(){ return sprites.y() - 7; },
 	current: 0,
 	padding: 2,
 	min: function(){ return 0; },
@@ -748,13 +752,13 @@ var editorClick = window._click = function _click(){
 
 	if(mode === 'sprite' || mode === 'map'){
 		// Sprite select
-		var spritesHeight = height() - cellheight() * 4;
-		if(my >= height() - cellheight() * 4){
+		var spritesHeight = sprites.h();
+		if(my >= sprites.y()){
 			var cw = cellwidth();
 			var ch = cellheight();
 
 			var spriteX = flr((mx+sprites.panx) / cw);
-			var spriteY = flr((my-spritesHeight+sprites.pany) / ch);
+			var spriteY = flr((my-sprites.y()+sprites.pany) / ch);
 			if(spriteX < ssget() && spriteY < ssget()){
 				sprites.current = spriteX + spriteY * ssget();
 				dirty = true;
@@ -842,6 +846,7 @@ var editorClick = window._click = function _click(){
 		}
 		if(buttons_click(spriteSheetSizeButtons,mx,my)){
 			ssset(spriteSheetSizeButtons.current === 0 ? 16 : 32);
+			sprites_clamp_pan(sprites);
 			dirty = true;
 		}
 		if(buttons_click(spriteSizeButtons,mx,my)){
@@ -849,6 +854,7 @@ var editorClick = window._click = function _click(){
 			cellwidth(newSize);
 			cellheight(newSize);
 			clearSprite(0);
+			sprites_clamp_pan(sprites);
 			dirty = true;
 		}
 	} else if(mode === 'track'){
@@ -1132,15 +1138,15 @@ function mouse_draw(x,y){
 }
 
 function sprites_draw(sprites){
-	var offsetX = 0;
-	var offsetY = height() - cellheight() * 4;
+	var offsetX = sprites.x();
+	var offsetY = sprites.y();
 
 	var cw = cellwidth();
 	var ch = cellheight();
 
-	rectfill(offsetX, offsetY, cw * 16, height(), 0);
-	clip(offsetX, offsetY, cw * 16, 4*ch);
-	spr(0, offsetX-sprites.panx, offsetY-sprites.pany, 16, 16);
+	rectfill(offsetX, offsetY, offsetX + sprites.w() - 1, offsetY + sprites.h() - 1, 0);
+	clip(offsetX, offsetY, sprites.w(), sprites.h());
+	spr(0, offsetX-sprites.panx, offsetY-sprites.pany, ssget(), ssget());
 
 	// Rectangle around the current editing sprite
 	var x = offsetX + (ssx(sprites.current)) * cw - sprites.panx;
@@ -1155,8 +1161,8 @@ function sprites_draw(sprites){
 }
 
 function sprites_clamp_pan(sprites){
-	sprites.panx = clamp(sprites.panx, 0, Math.max(0,ssget()*cellwidth()-width()));
-	sprites.pany = clamp(sprites.pany, 0, Math.max(0,ssget()*cellheight()-4*cellheight()));
+	sprites.panx = clamp(sprites.panx, 0, Math.max(0,ssget()*cellwidth()-sprites.w()));
+	sprites.pany = clamp(sprites.pany, 0, Math.max(0,ssget()*cellheight()-sprites.h()));
 }
 
 function palette_draw(palette){
@@ -2046,6 +2052,7 @@ cellwidth(16);
 cellheight(16);
 width(256);
 height(240);
+sprites_clamp_pan(sprites);
 
 palset(0, 0x000000);
 palset(1, 0x0829fc);
