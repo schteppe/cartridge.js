@@ -194,9 +194,10 @@ exports.createWhiteNoise = function(destination) {
 	whiteNoise.connect(destination);
 
 	return whiteNoise;
-}
+};
 
 var dft = null;
+var pulseWave = null;
 exports.createPulse = function(destination){
 	if(!dft){
 		var count = 128;
@@ -209,19 +210,20 @@ exports.createPulse = function(destination){
 
 		dft = new DFT(vals2.length);
 		dft.forward(vals2);
-	}
-	// DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
-	var table = context.createPeriodicWave(
-		new Float32Array(dft.real),
-		new Float32Array(dft.imag)
-	);
 
-	osc = context.createOscillator();
-	osc.setPeriodicWave(table);
+		// DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
+		pulseWave = context.createPeriodicWave(
+			new Float32Array(dft.real),
+			new Float32Array(dft.imag)
+		);
+	}
+
+	var osc = context.createOscillator();
+	osc.setPeriodicWave(pulseWave);
 	osc.connect(destination);
 
 	return osc;
-}
+};
 
 
 for(var j=0; j<4; j++){
