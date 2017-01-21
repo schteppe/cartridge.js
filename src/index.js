@@ -812,6 +812,7 @@ function toJSON(){
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
 	}
+	utils.removeTrailingZeros(data.flags);
 
 	// Sprite data
 	for(i=0; i<ssget()*cellwidth(); i++){
@@ -905,7 +906,7 @@ function loadJSON(data){
 	}
 
 	for(i=0; i<spriteFlags.length; i++){
-		fset(i, data.flags[i]);
+		fset(i, data.flags[i] || 0);
 	}
 	setPalette(data.palette);
 	for(i=0; i<spriteSheetSizeX*cellwidth(); i++){
