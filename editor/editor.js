@@ -50,23 +50,24 @@ var query = getQueryVariables({
 	file: 's'
 });
 
-var editorDraw;
-
 function resizeHandler(){
-	dirty = true;
+	editor.dirty = true;
 }
 window.addEventListener("resize", resizeHandler);
 window.addEventListener("mozfullscreenchange", resizeHandler);
 
-var modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
-var mode = modes[0];
-var loading = false;
-
-var dirty = true;
-var lastmx = 0;
-var lastmy = 0;
-var previousScroll = 0;
-var keysdown = {};
+var editorModes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
+var editor = {
+	modes: editorModes,
+	mode: editorModes[0],
+	loading: false,
+	dirty: true,
+	lastmx: 0,
+	lastmy: 0,
+	previousScroll: 0,
+	keysdown: {},
+	draw: null
+};
 
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
@@ -75,7 +76,7 @@ var sprites = {
 	x: function(){ return 0; },
 	y: function(){ return flr(3 * height() / 4); },
 	w: function(){ return width(); },
-	h: function(){ return flr(height() / 4); }
+	h: function(){ return ceil(height() / 4); }
 };
 
 var viewport = {
@@ -165,31 +166,31 @@ function track_drawpart(x, y, highlightedNote, trackIndex, start, end){
 }
 
 var keyToNote = {
-	"Z": 0, // C
-	"S": 1, // C#
-	"X": 3, // D
-	"D": 4, // D#
-	"C": 6, // E
-	"V": 7, // F
-	"G": 8, // F#
-	"B": 10, // G
-	"H": 11, // G#
-	"N": 13, // A
-	"J": 14, // A#
-	"M": 16, // B
+	Z: 0, // C
+	S: 1, // C#
+	X: 3, // D
+	D: 4, // D#
+	C: 6, // E
+	V: 7, // F
+	G: 8, // F#
+	B: 10, // G
+	H: 11, // G#
+	N: 13, // A
+	J: 14, // A#
+	M: 16, // B
 
-	"Q": 17 + 0, // C
+	Q: 17 + 0, // C
 	"2": 17 + 1, // C#
-	"W": 17 + 3, // D
+	W: 17 + 3, // D
 	"3": 17 + 4, // D#
-	"E": 17 + 6, // E
-	"R": 17 + 7, // F
+	E: 17 + 6, // E
+	R: 17 + 7, // F
 	"5": 17 + 8, // F#
-	"T": 17 + 10, // G
+	T: 17 + 10, // G
 	"6": 17 + 11, // G#
-	"Y": 17 + 13, // A
+	Y: 17 + 13, // A
 	"7": 17 + 14, // A#
-	"U": 17 + 16 // B
+	U: 17 + 16 // B
 };
 
 function track_keypress(track, evt){
@@ -560,7 +561,7 @@ function intsel_draw(intsel){
 
 function intsel_click(intsel, x, y){
 	if(inrect(x,y,intsel.x(),intsel.y(), 3 * (intsel.padding * 2 + 6),7)){
-		var speed = keysdown[16] ? 10 : 1;
+		var speed = editor.keysdown[16] ? 10 : 1;
 		var button = flr((x-intsel.x()) / (intsel.padding * 2 + 6));
 		if(button === 0){
 			intsel.current -= speed;
@@ -613,7 +614,7 @@ function floodfill(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){
 }
 
 function mousemovehandler(forceMouseDown){
-	switch(mode){
+	switch(editor.mode){
 	case 'sprite':
 		if(mousebtn(1) || forceMouseDown){
 			// Draw on sprite
@@ -628,7 +629,7 @@ function mousemovehandler(forceMouseDown){
 						ssy(sprites.current) * cellheight() + y,
 						palette.current
 					);
-					dirty = true;
+					editor.dirty = true;
 				} else if(toolButtons.current === 1){
 					// Fill!
 					var x0 = ssx(sprites.current) * cellwidth();
@@ -645,33 +646,33 @@ function mousemovehandler(forceMouseDown){
 						x0, x0 + cellwidth()-1,
 						y0, y0 + cellheight()-1
 					);
-					dirty = true;
+					editor.dirty = true;
 				}
 			}
-		} else if(keysdown[32] || mousebtn(2) || mousebtn(3)){
+		} else if(editor.keysdown[32] || mousebtn(2) || mousebtn(3)){
 			// Pan sprite view
-			var dx = mousex() - lastmx;
-			var dy = mousey() - lastmy;
+			var dx = mousex() - editor.lastmx;
+			var dy = mousey() - editor.lastmy;
 			sprites.panx -= dx;
 			sprites.pany -= dy;
 
 			// clamp panning
 			sprites_clamp_pan(sprites);
 
-			dirty = true;
+			editor.dirty = true;
 		}
 		break;
 
 	case 'map':
+		var dx = mousex() - editor.lastmx;
+		var dy = mousey() - editor.lastmy;
 		if(inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
-			if(keysdown[32] || mousebtn(2) || mousebtn(3)){
+			if(editor.keysdown[32] || mousebtn(2) || mousebtn(3)){
 				// Pan map
-				var dx = mousex() - lastmx;
-				var dy = mousey() - lastmy;
 				// TODO: clamp panning
 				mapPanX += dx;
 				mapPanY += dy;
-				dirty = true;
+				editor.dirty = true;
 			} else if((forceMouseDown || mousebtn(1))){
 				// Draw on map
 				mset(
@@ -679,19 +680,17 @@ function mousemovehandler(forceMouseDown){
 					flr((mousey() - mapPanY) / cellheight()),
 					sprites.current
 				);
-				dirty = true;
+				editor.dirty = true;
 			}
-		} else if(keysdown[32] || mousebtn(2) || mousebtn(3)){
+		} else if(editor.keysdown[32] || mousebtn(2) || mousebtn(3)){
 			// Pan sprite view
-			var dx = mousex() - lastmx;
-			var dy = mousey() - lastmy;
 			sprites.panx -= dx;
 			sprites.pany -= dy;
 
 			// clamp panning
 			sprites_clamp_pan(sprites);
 
-			dirty = true;
+			editor.dirty = true;
 		}
 		break;
 
@@ -716,10 +715,10 @@ function mousemovehandler(forceMouseDown){
 					afset(sfxSelector.current, n, 0);
 					avset(sfxSelector.current, n, 0);
 				}
-				dirty = true;
+				editor.dirty = true;
 			} else if(clamp(n,0,32) === n && clamp(vol,0,255) === vol){
 				avset(sfxSelector.current, n, vol);
-				dirty = true;
+				editor.dirty = true;
 			}
 		}
 		break;
@@ -727,26 +726,28 @@ function mousemovehandler(forceMouseDown){
 }
 
 function scrollhandler(delta){
-	switch(mode){
+	switch(editor.mode){
 		case 'code':
 			code.crow -= delta;
 			code_clamp_crow(code);
 			code_clamp_ccol(code);
+			break;
 	}
 }
 
-var editorClick = window._click = function _click(){
+editor.click = window._click = function _click(){
+	var mode = editor.mode;
 	var mx = mousex();
 	var my = mousey();
 	mousemovehandler(true);
 	if(mode === 'sprite'){
 		if(palette_click(palette,mx,my)){
-			dirty = true;
+			editor.dirty = true;
 		} else if(flags_click(flags,mx,my)){
-			dirty = true;
+			editor.dirty = true;
 		} else if(buttons_click(toolButtons,mx,my)){
 			// tool switcher
-			dirty = true;
+			editor.dirty = true;
 		}
 	}
 
@@ -761,7 +762,7 @@ var editorClick = window._click = function _click(){
 			var spriteY = flr((my-sprites.y()+sprites.pany) / ch);
 			if(spriteX < ssget() && spriteY < ssget()){
 				sprites.current = spriteX + spriteY * ssget();
-				dirty = true;
+				editor.dirty = true;
 			}
 		} else if(intsel_click(spriteSheetPageSelector, mx, my)){
 
@@ -778,42 +779,42 @@ var editorClick = window._click = function _click(){
 			sprites.pany = viewY*cellheight();
 			sprites_clamp_pan(sprites);
 
-			dirty = true;
+			editor.dirty = true;
 		}
 	} else if(mode === 'sfx'){
 		if(buttons_click(waveformButtons,mx,my)){
-			dirty = true;
+			editor.dirty = true;
 		}
 		if(intsel_click(speedSelector, mx, my)){
 			asset(sfxSelector.current, speedSelector.current);
-			dirty = true;
+			editor.dirty = true;
 		}
 		if(intsel_click(sfxSelector, mx, my)){
-			dirty = true;
+			editor.dirty = true;
 		}
 	}
 
 	// top mode switcher
 	if(buttons_click(topButtons,mx,my)){
-		if(modes[topButtons.current] === 'run'){
+		if(editor.modes[topButtons.current] === 'run'){
 			code_run(code);
-			dirty = true;
+			editor.dirty = true;
 		} else {
-			mode = modes[topButtons.current];
+			editor.mode = editor.modes[topButtons.current];
 		}
-		dirty = true;
+		editor.dirty = true;
 	}
 
-	if(mode === 'code' && code_click(code,mx,my)){
-		dirty = true;
-	} else if(mode === 'game'){
+	if(editor.mode === 'code' && code_click(code,mx,my)){
+		editor.dirty = true;
+	} else if(editor.mode === 'game'){
 		if(buttons_click(slotButtons,mx,my)){
 			if(load('slot' + slotButtons.current)){
 				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
 			} else {
 				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
 			}
-			dirty = true;
+			editor.dirty = true;
 			syntaxTreeDirty = true;
 			slotButtons.current = -1;
 		}
@@ -825,29 +826,29 @@ var editorClick = window._click = function _click(){
 				case 2: reset(); break;
 			}
 			saveLoadButtons.current = -1;
-			dirty = true;
+			editor.dirty = true;
 		}
 
 		if(buttons_click(saveButtons,mx,my)){
 			save('slot' + saveButtons.current);
 			alert('Saved game to slot ' + (saveButtons.current + 1) + '.');
-			dirty = true;
+			editor.dirty = true;
 			saveButtons.current = -1;
 		}
 
 		if(intsel_click(resolutionSelectorX, mx, my)){
 			width(resolutionSelectorX.current);
-			dirty = true;
+			editor.dirty = true;
 		}
 
 		if(intsel_click(resolutionSelectorY, mx, my)){
 			height(resolutionSelectorY.current);
-			dirty = true;
+			editor.dirty = true;
 		}
 		if(buttons_click(spriteSheetSizeButtons,mx,my)){
 			ssset(spriteSheetSizeButtons.current === 0 ? 16 : 32);
 			sprites_clamp_pan(sprites);
-			dirty = true;
+			editor.dirty = true;
 		}
 		if(buttons_click(spriteSizeButtons,mx,my)){
 			var newSize = spriteSizeButtons.options[spriteSizeButtons.current];
@@ -855,41 +856,41 @@ var editorClick = window._click = function _click(){
 			cellheight(newSize);
 			clearSprite(0);
 			sprites_clamp_pan(sprites);
-			dirty = true;
+			editor.dirty = true;
 		}
-	} else if(mode === 'track'){
+	} else if(editor.mode === 'track'){
 		if(intsel_click(trackSpeedSelector, mx, my)){
 			gsset(trackGroupSelector.current, trackSpeedSelector.current);
-			dirty = true;
+			editor.dirty = true;
 		} else if(intsel_click(trackGroupSelector, mx, my)){
-			dirty = true;
+			editor.dirty = true;
 		} else if(buttons_click(waveformButtons,mx,my)){
-			dirty = true;
+			editor.dirty = true;
 		} else if(buttons_click(octaveButtons,mx,my)){
-			dirty = true;
+			editor.dirty = true;
 		} else if(buttons_click(trackVolumeButtons,mx,my)){
-			dirty = true;
+			editor.dirty = true;
 		} else if(track_click(track,mx,my)){
-			dirty = true;
+			editor.dirty = true;
 		}
-	} else if(mode === 'pattern'){
+	} else if(editor.mode === 'pattern'){
 		if(buttons_click(patternEndButtons, mx, my)){
 			mfset(patternSelector.current, {0: 0, 1:1, 2:2, 3:4}[patternEndButtons.current]);
-			dirty = true;
+			editor.dirty = true;
 		} else if(intsel_click(patternSelector, mx, my)){
-			dirty = true;
+			editor.dirty = true;
 		} else if(intsel_click(trackSelector0, mx, my)){
 			mgset(patternSelector.current, 0, trackSelector0.current);
-			dirty = true;
+			editor.dirty = true;
 		} else if(intsel_click(trackSelector1, mx, my)){
 			mgset(patternSelector.current, 1, trackSelector1.current);
-			dirty = true;
+			editor.dirty = true;
 		} else if(intsel_click(trackSelector2, mx, my)){
 			mgset(patternSelector.current, 2, trackSelector2.current);
-			dirty = true;
+			editor.dirty = true;
 		} else if(intsel_click(trackSelector3, mx, my)){
 			mgset(patternSelector.current, 3, trackSelector3.current);
-			dirty = true;
+			editor.dirty = true;
 		}
 	}
 };
@@ -917,40 +918,40 @@ var editorLoad = window._init = function _init(){
 		].join('\n').toLowerCase());
 	}
 
-	dirty = true;
+	editor.dirty = true;
 	syntaxTreeDirty = true;
 };
 
-editorDraw = window._draw = function _draw(){
-	if(loading) return;
+editor.draw = window._draw = function _draw(){
+	if(editor.loading) return;
 
 	// Mouse move
 	var mx = mousex();
 	var my = mousey();
-	if(!(lastmx === mx && lastmy === my)){
+	if(!(editor.lastmx === mx && editor.lastmy === my)){
 		mousemovehandler();
-		dirty = true;
+		editor.dirty = true;
 	}
-	lastmx = mx;
-	lastmy = my;
+	editor.lastmx = mx;
+	editor.lastmy = my;
 
 	// mouse scroll
 	var currentScroll = mousescroll();
-	if(currentScroll !== previousScroll){
-		var delta = currentScroll - previousScroll;
+	if(currentScroll !== editor.previousScroll){
+		var delta = currentScroll - editor.previousScroll;
 		scrollhandler(delta);
-		dirty = true;
+		editor.dirty = true;
 	}
-	previousScroll = currentScroll;
+	editor.previousScroll = currentScroll;
 
-	if(!dirty) return;
-	dirty = false;
+	if(!editor.dirty) return;
+	editor.dirty = false;
 
 	rectfill(0, 0, width(), height(), 7);
 
-	topButtons.current = modes.indexOf(mode);
+	topButtons.current = editor.modes.indexOf(editor.mode);
 
-	switch(mode){
+	switch(editor.mode){
 	case 'code':
 		code_draw(code);
 		break;
@@ -1059,7 +1060,7 @@ editorDraw = window._draw = function _draw(){
 
 	drawtop();
 	mouse_draw(mousex(), mousey());
-}
+};
 
 function drawtop(){
 	rectfill(0, 0, width(), 6, 0);
@@ -1157,6 +1158,7 @@ function sprites_draw(sprites){
 		6
 	);
 
+	// Reset clip
 	clip();
 }
 
@@ -1446,18 +1448,18 @@ window._error = function(info){
 	code_stop(code);
 
 	// Handle error
-	mode = 'code';
+	editor.mode = 'code';
 	code.ccol = info.column - 1;
 	code.crow = info.line - 1;
 	code.errorMessage = 'L' + info.column + ' C' + info.line + ' ' + info.message;
 	code.errorTime = time();
-	dirty = true;
+	editor.dirty = true;
 };
 
 function code_run(code){
 	// Run code in global scope
-	code.previousMode = mode;
-	mode = 'run';
+	code.previousMode = editor.mode;
+	editor.mode = 'run';
 	code.initialized = false;
 
 	delete window._update;
@@ -1499,9 +1501,9 @@ function code_stop(code){
 	delete window._kill;
 	delete window._click;
 
-	mode = code.previousMode;
-	window._draw = editorDraw;
-	window._click = editorClick;
+	editor.mode = code.previousMode;
+	window._draw = editor.draw;
+	window._click = editor.click;
 	var oldCode = codeget();
 	code_set("", false);
 	run();
@@ -1570,7 +1572,7 @@ function code_paste(code, str){
 	}
 
 	code_set(codeArray.join('\n'));
-	dirty = true;
+	editor.dirty = true;
 }
 
 function code_keydown(code, evt){
@@ -1709,7 +1711,7 @@ function code_keypress(code, evt){
 }
 
 window.addEventListener('keyup', function(evt){
-	keysdown[evt.keyCode] = false;
+	editor.keysdown[evt.keyCode] = false;
 });
 
 function strInsertAt(str, index, character) {
@@ -1813,23 +1815,23 @@ function mod(a,b) { return ((a%b)+b)%b; }
 function isMac(){ return navigator.platform.match("Mac"); }
 
 window.addEventListener('keydown', function(evt){
-	if(mode === 'run'){
+	if(editor.mode === 'run'){
 		if(evt.keyCode === 27){
 			code_stop(code);
-			dirty = true;
+			editor.dirty = true;
 		}
 		return;
 	}
 
-	keysdown[evt.keyCode] = true;
+	editor.keysdown[evt.keyCode] = true;
 
 	// alt + left or right, switch editor
 	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
 		var delta = evt.keyCode === 37 ? -1 : 1;
-		mode = modes[mod(modes.indexOf(mode)+delta, modes.length)];
-		if(mode === 'run')
-			mode = modes[mod(modes.indexOf(mode)+delta, modes.length)];
-		dirty = true;
+		editor.mode = editor.modes[mod(modes.indexOf(editor.mode)+delta, editor.modes.length)];
+		if(editor.mode === 'run')
+			editor.mode = editor.modes[mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
+		editor.dirty = true;
 
 		// Prevent going back in history
 		evt.cancelBubble = true;
@@ -1845,24 +1847,24 @@ window.addEventListener('keydown', function(evt){
 		return;
 	}
 
-	if(mode === 'code'){
+	if(editor.mode === 'code'){
 		code_keydown(code, evt);
 	} else if(!evt.altKey && !evt.metaKey && !evt.ctrlKey){
 		switch(evt.keyCode){
-			case 86: if(mode === 'sprite') flipSprite(sprites.current, false); break; // V
-			case 70: if(mode === 'sprite') flipSprite(sprites.current, true); break; // F
-			case 82: if(mode === 'sprite') rotateSprite(sprites.current); break; // R
-			case 46: if(mode === 'sprite') clearSprite(sprites.current); break; // delete
-			case 81: if(mode === 'sprite' || mode === 'map') sprites.current=mod(sprites.current-1,ssget()*ssget()); break; // Q
-			case 87: if(mode === 'sprite' || mode === 'map') sprites.current=mod(sprites.current+1,ssget()*ssget()); break; // W
-			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
+			case 86: if(editor.mode === 'sprite') flipSprite(sprites.current, false); break; // V
+			case 70: if(editor.mode === 'sprite') flipSprite(sprites.current, true); break; // F
+			case 82: if(editor.mode === 'sprite') rotateSprite(sprites.current); break; // R
+			case 46: if(editor.mode === 'sprite') clearSprite(sprites.current); break; // delete
+			case 81: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=mod(sprites.current-1,ssget()*ssget()); break; // Q
+			case 87: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=mod(sprites.current+1,ssget()*ssget()); break; // W
+			case 32: if(editor.mode === 'sfx') sfx(sfxSelector.current); break;
 		}
 	}
-	dirty = true;
+	editor.dirty = true;
 });
 
 document.addEventListener('keydown', function(e){
-	if(mode === 'run') return;
+	if(editor.mode === 'run') return;
 
 	// ctrl + s
 	if (e.keyCode == 83 && (isMac() ? e.metaKey : e.ctrlKey)){
@@ -1877,19 +1879,19 @@ document.addEventListener('keydown', function(e){
 	}
 
 	// backspace
-	if (mode === 'code' && e.keyCode === 8) {
+	if (editor.mode === 'code' && e.keyCode === 8) {
 		e.preventDefault();
 	}
 
 }, false);
 
 window.addEventListener('keypress', function(evt){
-	if(mode === 'run') return;
-	if(mode === 'code'){
+	if(editor.mode === 'run') return;
+	if(editor.mode === 'code'){
 		code_keypress(code, evt);
-	} else if(mode === 'track'){
+	} else if(editor.mode === 'track'){
 		track_keypress(track, evt);
-	} else if(mode === 'pattern'){
+	} else if(editor.mode === 'pattern'){
 		pattern_keypress(track, evt);
 	}
 });
@@ -1912,16 +1914,17 @@ function readSingleFile(e) {
 			var json = JSON.parse(e.target.result);
 			load(json);
 			syntaxTreeDirty = true;
-			dirty = true;
+			editor.dirty = true;
 		} catch(err){
 			console.error("Could not open file.");
 		}
 	};
 	reader.readAsText(file);
 }
+
 window.addEventListener('paste', handlepaste, false);
 function handlepaste (e) {
-	if(mode === 'run') return;
+	if(editor.mode === 'run') return;
 	if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
 		var types = e.clipboardData.types;
 		var handled = false;
@@ -1952,7 +1955,7 @@ function handlepaste (e) {
 }
 
 function handlePasteImage(file){
-	if(mode !== 'sprite') return;
+	if(editor.mode !== 'sprite') return;
 
 	var urlCreator = window.URL || window.webkitURL;
 	var img = new Image();
@@ -1995,7 +1998,7 @@ function handlePasteImage(file){
 				if(sprites.current !== 0){
 					sset(x, y, bestColor);
 				}
-				dirty = true;
+				editor.dirty = true;
 			}
 		}
 
@@ -2005,12 +2008,12 @@ function handlePasteImage(file){
 }
 
 function handlePasteString(str){
-	switch(mode){
+	switch(editor.mode){
 	case 'sprite':
 		var m = str.match(/sprite:([\d]+)/);
 		if(m){
 			copySprite(parseInt(m[1]), sprites.current);
-			dirty = true;
+			editor.dirty = true;
 		}
 		break;
 	case 'code':
@@ -2023,7 +2026,7 @@ function handlePasteString(str){
 }
 
 document.addEventListener('copy', function(e){
-	switch(mode){
+	switch(editor.mode){
 	case 'run':
 		return;
 	case 'sprite':
@@ -2074,14 +2077,14 @@ palset(15, 0xffffff);
 run();
 
 if(query.file){
-	loading = true;
+	editor.loading = true;
 	load(query.file);
 }
 
 window._load = function(){
 	delete window._load; // only need to load once!
-	loading = false;
-	dirty = true;
+	editor.loading = false;
+	editor.dirty = true;
 	syntaxTreeDirty = true;
 	if(query.run)
 		code_run(code);
