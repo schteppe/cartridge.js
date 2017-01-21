@@ -426,20 +426,19 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// full clip
-	// TODO: partial clip
 	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
 		return;
 	}
 
-	pixelops.beforeChange();
+	for(var x=x0; x<=x1; x++){
+		exports.pset(x,y0,col);
+		exports.pset(x,y1,col);
+	}
 
-	var w = x1 - x0;
-	var h = y1 - y0;
-	ctx.fillStyle = paletteHex[col];
-	ctx.fillRect(x0, y0, w, 1);
-	ctx.fillRect(x0, y0, 1, h);
-	ctx.fillRect(x1, y0, 1, h+1);
-	ctx.fillRect(x0, y1, w+1, 1);
+	for(var y=y0; y<=y1; y++){
+		exports.pset(x0,y,col);
+		exports.pset(x1,y,col);
+	}
 };
 
 exports.clip = function(x,y,w,h){
@@ -554,20 +553,40 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	w = w | 0;
 	h = h | 0;
 
-	var sizex = cellsizeX * w;
-	var sizey = cellsizeY * h;
+	var sourceSizeX = cellsizeX * w;
+	var sourceSizeY = cellsizeY * h;
+	var destSizeX = sourceSizeX;
+	var destSizeY = sourceSizeY;
+	var destX = x;
+	var destY = y;
+
+	var sourceX = ssx(n) * cellsizeX;
+	var sourceY = ssy(n) * cellsizeY;
+
+	// Clip lower
+	if(destX < clipX0){
+		sourceX = sourceX + clipX0 - destX;
+		destX = clipX0;
+	}
+	if(destY < clipY0){
+		sourceY = sourceY + clipY0 - destY;
+		destY = clipY0;
+	}
+
+	// TODO: clip upper
+
 	ctx.save();
 	ctx.translate(
-		x + (flip_x ? sizex : 0),
-		y + (flip_y ? sizey : 0)
+		destX + (flip_x ? sourceSizeX : 0),
+		destY + (flip_y ? sourceSizeY : 0)
 	);
 	ctx.scale(flip_x ? -1 : 1, flip_y ? -1 : 1);
 	ctx.drawImage(
 		spriteSheetCanvas,
-		ssx(n) * cellsizeX, ssy(n) * cellsizeY,
-		sizex, sizey,
+		sourceX, sourceY,
+		sourceSizeX, sourceSizeY,
 		0, 0,
-		sizex, sizey
+		destSizeX, destSizeY
 	);
 	ctx.restore();
 };

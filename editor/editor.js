@@ -644,25 +644,49 @@ function mousemovehandler(forceMouseDown){
 					dirty = true;
 				}
 			}
+		} else if(keysdown[32] || mousebtn(2) || mousebtn(3)){
+			// Pan sprite view
+			var dx = mousex() - lastmx;
+			var dy = mousey() - lastmy;
+			sprites.panx -= dx;
+			sprites.pany -= dy;
+
+			// clamp panning
+			sprites_clamp_pan(sprites);
+
+			dirty = true;
 		}
 		break;
 
 	case 'map':
-		if(keysdown[32] || mousebtn(2) || mousebtn(3)){
-			// Pan map
+		if(inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
+			if(keysdown[32] || mousebtn(2) || mousebtn(3)){
+				// Pan map
+				var dx = mousex() - lastmx;
+				var dy = mousey() - lastmy;
+				// TODO: clamp panning
+				mapPanX += dx;
+				mapPanY += dy;
+				dirty = true;
+			} else if((forceMouseDown || mousebtn(1))){
+				// Draw on map
+				mset(
+					flr((mousex() - mapPanX) / cellwidth()),
+					flr((mousey() - mapPanY) / cellheight()),
+					sprites.current
+				);
+				dirty = true;
+			}
+		} else if(keysdown[32] || mousebtn(2) || mousebtn(3)){
+			// Pan sprite view
 			var dx = mousex() - lastmx;
 			var dy = mousey() - lastmy;
-			// TODO: clamp panning
-			mapPanX += dx;
-			mapPanY += dy;
-			dirty = true;
-		} else if((forceMouseDown || mousebtn(1)) && inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
-			// Draw on map
-			mset(
-				flr((mousex() - mapPanX) / cellwidth()),
-				flr((mousey() - mapPanY) / cellheight()),
-				sprites.current
-			);
+			sprites.panx -= dx;
+			sprites.pany -= dy;
+
+			// clamp panning
+			sprites_clamp_pan(sprites);
+
 			dirty = true;
 		}
 		break;
@@ -729,20 +753,27 @@ var editorClick = window._click = function _click(){
 			var cw = cellwidth();
 			var ch = cellheight();
 
-			var spriteX, spriteY;
-
-			if(ssget() === 16){
-				spriteX = flr(mx / cw);
-				spriteY = flr((my-spritesHeight) / ch) + spriteSheetPageSelector.current * 4;
-			} else {
-				spriteX = flr(mx / cw) + (spriteSheetPageSelector.current % 2) * 16;
-				spriteY = flr((my-spritesHeight) / ch) + flr(spriteSheetPageSelector.current / 2) * 4;
-			}
+			var spriteX = flr((mx+sprites.panx) / cw);
+			var spriteY = flr((my-spritesHeight+sprites.pany) / ch);
 			if(spriteX < ssget() && spriteY < ssget()){
 				sprites.current = spriteX + spriteY * ssget();
 				dirty = true;
 			}
 		} else if(intsel_click(spriteSheetPageSelector, mx, my)){
+
+			// Convert to panx/pany values
+			var n = spriteSheetPageSelector.current * 4 * 16;
+			var viewX = 0;
+			var viewY = 4 * spriteSheetPageSelector.current;
+			if(ssget() === 32){
+				viewX = (spriteSheetPageSelector.current % 2) * 16;
+				viewY = flr(spriteSheetPageSelector.current/2) * 4;
+				n = viewY * 32 + viewX;
+			}
+			sprites.panx = viewX*cellwidth();
+			sprites.pany = viewY*cellheight();
+			sprites_clamp_pan(sprites);
+
 			dirty = true;
 		}
 	} else if(mode === 'sfx'){
@@ -855,7 +886,7 @@ var editorClick = window._click = function _click(){
 			dirty = true;
 		}
 	}
-}
+};
 
 var editorLoad = window._init = function _init(){
 
@@ -919,7 +950,7 @@ editorDraw = window._draw = function _draw(){
 		break;
 	case 'sprite':
 		viewport_draw(viewport);
-		sprites_draw();
+		sprites_draw(sprites);
 		palette_draw(palette);
 		buttons_draw(toolButtons);
 		intsel_draw(spriteSheetPageSelector);
@@ -930,7 +961,7 @@ editorDraw = window._draw = function _draw(){
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX-1, mapPanY-1, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
-		sprites_draw();
+		sprites_draw(sprites);
 		intsel_draw(spriteSheetPageSelector);
 		break;
 	case 'sfx':
@@ -1100,7 +1131,7 @@ function mouse_draw(x,y){
 	rectfill(x, y, x, y, 4);
 }
 
-function sprites_draw(){
+function sprites_draw(sprites){
 	var offsetX = 0;
 	var offsetY = height() - cellheight() * 4;
 
@@ -1108,27 +1139,24 @@ function sprites_draw(){
 	var ch = cellheight();
 
 	rectfill(offsetX, offsetY, cw * 16, height(), 0);
-
-	var n = spriteSheetPageSelector.current * 4 * 16;
-	var viewX = 0;
-	var viewY = 4 * spriteSheetPageSelector.current;
-	if(ssget() === 32){
-		viewX = (spriteSheetPageSelector.current % 2) * 16;
-		viewY = flr(spriteSheetPageSelector.current/2) * 4;
-		n = viewY * 32 + viewX;
-	}
-	spr(n, offsetX, offsetY, 16, 4);
+	clip(offsetX, offsetY, cw * 16, 4*ch);
+	spr(0, offsetX-sprites.panx, offsetY-sprites.pany, 16, 16);
 
 	// Rectangle around the current editing sprite
-	if(ssy(sprites.current) >= viewY && ssy(sprites.current) < viewY+ssget()){
-		var x = offsetX + (ssx(sprites.current) - viewX) * cw;
-		var y = offsetY + (ssy(sprites.current) - viewY) * ch;
-		rect(
-			x-1, y-1,
-			x+cw, y+ch,
-			6
-		);
-	}
+	var x = offsetX + (ssx(sprites.current)) * cw - sprites.panx;
+	var y = offsetY + (ssy(sprites.current)) * ch - sprites.pany;
+	rect(
+		x-1, y-1,
+		x+cw, y+ch,
+		6
+	);
+
+	clip();
+}
+
+function sprites_clamp_pan(sprites){
+	sprites.panx = clamp(sprites.panx, 0, Math.max(0,ssget()*cellwidth()-width()));
+	sprites.pany = clamp(sprites.pany, 0, Math.max(0,ssget()*cellheight()-4*cellheight()));
 }
 
 function palette_draw(palette){
