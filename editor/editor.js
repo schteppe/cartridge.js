@@ -1849,8 +1849,6 @@ window.addEventListener('keydown', function(evt){
 			case 46: if(mode === 'sprite') clearSprite(sprites.current); break; // delete
 			case 81: if(mode === 'sprite' || mode === 'map') sprites.current=mod(sprites.current-1,ssget()*ssget()); break; // Q
 			case 87: if(mode === 'sprite' || mode === 'map') sprites.current=mod(sprites.current+1,ssget()*ssget()); break; // W
-			case 83: if(mode === 'game') save('game.json'); break; // S
-			case 79: if(mode === 'game') openfile(); break; // O
 			case 32: if(mode === 'sfx') sfx(sfxSelector.current); break;
 		}
 	}
@@ -1860,12 +1858,19 @@ window.addEventListener('keydown', function(evt){
 document.addEventListener('keydown', function(e){
 	if(mode === 'run') return;
 
-	// Prevent ctrl + s
+	// ctrl + s
 	if (e.keyCode == 83 && (isMac() ? e.metaKey : e.ctrlKey)){
+		save('game.json');
 		e.preventDefault();
 	}
 
-	// Prevent backspace
+	// ctrl + o
+	if (e.keyCode == 79 && (isMac() ? e.metaKey : e.ctrlKey)){
+ 		openfile();
+		e.preventDefault();
+	}
+
+	// backspace
 	if (mode === 'code' && e.keyCode === 8) {
 		e.preventDefault();
 	}
