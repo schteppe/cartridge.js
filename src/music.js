@@ -21,7 +21,8 @@ function getFrequency(pitch, octave){
 }
 
 var groups = [];
-var maxPatterns = 8;
+var maxPatterns = 64;
+var maxGroups = 64;
 var patterns = utils.zeros(maxPatterns * (4 + 1)); // 4 channels (pointing to groups), 1 bitfield/flags
 
 var playState = {
@@ -34,7 +35,7 @@ var playState = {
 	startTimeLowRes: 0
 };
 
-while(groups.length < 8){
+while(groups.length < maxGroups){
 	var group = {
 		speed: 16,
 		notes: utils.zeros(5 * 8 * 4) // pitch, octave, instrument, volume, effect

@@ -463,7 +463,11 @@ var patternSelector = {
 	current: 0,
 	padding: 0,
 	min: function(){ return 0; },
-	max: function(){ return	7; },
+	max: function(){
+		var maxPatterns = 0;
+		while(mfget(maxPatterns+1) !== undefined) maxPatterns++;
+		return maxPatterns;
+	},
 	prefix: '',
 	postfix: ''
 };
@@ -485,7 +489,11 @@ var trackGroupSelector = {
 	current: 1,
 	padding: 6,
 	min: function(){ return 1; },
-	max: function(){ return 7; },
+	max: function(){
+		var maxTracks = 0;
+		while(gsget(maxTracks+1) !== undefined) maxTracks++;
+		return maxTracks;
+	},
 	prefix: '',
 	postfix: ''
 };
@@ -1810,7 +1818,7 @@ function reset(){
 		}
 	}
 
-	// Music
+	// Tracks
 	for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 		gsset(groupIndex);
 		for(var position=0; position<32; position++){
@@ -1818,8 +1826,8 @@ function reset(){
 		}
 	}
 
-	// Tracks
-	for(var pattern=0; pattern<8; pattern++){
+	// Patterns
+	for(var pattern=0; mfget(pattern) !== undefined; pattern++){
 		mfset(pattern);
 		for(var channel=0; channel<4; channel++){
 			mgset(pattern, channel);
