@@ -1,5 +1,3 @@
-(function(){
-
 // For safari
 if(Object.values === undefined){
 	Object.values = function(obj){
@@ -2116,5 +2114,3 @@ window._load = function(){
 	if(query.run)
 		code_run(code);
 };
-
-})();
