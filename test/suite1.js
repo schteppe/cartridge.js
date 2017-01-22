@@ -151,6 +151,14 @@ this.suite1 = {
             test.equal(typeof fget(0), 'number');
             test.equal(typeof fget(0,1), 'boolean');
             test.done();
+        },
+        spr: function(test){
+            spr(1,0,0);
+            test.done();
+        },
+        spr2: function(test){
+            spr2(1,0,0,0);
+            test.done();
         }
     },
 

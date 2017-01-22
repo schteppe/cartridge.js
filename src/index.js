@@ -555,6 +555,11 @@ function ssy(n){
 	return Math.floor(n / spriteSheetSizeX) % (spriteSheetSizeX * spriteSheetSizeY);
 }
 
+exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
+	var n = ny * spriteSheetSizeX + nx;
+	return spr(n, x, y, w, h, flip_x, flip_y);
+};
+
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
 	if(spriteSheetDirty) redrawSpriteSheet();
