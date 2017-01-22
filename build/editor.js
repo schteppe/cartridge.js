@@ -1771,7 +1771,7 @@ function flipSprite(spriteNumber, flipX){
 }
 
 function copySprite(from,to){
-	if(sprites.current === 0) return;
+	if(to === 0) return;
 
 	var i,j;
 	for(i=0; i<cellwidth(); i++){

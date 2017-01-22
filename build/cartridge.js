@@ -2793,10 +2793,7 @@ function resizeCanvases(){
 	pixelops.resize(canvases[0]);
 
 	// Reset clip state
-	clipX0 = 0;
-	clipY0 = 0;
-	clipX1 = screensizeX;
-	clipY1 = screensizeY;
+	clip();
 }
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
@@ -2964,6 +2961,14 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	cel_h = cel_h | 0;
 
 	var i,j;
+
+	var x0 = sx;
+	var x1 = sx + cel_w * cellwidth();
+	var y0 = sy;
+	var y1 = sy + cel_h * cellheight();
+	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+		return; // fully outside the clip area
+	}
 
 	if(layer === 0){
 		// Update invalidated map cache
