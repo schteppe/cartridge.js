@@ -43,14 +43,17 @@ while(groups.length < 8){
 }
 
 exports.gsset = function(group, speed){
+	speed = speed !== undefined ? speed : 16;
 	groups[group].speed = speed;
 };
 
 exports.gsget = function(group){
+	if(group >= groups.length) return;
 	return groups[group].speed;
 };
 
 exports.npset = function(group, position, pitch){
+	pitch = pitch !== undefined ? pitch : 0;
 	if(pitch < 0 || pitch > noteNames.length) throw new Error('Pitch out of range');
 	groups[group].notes[5 * position + 0] = pitch;
 };
@@ -65,6 +68,7 @@ exports.nnget = function(note){
 
 // Octave is the "pitch multiplier", from 0 to 8 (more limits?)
 exports.noset = function(group, position, octave){
+	octave = octave !== undefined ? octave : 0;
 	if(octave < 0 || octave > 8) throw new Error('Octave out of range');
 	groups[group].notes[5 * position + 1] = octave;
 };
@@ -75,6 +79,7 @@ exports.noget = function(group, position){
 
 // volume for a note
 exports.nvset = function(group, position, volume){
+	volume = volume !== undefined ? volume : 0;
 	groups[group].notes[5 * position + 3] = volume;
 
 	// If volume is zero, set the other data to zero
@@ -91,6 +96,7 @@ exports.nvget = function(group, position){
 
 // instrument for a note
 exports.niset = function(group, position, instrument){
+	instrument = instrument !== undefined ? instrument : 0;
 	groups[group].notes[5 * position + 2] = instrument;
 };
 
@@ -100,6 +106,8 @@ exports.niget = function(group, position){
 
 // Set a group to be played in a channel in a pattern.
 exports.mgset = function(pattern, channel, group){
+	group = group !== undefined ? group : 0;
+	channel = channel !== undefined ? channel : 0;
 	patterns[pattern * 5 + 1 + channel] = group;
 };
 
@@ -109,6 +117,7 @@ exports.mgget = function(pattern, channel){
 
 // Set flags for a pattern
 exports.mfset = function(pattern, flags){
+	flags = flags !== undefined ? flags : 0;
 	patterns[pattern * 5 + 0] = flags;
 };
 

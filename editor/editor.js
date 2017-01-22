@@ -1778,13 +1778,16 @@ function copySprite(from,to){
 	}
 }
 
+// TODO: should this logic be in the engine?
 function reset(){
-	// Clear sprites
+
+	// sprites
 	var numSprites = ssget() * ssget();
 	for(var i=0; i<numSprites; i++){
 		clearSprite(i);
 		fset(i,0);
 	}
+
 	// Map
 	for(var i=0; i<128; i++){
 		for(var j=0; j<32; j++){
@@ -1794,7 +1797,7 @@ function reset(){
 
 	// palette
 	for(var i=0; i<16; i++){
-		palset(i);
+		palset(i); // set default
 	}
 	palset(16,-1);
 
@@ -1804,6 +1807,22 @@ function reset(){
 			avset(i,j);
 			afset(i,j);
 			awset(i,j);
+		}
+	}
+
+	// Music
+	for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
+		gsset(groupIndex);
+		for(var position=0; position<32; position++){
+			nvset(groupIndex, position, 0);
+		}
+	}
+
+	// Tracks
+	for(var pattern=0; pattern<8; pattern++){
+		mfset(pattern);
+		for(var channel=0; channel<4; channel++){
+			mgset(pattern, channel);
 		}
 	}
 
