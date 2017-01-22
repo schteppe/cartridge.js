@@ -2804,6 +2804,10 @@ exports.alpha = function(){ return _alpha; }; // for interpolation
 // TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
+		if(screensizeX === newWidth){
+			// unchanged
+			return;
+		}
 		screensizeX = newWidth | 0;
 		resizeCanvases();
 	}
@@ -2813,6 +2817,10 @@ exports.width = function(newWidth){
 // TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
+		if(screensizeY === newHeight){
+			// unchanged
+			return;
+		}
 		screensizeY = newHeight | 0;
 		resizeCanvases();
 	}
@@ -2822,6 +2830,10 @@ exports.height = function(newHeight){
 // TODO: rename to cwget/set() ?
 exports.cellwidth = function(newCellWidth){
 	if(newCellWidth !== undefined){
+		if(newCellWidth === cellsizeX){
+			// unchanged
+			return;
+		}
 		setCellSize(newCellWidth, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeX;
@@ -2831,6 +2843,10 @@ exports.cellwidth = function(newCellWidth){
 // TODO: rename to chget/set() ?
 exports.cellheight = function(newCellHeight){
 	if(newCellHeight !== undefined){
+		if(newCellHeight === cellsizeY){
+			// unchanged
+			return;
+		}
 		setCellSize(cellsizeX, newCellHeight, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeY;
@@ -2889,20 +2905,19 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// full clip
-	// TODO: partial clip
 	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
 		return;
 	}
 
-	pixelops.beforeChange();
+	for(var x=x0; x<=x1; x++){
+		exports.pset(x,y0,col);
+		exports.pset(x,y1,col);
+	}
 
-	var w = x1 - x0;
-	var h = y1 - y0;
-	ctx.fillStyle = paletteHex[col];
-	ctx.fillRect(x0, y0, w, 1);
-	ctx.fillRect(x0, y0, 1, h);
-	ctx.fillRect(x1, y0, 1, h+1);
-	ctx.fillRect(x0, y1, w+1, 1);
+	for(var y=y0; y<=y1; y++){
+		exports.pset(x0,y,col);
+		exports.pset(x1,y,col);
+	}
 };
 
 exports.clip = function(x,y,w,h){
@@ -3017,20 +3032,40 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	w = w | 0;
 	h = h | 0;
 
-	var sizex = cellsizeX * w;
-	var sizey = cellsizeY * h;
+	var sourceSizeX = cellsizeX * w;
+	var sourceSizeY = cellsizeY * h;
+	var destSizeX = sourceSizeX;
+	var destSizeY = sourceSizeY;
+	var destX = x;
+	var destY = y;
+
+	var sourceX = ssx(n) * cellsizeX;
+	var sourceY = ssy(n) * cellsizeY;
+
+	// Clip lower
+	if(destX < clipX0){
+		sourceX = sourceX + clipX0 - destX;
+		destX = clipX0;
+	}
+	if(destY < clipY0){
+		sourceY = sourceY + clipY0 - destY;
+		destY = clipY0;
+	}
+
+	// TODO: clip upper
+
 	ctx.save();
 	ctx.translate(
-		x + (flip_x ? sizex : 0),
-		y + (flip_y ? sizey : 0)
+		destX + (flip_x ? sourceSizeX : 0),
+		destY + (flip_y ? sourceSizeY : 0)
 	);
 	ctx.scale(flip_x ? -1 : 1, flip_y ? -1 : 1);
 	ctx.drawImage(
 		spriteSheetCanvas,
-		ssx(n) * cellsizeX, ssy(n) * cellsizeY,
-		sizex, sizey,
+		sourceX, sourceY,
+		sourceSizeX, sourceSizeY,
 		0, 0,
-		sizex, sizey
+		destSizeX, destSizeY
 	);
 	ctx.restore();
 };
@@ -3256,6 +3291,7 @@ function toJSON(){
 	for(var i=0; i<spriteFlags.length; i++){
 		data.flags[i] = fget(i);
 	}
+	utils.removeTrailingZeros(data.flags);
 
 	// Sprite data
 	for(i=0; i<ssget()*cellwidth(); i++){
@@ -3349,7 +3385,7 @@ function loadJSON(data){
 	}
 
 	for(i=0; i<spriteFlags.length; i++){
-		fset(i, data.flags[i]);
+		fset(i, data.flags[i] || 0);
 	}
 	setPalette(data.palette);
 	for(i=0; i<spriteSheetSizeX*cellwidth(); i++){
@@ -3734,17 +3770,21 @@ function getFrequency(pitch, octave){
 }
 
 var groups = [];
-var maxPatterns = 8;
+var maxPatterns = 64;
+var maxGroups = 64;
 var patterns = utils.zeros(maxPatterns * (4 + 1)); // 4 channels (pointing to groups), 1 bitfield/flags
 
 var playState = {
 	pattern: -1,
 	nextPattern: -1,
 	bufferedUntil: 0,
-	patternLength: 0
+	bufferedUntilLowRes: 0, // Use low res timer if possible, because context.currentTime is slow on some devices
+	patternLength: 0,
+	startTime: 0,
+	startTimeLowRes: 0
 };
 
-while(groups.length < 8){
+while(groups.length < maxGroups){
 	var group = {
 		speed: 16,
 		notes: utils.zeros(5 * 8 * 4) // pitch, octave, instrument, volume, effect
@@ -3753,14 +3793,17 @@ while(groups.length < 8){
 }
 
 exports.gsset = function(group, speed){
+	speed = speed !== undefined ? speed : 16;
 	groups[group].speed = speed;
 };
 
 exports.gsget = function(group){
+	if(group >= groups.length) return;
 	return groups[group].speed;
 };
 
 exports.npset = function(group, position, pitch){
+	pitch = pitch !== undefined ? pitch : 0;
 	if(pitch < 0 || pitch > noteNames.length) throw new Error('Pitch out of range');
 	groups[group].notes[5 * position + 0] = pitch;
 };
@@ -3775,6 +3818,7 @@ exports.nnget = function(note){
 
 // Octave is the "pitch multiplier", from 0 to 8 (more limits?)
 exports.noset = function(group, position, octave){
+	octave = octave !== undefined ? octave : 0;
 	if(octave < 0 || octave > 8) throw new Error('Octave out of range');
 	groups[group].notes[5 * position + 1] = octave;
 };
@@ -3785,6 +3829,7 @@ exports.noget = function(group, position){
 
 // volume for a note
 exports.nvset = function(group, position, volume){
+	volume = volume !== undefined ? volume : 0;
 	groups[group].notes[5 * position + 3] = volume;
 
 	// If volume is zero, set the other data to zero
@@ -3801,6 +3846,7 @@ exports.nvget = function(group, position){
 
 // instrument for a note
 exports.niset = function(group, position, instrument){
+	instrument = instrument !== undefined ? instrument : 0;
 	groups[group].notes[5 * position + 2] = instrument;
 };
 
@@ -3810,6 +3856,8 @@ exports.niget = function(group, position){
 
 // Set a group to be played in a channel in a pattern.
 exports.mgset = function(pattern, channel, group){
+	group = group !== undefined ? group : 0;
+	channel = channel !== undefined ? channel : 0;
 	patterns[pattern * 5 + 1 + channel] = group;
 };
 
@@ -3819,6 +3867,7 @@ exports.mgget = function(pattern, channel){
 
 // Set flags for a pattern
 exports.mfset = function(pattern, flags){
+	flags = flags !== undefined ? flags : 0;
 	patterns[pattern * 5 + 0] = flags;
 };
 
@@ -3834,6 +3883,7 @@ var masterGain = sfx.getMasterGain();
 var channels = [];
 var oscillatorTypes = sfx.getOscillatorTypes();
 var allTypes = sfx.getAllOscillatorTypes();
+var cTime = context.currentTime;
 for(var j=0; j<4; j++){ // one for each channel in the music
 	var channel = {
 		instruments: {},
@@ -3856,7 +3906,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 		channel.instruments[type] = osc;
 		channel.gains[type] = gain;
 		channel.volumeMultipliers[type] = 1 / sfx.rms[type];
-		osc.start(context.currentTime);
+		osc.start(cTime);
 	}
 
 	// Add square25 / pulse
@@ -3867,7 +3917,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	channel.instruments.square25 = square25;
 	channel.gains.square25 = gain;
 	channel.volumeMultipliers.square25 = 1 / sfx.rms.square25;
-	square25.start(context.currentTime);
+	square25.start(cTime);
 
 	// Add white noise
 	gain = context.createGain();
@@ -3877,7 +3927,7 @@ for(var j=0; j<4; j++){ // one for each channel in the music
 	channel.instruments.white = whiteNoise;
 	channel.gains.white = gain;
 	channel.volumeMultipliers.white = 1 / sfx.rms.white;
-	whiteNoise.start(context.currentTime);
+	whiteNoise.start(cTime);
 }
 
 exports.iosFix = function(){
@@ -3949,7 +3999,9 @@ exports.music = function(patternIndex, fade, channelmask){
 	playState.nextPattern = getNextPattern(patternIndex);
 	playState.patternLength = getPatternLength(patternIndex);
 	playState.startTime = startTime;
+	playState.startTimeLowRes = Date.now()/1000;
 	playState.bufferedUntil = startTime + playState.patternLength;
+	playState.bufferedUntilLowRes = Date.now()/1000 + playState.patternLength;
 
 	// schedule groups in all channels
 	for(var channelIndex=0; channelIndex < channels.length; channelIndex++){
@@ -3991,9 +4043,9 @@ exports.update = function(){
 		return;
 	}
 
-	var currentTime = context.currentTime;
+	var currentTime = Date.now()/1000;
 
-	if(currentTime < playState.bufferedUntil - playState.patternLength * 0.5){
+	if(currentTime < playState.bufferedUntilLowRes - playState.patternLength * 0.5){
 		// Already buffered enough
 		return;
 	}
@@ -4009,7 +4061,9 @@ exports.update = function(){
 	playState.pattern = playState.nextPattern;
 	playState.patternLength = getPatternLength(playState.pattern);
 	playState.startTime += prevPatternLength;
+	playState.startTimeLowRes += prevPatternLength;
 	playState.bufferedUntil = playState.startTime + playState.patternLength;
+	playState.bufferedUntilLowRes = playState.startTimeLowRes + playState.patternLength;
 	playState.nextPattern = getNextPattern(playState.pattern);
 };
 
@@ -4322,9 +4376,10 @@ exports.createWhiteNoise = function(destination) {
 	whiteNoise.connect(destination);
 
 	return whiteNoise;
-}
+};
 
 var dft = null;
+var pulseWave = null;
 exports.createPulse = function(destination){
 	if(!dft){
 		var count = 128;
@@ -4337,19 +4392,20 @@ exports.createPulse = function(destination){
 
 		dft = new DFT(vals2.length);
 		dft.forward(vals2);
-	}
-	// DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
-	var table = context.createPeriodicWave(
-		new Float32Array(dft.real),
-		new Float32Array(dft.imag)
-	);
 
-	osc = context.createOscillator();
-	osc.setPeriodicWave(table);
+		// DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
+		pulseWave = context.createPeriodicWave(
+			new Float32Array(dft.real),
+			new Float32Array(dft.imag)
+		);
+	}
+
+	var osc = context.createOscillator();
+	osc.setPeriodicWave(pulseWave);
 	osc.connect(destination);
 
 	return osc;
-}
+};
 
 
 for(var j=0; j<4; j++){
