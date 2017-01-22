@@ -12,6 +12,8 @@ Create a full game containing your own sprites, maps, sounds, gamepad input, mus
 
 [![megaman-intro](https://cloud.githubusercontent.com/assets/1063152/21720795/6fa28680-d425-11e6-8530-f516e8697b5d.png)](https://schteppe.github.io/cartridge.js/editor/?file=../carts/megaman-intro.json&run=1)
 [![lemmings](https://cloud.githubusercontent.com/assets/1063152/21808248/c1c28e54-d742-11e6-8c07-50e40d8ba6d2.png)](https://schteppe.github.io/cartridge.js/editor/?file=../carts/lemmings.json&run=1)
+[![game-of-life](https://cloud.githubusercontent.com/assets/1063152/22184077/616345b6-e0cb-11e6-940d-4e61c1455421.png)](https://schteppe.github.io/cartridge.js/editor/?file=../carts/gameoflife.json&run=1)
+
 [![twister](https://cloud.githubusercontent.com/assets/1063152/22183937/61f1ff60-e0c9-11e6-8835-0c99ebd31d0b.png)](https://schteppe.github.io/cartridge.js/editor/?file=../carts/twister.json&run=1)
 [![input-test](https://cloud.githubusercontent.com/assets/1063152/22183938/6498d446-e0c9-11e6-81a9-29a9c39780ea.png)](https://schteppe.github.io/cartridge.js/editor/?file=../carts/input.json&run=1)
 
