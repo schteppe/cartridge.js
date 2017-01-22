@@ -341,6 +341,10 @@ exports.alpha = function(){ return _alpha; }; // for interpolation
 // TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
+		if(screensizeX === newWidth){
+			// unchanged
+			return;
+		}
 		screensizeX = newWidth | 0;
 		resizeCanvases();
 	}
@@ -350,6 +354,10 @@ exports.width = function(newWidth){
 // TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
+		if(screensizeY === newHeight){
+			// unchanged
+			return;
+		}
 		screensizeY = newHeight | 0;
 		resizeCanvases();
 	}
@@ -359,6 +367,10 @@ exports.height = function(newHeight){
 // TODO: rename to cwget/set() ?
 exports.cellwidth = function(newCellWidth){
 	if(newCellWidth !== undefined){
+		if(newCellWidth === cellsizeX){
+			// unchanged
+			return;
+		}
 		setCellSize(newCellWidth, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeX;
@@ -368,6 +380,10 @@ exports.cellwidth = function(newCellWidth){
 // TODO: rename to chget/set() ?
 exports.cellheight = function(newCellHeight){
 	if(newCellHeight !== undefined){
+		if(newCellHeight === cellsizeY){
+			// unchanged
+			return;
+		}
 		setCellSize(cellsizeX, newCellHeight, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
 		return cellsizeY;
