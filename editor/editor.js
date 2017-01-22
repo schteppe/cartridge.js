@@ -2078,10 +2078,10 @@ cartridge({
 	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (isMobile ? 1 : 0)
 });
 
-cellwidth(16);
-cellheight(16);
-width(256);
-height(240);
+cellwidth(8);
+cellheight(8);
+width(128);
+height(128);
 sprites_clamp_pan(sprites);
 
 palset(0, 0x000000);
