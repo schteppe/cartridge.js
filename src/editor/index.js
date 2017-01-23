@@ -1785,6 +1785,12 @@ function reset(){
 
 	// Code
 	code_set("");
+
+	width(128);
+	height(128);
+	cellwidth(8);
+	cellheight(8);
+	ssset(16);
 }
 
 window.addEventListener('keydown', function(evt){
