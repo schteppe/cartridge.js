@@ -760,6 +760,7 @@ exports.mget = function mget(x, y){
 exports.mset = function mset(x, y, i){
 	if(mget(x,y) === i) return;
 
+	i = i | 0;
 	x = x | 0;
 	y = y | 0;
 

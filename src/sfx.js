@@ -74,8 +74,6 @@ function createAudioContext(desiredSampleRate) {
 
 function play(channel, types, frequencies, volumes, speed, offset){
 	var i,j;
-	var osc = channel.oscillators[allTypes[types[offset+0]]];
-	var gain = channel.gains[allTypes[types[offset+0]]];
 
 	// Get the length by looking at the volume values
 	var endPosition = 0;
@@ -87,36 +85,36 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	if(endPosition === 0) return;
 
 	var currentTime = context.currentTime;
-	for(i=offset; i<endPosition; i++){
-		var type = allTypes[types[i]];
-		osc = channel.oscillators[type];
 
-		var startTime = currentTime + i / speed;
+	var prevType = null;
+	for(j=offset; j<endPosition; j++){
+		var type = allTypes[types[j]];
+		var gain = channel.gains[type];
+		var osc = channel.oscillators[type];
+		var startTime = currentTime + j / speed;
 
-		for(j=0; j<allTypes.length; j++){ // todo: do one type at a time !
-			gain = channel.gains[allTypes[j]];
-
-			// Set other gains to zero
-			if(allTypes[j] !== type){
-				gain.gain.setValueAtTime(0, startTime);
-			} else {
-				var vol = volumes[i] / 255 * (1 / exports.rms[allTypes[j]]);
-				if(osc.frequency){ // noise doesn't have frequency
-					var frequency = frequencies[i] / 255 * (maxFrequency - minFrequency) + minFrequency;
-					osc.frequency.setValueAtTime(frequency, startTime);
-					if(frequency !== 0) vol /= aWeight(frequency);
-				}
-				gain.gain.setValueAtTime(vol, startTime);
-			}
+		if(prevType !== type && prevType !== null){
+			channel.gains[prevType].gain.setValueAtTime(0, startTime);
 		}
+
+		var vol = volumes[j] / 255 * (1 / exports.rms[type]);
+
+		if(osc.frequency){ // noise doesn't have frequency
+			var frequency = frequencies[j] / 255 * (maxFrequency - minFrequency) + minFrequency;
+			osc.frequency.setValueAtTime(frequency, startTime);
+			if(frequency !== 0) vol /= aWeight(frequency);
+		}
+
+		gain.gain.setValueAtTime(vol, startTime);
+
+		prevType = type;
 	}
 
 	// Set the volume at the end to zero
-	var len = (endPosition-offset) / speed;
-	var endTime = currentTime + len;
-	for(j=0; j<allTypes.length; j++){
-		gain = channel.gains[allTypes[j]];
-		gain.gain.setValueAtTime(0, endTime);
+	if(prevType !== null){
+		var len = (endPosition - offset) / speed;
+		var endTime = currentTime + len;
+		channel.gains[prevType].gain.setValueAtTime(0, endTime);
 	}
 
 	channel.occupiedUntil = endTime;
