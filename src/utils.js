@@ -279,3 +279,8 @@ exports.floodfill = function(get, set, x, y, target, replace, xmin, xmax, ymin, 
 		}
 	}
 };
+
+// Reliable modulo
+exports.mod = function(a,b) {
+	return ((a%b)+b)%b;
+};

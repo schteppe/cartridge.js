@@ -1534,7 +1534,7 @@ function code_keydown(code, evt){
 		code_clamp_ccol(code, codeArray);
 		evt.preventDefault();
 	} else {
-		var shouldJump = (evt.altKey && isMac()) || (evt.ctrlKey && !isMac());
+		var shouldJump = (evt.altKey && utils.isMac()) || (evt.ctrlKey && !utils.isMac());
 		switch(evt.keyCode){
 		case 37: // left
 			if(code.ccol === 0 && code.crow > 0){
@@ -1777,9 +1777,6 @@ function reset(){
 	code_set("");
 }
 
-function mod(a,b) { return ((a%b)+b)%b; }
-function isMac(){ return navigator.platform.match("Mac"); }
-
 window.addEventListener('keydown', function(evt){
 	if(editor.mode === 'run'){
 		if(evt.keyCode === 27){
@@ -1794,9 +1791,9 @@ window.addEventListener('keydown', function(evt){
 	// alt + left or right, switch editor
 	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
 		var delta = evt.keyCode === 37 ? -1 : 1;
-		editor.mode = editor.modes[mod(modes.indexOf(editor.mode)+delta, editor.modes.length)];
+		editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
 		if(editor.mode === 'run')
-			editor.mode = editor.modes[mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
+			editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
 		editor.dirty = true;
 
 		// Prevent going back in history
@@ -1808,7 +1805,7 @@ window.addEventListener('keydown', function(evt){
 	}
 
 	// ctrl+enter -> run game
-	if(evt.keyCode === 13 && (isMac() ? evt.metaKey : evt.ctrlKey)){
+	if(evt.keyCode === 13 && (utils.isMac() ? evt.metaKey : evt.ctrlKey)){
 		code_run(code);
 		return;
 	}
@@ -1821,8 +1818,8 @@ window.addEventListener('keydown', function(evt){
 			case 70: if(editor.mode === 'sprite') flipSprite(sprites.current, true); break; // F
 			case 82: if(editor.mode === 'sprite') rotateSprite(sprites.current); break; // R
 			case 46: if(editor.mode === 'sprite') clearSprite(sprites.current); break; // delete
-			case 81: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=mod(sprites.current-1,ssget()*ssget()); break; // Q
-			case 87: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=mod(sprites.current+1,ssget()*ssget()); break; // W
+			case 81: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current-1,ssget()*ssget()); break; // Q
+			case 87: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current+1,ssget()*ssget()); break; // W
 			case 32: if(editor.mode === 'sfx') sfx(sfxSelector.current); break;
 		}
 	}
@@ -1833,13 +1830,13 @@ document.addEventListener('keydown', function(e){
 	if(editor.mode === 'run') return;
 
 	// ctrl + s
-	if (e.keyCode == 83 && (isMac() ? e.metaKey : e.ctrlKey)){
+	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
 		save('game.json');
 		e.preventDefault();
 	}
 
 	// ctrl + o
-	if (e.keyCode == 79 && (isMac() ? e.metaKey : e.ctrlKey)){
+	if (e.keyCode == 79 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
  		openfile();
 		e.preventDefault();
 	}
