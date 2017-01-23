@@ -1860,29 +1860,20 @@ window.addEventListener('keypress', function(evt){
 });
 
 function openfile(){
-	var input = document.createElement('input');
-	input.type = 'file';
-	input.addEventListener('change', readSingleFile, false);
-	input.click();
-}
-
-function readSingleFile(e) {
-	var file = e.target.files[0];
-	if (!file) {
-		return;
-	}
-	var reader = new FileReader();
-	reader.onload = function(e) {
+	utils.opentextfile(function(err, text){
+		if(err){
+			console.error(err);
+			return;
+		}
 		try {
-			var json = JSON.parse(e.target.result);
+			var json = JSON.parse(text);
 			load(json);
 			syntaxTreeDirty = true;
 			editor.dirty = true;
 		} catch(err){
-			console.error("Could not open file.");
+			console.error('Could not load file');
 		}
-	};
-	reader.readAsText(file);
+	});
 }
 
 window.addEventListener('paste', handlepaste, false);

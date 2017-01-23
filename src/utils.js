@@ -284,3 +284,31 @@ exports.floodfill = function(get, set, x, y, target, replace, xmin, xmax, ymin, 
 exports.mod = function(a,b) {
 	return ((a%b)+b)%b;
 };
+
+var input = null;
+exports.opentextfile = function(callback){
+	if(!input){
+		input = document.createElement('input');
+		input.style.display = 'none';
+		input.type = 'file';
+		input.value = null;
+		document.body.appendChild(input);
+	}
+	input.onchange = function(e) {
+		var file = e.target.files[0];
+		if (!file) {
+			return callback(new Error('No file.'));
+		}
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			callback(null, e.target.result);
+		};
+		reader.onerror = function(e) {
+			callback(new Erorr('Could not open file.'));
+		};
+		reader.readAsText(file);
+		this.value = null;
+	};
+
+	input.click();
+};
