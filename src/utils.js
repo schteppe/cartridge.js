@@ -219,3 +219,63 @@ exports.iosAudioFix = function(element, callback){
 		}, 0);
 	};
 };
+
+exports.values = function(obj){
+	var vals = [];
+	for(var key in obj) {
+		vals.push(obj[key]);
+	}
+	return vals;
+};
+
+// Parse query vars
+// "search" is window.location.search
+exports.parseQueryVariables = function(search,variables) {
+    var query = search.substring(1);
+    var vars = query.split('&');
+	var result = {};
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+		var varName = decodeURIComponent(pair[0]);
+		var type = variables[varName];
+        if (type === undefined) continue;
+
+		var value = decodeURIComponent(pair[1]);
+		var ok = false;
+		switch(type){
+			case 'i':
+				value = parseInt(value, 10);
+				ok = !isNaN(value);
+				break;
+			case 'b':
+				value = (value === "1");
+				ok = true;
+				break;
+			case 's':
+				ok = true;
+				break;
+		}
+		if(ok){
+			result[varName] = value;
+        }
+    }
+    return result;
+};
+
+exports.floodfill = function(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){
+	if(target === replace) return;
+	if(get(x,y) !== target) return;
+	var q = [];
+	q.push(x,y);
+	while(q.length){
+		var nx = q.shift();
+		var ny = q.shift();
+		if(get(nx,ny) === target){
+			set(nx,ny,replace);
+			if(nx > xmin && get(nx-1,ny) === target) q.push(nx-1,ny);
+			if(nx < xmax && get(nx+1,ny) === target) q.push(nx+1,ny);
+			if(ny < ymax && get(nx,ny+1) === target) q.push(nx,ny+1);
+			if(ny > ymin && get(nx,ny-1) === target) q.push(nx,ny-1);
+		}
+	}
+};

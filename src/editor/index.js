@@ -1,58 +1,10 @@
-// For safari
-if(Object.values === undefined){
-	Object.values = function(obj){
-		var vals = [];
-		for(var key in obj) {
-			vals.push(obj[key]);
-		}
-		return vals;
-	};
-}
+var utils = require('../utils');
 
-// Parse query vars
-function getQueryVariables(variables) {
-    var query = window.location.search.substring(1);
-    var vars = query.split('&');
-	var result = {};
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=');
-		var varName = decodeURIComponent(pair[0]);
-		var type = variables[varName];
-        if (type === undefined) continue;
-
-		var value = decodeURIComponent(pair[1]);
-		var ok = false;
-		switch(type){
-			case 'i':
-				value = parseInt(value, 10);
-				ok = !isNaN(value);
-				break;
-			case 'b':
-				value = (value === "1");
-				ok = true;
-				break;
-			case 's':
-				ok = true;
-				break;
-		}
-		if(ok){
-			result[varName] = value;
-        }
-    }
-    return result;
-}
-
-var query = getQueryVariables({
+var query = utils.parseQueryVariables(window.location.search, {
 	pixel_perfect: 'i',
 	run: 'b',
 	file: 's'
 });
-
-function resizeHandler(){
-	editor.dirty = true;
-}
-window.addEventListener("resize", resizeHandler);
-window.addEventListener("mozfullscreenchange", resizeHandler);
 
 var editorModes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
 var editor = {
@@ -66,6 +18,12 @@ var editor = {
 	keysdown: {},
 	draw: null
 };
+
+function resizeHandler(){
+	editor.dirty = true;
+}
+window.addEventListener("resize", resizeHandler);
+window.addEventListener("mozfullscreenchange", resizeHandler);
 
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
@@ -601,23 +559,6 @@ function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y 
 function decToR(c){ return Math.floor(c / (256*256)); }
 function decToG(c){ return Math.floor(c / 256) % 256; }
 function decToB(c){ return c % 256; }
-function floodfill(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){
-	if(target === replace) return;
-	if(get(x,y) !== target) return;
-	var q = [];
-	q.push(x,y);
-	while(q.length){
-		var nx = q.shift();
-		var ny = q.shift();
-		if(get(nx,ny) === target){
-			set(nx,ny,replace);
-			if(nx > xmin && get(nx-1,ny) === target) q.push(nx-1,ny);
-			if(nx < xmax && get(nx+1,ny) === target) q.push(nx+1,ny);
-			if(ny < ymax && get(nx,ny+1) === target) q.push(nx,ny+1);
-			if(ny > ymin && get(nx,ny-1) === target) q.push(nx,ny-1);
-		}
-	}
-}
 
 function mousemovehandler(forceMouseDown){
 	switch(editor.mode){
@@ -642,7 +583,7 @@ function mousemovehandler(forceMouseDown){
 					var y0 = ssy(sprites.current) * cellheight();
 					var fillx = x0 + x;
 					var filly = y0 + y;
-					floodfill(
+					utils.floodfill(
 						sget,
 						sset,
 						fillx,
@@ -1410,7 +1351,7 @@ function code_draw(code){
 					print("//" + node.value, nodeX, rowY, code.commentColor);
 					break;
 			}
-			Object.values(node).forEach(add);
+			utils.values(node).forEach(add);
 		}
 
 		position += row.length + 1;
