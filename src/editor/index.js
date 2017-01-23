@@ -1,11 +1,5 @@
 var utils = require('../utils');
 
-var query = utils.parseQueryVariables(window.location.search, {
-	pixel_perfect: 'i',
-	run: 'b',
-	file: 's'
-});
-
 var editorModes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
 var editor = {
 	modes: editorModes,
@@ -2008,6 +2002,12 @@ document.addEventListener('copy', function(e){
 		e.preventDefault();
 		break;
 	}
+});
+
+var query = utils.parseQueryVariables(window.location.search, {
+	pixel_perfect: 'i',
+	run: 'b',
+	file: 's'
 });
 
 cartridge({
