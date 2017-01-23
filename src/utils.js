@@ -312,3 +312,7 @@ exports.opentextfile = function(callback){
 
 	input.click();
 };
+
+exports.inrect = function(x,y,rx,ry,rw,rh){
+	return x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+};

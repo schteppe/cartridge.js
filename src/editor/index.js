@@ -524,7 +524,7 @@ function intsel_draw(intsel){
 }
 
 function intsel_click(intsel, x, y){
-	if(inrect(x,y,intsel.x(),intsel.y(), 3 * (intsel.padding * 2 + 6),7)){
+	if(utils.inrect(x,y,intsel.x(),intsel.y(), 3 * (intsel.padding * 2 + 6),7)){
 		var speed = editor.keysdown[16] ? 10 : 1;
 		var button = flr((x-intsel.x()) / (intsel.padding * 2 + 6));
 		if(button === 0){
@@ -555,10 +555,6 @@ var volumes = {
 // Helpers
 function ssx(n){ return n % ssget(); }
 function ssy(n){ return Math.floor(n / ssget()) % (ssget() * ssget()); }
-function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y < ry + rh; }
-function decToR(c){ return Math.floor(c / (256*256)); }
-function decToG(c){ return Math.floor(c / 256) % 256; }
-function decToB(c){ return c % 256; }
 
 function mousemovehandler(forceMouseDown){
 	switch(editor.mode){
@@ -568,7 +564,7 @@ function mousemovehandler(forceMouseDown){
 			var x = flr((mousex()-viewport.x) / viewport.sx());
 			var y = flr((mousey()-viewport.y) / viewport.sy());
 
-			if(sprites.current !== 0 && inrect(x, y, 0, 0, cellwidth(), cellheight())){
+			if(sprites.current !== 0 && utils.inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				if(toolButtons.current === 0){
 					// Draw!
 					sset(
@@ -613,7 +609,7 @@ function mousemovehandler(forceMouseDown){
 	case 'map':
 		var dx = mousex() - editor.lastmx;
 		var dy = mousey() - editor.lastmy;
-		if(inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
+		if(utils.inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
 			if(editor.keysdown[32] || mousebtn(2) || mousebtn(3)){
 				// Pan map
 				// TODO: clamp panning
@@ -1038,7 +1034,7 @@ function buttons_draw(settings){
 
 function buttons_click(buttons,x,y){
 	var num = buttons.num !== undefined ? buttons.num : buttons.options.length;
-	if(inrect(x,y,buttons.x(),buttons.y(), num * (buttons.padding * 2 + 6),7)){
+	if(utils.inrect(x,y,buttons.x(),buttons.y(), num * (buttons.padding * 2 + 6),7)){
 		var button = flr((x-buttons.x()) / (buttons.padding * 2 + 6));
 		if(buttons.current === button){
 			return false;
@@ -1067,7 +1063,7 @@ function flags_draw(flags){
 }
 
 function flags_click(flags, x, y){
-	if(inrect(x,y,flags.x(),flags.y(),6*8,5)){
+	if(utils.inrect(x,y,flags.x(),flags.y(),6*8,5)){
 		var flagIndex = flr((x-flags.x()) / 6);
 		var oldFlags = flags.current();
 		var clickedFlag = (1 << flagIndex);
@@ -1142,7 +1138,7 @@ function palette_draw(palette){
 
 function palette_click(palette,x,y){
 	var n = palette.n();
-	if(inrect(x,y,palette.x(),palette.y(),palette.sx()*n,palette.sy()*n)){
+	if(utils.inrect(x,y,palette.x(),palette.y(),palette.sx()*n,palette.sy()*n)){
 		var px = flr((x-palette.x()) / palette.sx());
 		var py = flr((y-palette.y()) / palette.sy());
 		var newColor = px + n * py;
@@ -1461,7 +1457,7 @@ function code_stop(code){
 }
 
 function code_click(code,x,y){
-	if(!inrect(x,y,code.x,code.y,code.width(),code.height())){
+	if(!utils.inrect(x,y,code.x,code.y,code.width(),code.height())){
 		return false;
 	}
 
@@ -1935,9 +1931,9 @@ function handlePasteImage(file){
 				var distance = 1e10;
 				for(var k=0; k<16; k++){
 					var dec = palget(k);
-					var dr = decToR(dec);
-					var dg = decToG(dec);
-					var db = decToB(dec);
+					var dr = utils.decToR(dec);
+					var dg = utils.decToG(dec);
+					var db = utils.decToB(dec);
 					var da = palt(k) ? 0 : 255;
 					var newDistance = (r-dr)*(r-dr) + (g-dg)*(g-dg) + (b-db)*(b-db) + (a-da)*(a-da);
 					if(newDistance < distance){
