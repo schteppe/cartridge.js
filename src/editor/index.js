@@ -1319,32 +1319,46 @@ function code_draw(code){
 			var nodeX = x + (node.start - rowstart) * fontWidth;
 
 			switch(node.type){
-				case "VariableDeclaration":
-					print("var", nodeX, rowY, code.keywordColor);
-					break;
 				case "VariableDeclarator":
 					break;
 				case "Literal":
 					print(node.raw, nodeX, rowY, code.literalColor);
-					break;
-				case "FunctionDeclaration":
-					print("function", nodeX, rowY, code.keywordColor);
 					break;
 				case "Identifier":
 					var isApi = cartridgeIdentifiers.indexOf(node.name) !== -1;
 					var color = isApi ? code.apiColor : code.identifierColor;
 					print(node.name, nodeX, rowY, color);
 					break;
-				case "ForStatement":
-					print("for", nodeX, rowY, code.keywordColor);
-					break;
 				case "BinaryExpression":
-					break;
-				case "WhileStatement":
-					print("while", nodeX, rowY, code.keywordColor);
 					break;
 				case "Line":
 					print("//" + node.value, nodeX, rowY, code.commentColor);
+					break;
+				default:
+					var keywords = {
+						FunctionDeclaration: "function",
+						ForStatement: "for",
+						VariableDeclaration: "var",
+						IfStatement: "if",
+						DebuggerStatement: "debugger",
+						WithStatement: "with",
+						ReturnStatement: "return",
+						BreakStatement: "break",
+						ContinueStatement: "continue",
+						SwitchStatement: "switch",
+						SwitchCase: "case",
+						ThrowStatement: "throw",
+						TryStatement: "try",
+						CatchClause: "catch",
+						WhileStatement: "while",
+						ForStatement: "for",
+						ThisExpression: "this",
+						NewExpression: "new"
+					};
+					var keyword = keywords[node.type];
+					if(keyword){
+						print(keyword, nodeX, rowY, code.keywordColor);
+					}
 					break;
 			}
 			utils.values(node).forEach(add);
@@ -1994,29 +2008,6 @@ cartridge({
 	containerId: 'container',
 	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0)
 });
-
-cellwidth(8);
-cellheight(8);
-width(128);
-height(128);
-sprites_clamp_pan(sprites);
-
-palset(0, 0x000000);
-palset(1, 0x0829fc);
-palset(2, 0x7e2500);
-palset(3, 0x008000);
-palset(4, 0xab5236);
-palset(5, 0x5f574f);
-palset(6, 0xc2c3c7);
-palset(7, 0xfff1e8);
-palset(8, 0xe40405);
-palset(9, 0xffa300);
-palset(10, 0xfff024);
-palset(11, 0x00e756);
-palset(12, 0x8bf9fc);
-palset(13, 0x83769c);
-palset(14, 0xff8e7d);
-palset(15, 0xffffff);
 
 run();
 
