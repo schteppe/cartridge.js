@@ -13,12 +13,6 @@ var editor = {
 	draw: null
 };
 
-function resizeHandler(){
-	editor.dirty = true;
-}
-window.addEventListener("resize", resizeHandler);
-window.addEventListener("mozfullscreenchange", resizeHandler);
-
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
 	panx: 0,
@@ -1782,6 +1776,12 @@ function reset(){
 	ssset(16);
 }
 
+function resizeHandler(){
+	editor.dirty = true;
+}
+window.addEventListener("resize", resizeHandler);
+window.addEventListener("mozfullscreenchange", resizeHandler);
+
 window.addEventListener('keydown', function(evt){
 	if(editor.mode === 'run'){
 		if(evt.keyCode === 27){
@@ -1914,7 +1914,9 @@ function handlepaste (e) {
 }
 
 function handlePasteImage(file){
-	if(editor.mode !== 'sprite') return;
+	if(editor.mode !== 'sprite' || sprites.current === 0){
+		return;
+	}
 
 	var urlCreator = window.URL || window.webkitURL;
 	var img = new Image();
@@ -1926,9 +1928,10 @@ function handlePasteImage(file){
 		tmpCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
 		var imgData = tmpCanvas.getContext('2d').getImageData(0, 0, img.width, img.height);
 		var pixels = imgData.data;
-
-		for(var i=0; i<img.width && i < ssget() * cellwidth(); i++){
-			for(var j=0; j<img.height && j < ssget() * cellheight(); j++){
+		var x0 = ssx(sprites.current) * cellwidth();
+		var y0 = ssy(sprites.current) * cellheight();
+		for(var i=0; i<img.width && x0 + i < ssget() * cellwidth(); i++){
+			for(var j=0; j<img.height && y0 + j < ssget() * cellheight(); j++){
 				// Get best matching color
 				var p = 4 * (i + j*img.width);
 				var r = pixels[p + 0];
@@ -1938,7 +1941,7 @@ function handlePasteImage(file){
 
 				var bestColor = 0;
 				var distance = 1e10;
-				for(var k=0; k<16; k++){
+				for(var k=0; palget(k) !== undefined; k++){
 					var dec = palget(k);
 					var dr = utils.decToR(dec);
 					var dg = utils.decToG(dec);
@@ -1952,11 +1955,10 @@ function handlePasteImage(file){
 				}
 
 				// write to spritesheet at current position
-				var x = (ssx(sprites.current) * cellwidth() + i);
-				var y = (ssy(sprites.current) * cellheight() + j);
-				if(sprites.current !== 0){
-					sset(x, y, bestColor);
-				}
+				var x = x0 + i;
+				var y = y0 + j;
+				sset(x, y, bestColor);
+
 				editor.dirty = true;
 			}
 		}
