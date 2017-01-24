@@ -1,59 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// For safari
-if(Object.values === undefined){
-	Object.values = function(obj){
-		var vals = [];
-		for(var key in obj) {
-			vals.push(obj[key]);
-		}
-		return vals;
-	};
-}
-
-// Parse query vars
-function getQueryVariables(variables) {
-    var query = window.location.search.substring(1);
-    var vars = query.split('&');
-	var result = {};
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=');
-		var varName = decodeURIComponent(pair[0]);
-		var type = variables[varName];
-        if (type === undefined) continue;
-
-		var value = decodeURIComponent(pair[1]);
-		var ok = false;
-		switch(type){
-			case 'i':
-				value = parseInt(value, 10);
-				ok = !isNaN(value);
-				break;
-			case 'b':
-				value = (value === "1");
-				ok = true;
-				break;
-			case 's':
-				ok = true;
-				break;
-		}
-		if(ok){
-			result[varName] = value;
-        }
-    }
-    return result;
-}
-
-var query = getQueryVariables({
-	pixel_perfect: 'i',
-	run: 'b',
-	file: 's'
-});
-
-function resizeHandler(){
-	editor.dirty = true;
-}
-window.addEventListener("resize", resizeHandler);
-window.addEventListener("mozfullscreenchange", resizeHandler);
+var utils = require('../utils');
 
 var editorModes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
 var editor = {
@@ -67,6 +13,12 @@ var editor = {
 	keysdown: {},
 	draw: null
 };
+
+function resizeHandler(){
+	editor.dirty = true;
+}
+window.addEventListener("resize", resizeHandler);
+window.addEventListener("mozfullscreenchange", resizeHandler);
 
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
@@ -567,7 +519,7 @@ function intsel_draw(intsel){
 }
 
 function intsel_click(intsel, x, y){
-	if(inrect(x,y,intsel.x(),intsel.y(), 3 * (intsel.padding * 2 + 6),7)){
+	if(utils.inrect(x,y,intsel.x(),intsel.y(), 3 * (intsel.padding * 2 + 6),7)){
 		var speed = editor.keysdown[16] ? 10 : 1;
 		var button = flr((x-intsel.x()) / (intsel.padding * 2 + 6));
 		if(button === 0){
@@ -598,27 +550,6 @@ var volumes = {
 // Helpers
 function ssx(n){ return n % ssget(); }
 function ssy(n){ return Math.floor(n / ssget()) % (ssget() * ssget()); }
-function inrect(x,y,rx,ry,rw,rh){ return x >= rx && y >= ry && x < rx + rw && y < ry + rh; }
-function decToR(c){ return Math.floor(c / (256*256)); }
-function decToG(c){ return Math.floor(c / 256) % 256; }
-function decToB(c){ return c % 256; }
-function floodfill(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){
-	if(target === replace) return;
-	if(get(x,y) !== target) return;
-	var q = [];
-	q.push(x,y);
-	while(q.length){
-		var nx = q.shift();
-		var ny = q.shift();
-		if(get(nx,ny) === target){
-			set(nx,ny,replace);
-			if(nx > xmin && get(nx-1,ny) === target) q.push(nx-1,ny);
-			if(nx < xmax && get(nx+1,ny) === target) q.push(nx+1,ny);
-			if(ny < ymax && get(nx,ny+1) === target) q.push(nx,ny+1);
-			if(ny > ymin && get(nx,ny-1) === target) q.push(nx,ny-1);
-		}
-	}
-}
 
 function mousemovehandler(forceMouseDown){
 	switch(editor.mode){
@@ -628,7 +559,7 @@ function mousemovehandler(forceMouseDown){
 			var x = flr((mousex()-viewport.x) / viewport.sx());
 			var y = flr((mousey()-viewport.y) / viewport.sy());
 
-			if(sprites.current !== 0 && inrect(x, y, 0, 0, cellwidth(), cellheight())){
+			if(sprites.current !== 0 && utils.inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				if(toolButtons.current === 0){
 					// Draw!
 					sset(
@@ -643,7 +574,7 @@ function mousemovehandler(forceMouseDown){
 					var y0 = ssy(sprites.current) * cellheight();
 					var fillx = x0 + x;
 					var filly = y0 + y;
-					floodfill(
+					utils.floodfill(
 						sget,
 						sset,
 						fillx,
@@ -673,7 +604,7 @@ function mousemovehandler(forceMouseDown){
 	case 'map':
 		var dx = mousex() - editor.lastmx;
 		var dy = mousey() - editor.lastmy;
-		if(inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
+		if(utils.inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
 			if(editor.keysdown[32] || mousebtn(2) || mousebtn(3)){
 				// Pan map
 				// TODO: clamp panning
@@ -1098,7 +1029,7 @@ function buttons_draw(settings){
 
 function buttons_click(buttons,x,y){
 	var num = buttons.num !== undefined ? buttons.num : buttons.options.length;
-	if(inrect(x,y,buttons.x(),buttons.y(), num * (buttons.padding * 2 + 6),7)){
+	if(utils.inrect(x,y,buttons.x(),buttons.y(), num * (buttons.padding * 2 + 6),7)){
 		var button = flr((x-buttons.x()) / (buttons.padding * 2 + 6));
 		if(buttons.current === button){
 			return false;
@@ -1127,7 +1058,7 @@ function flags_draw(flags){
 }
 
 function flags_click(flags, x, y){
-	if(inrect(x,y,flags.x(),flags.y(),6*8,5)){
+	if(utils.inrect(x,y,flags.x(),flags.y(),6*8,5)){
 		var flagIndex = flr((x-flags.x()) / 6);
 		var oldFlags = flags.current();
 		var clickedFlag = (1 << flagIndex);
@@ -1202,7 +1133,7 @@ function palette_draw(palette){
 
 function palette_click(palette,x,y){
 	var n = palette.n();
-	if(inrect(x,y,palette.x(),palette.y(),palette.sx()*n,palette.sy()*n)){
+	if(utils.inrect(x,y,palette.x(),palette.y(),palette.sx()*n,palette.sy()*n)){
 		var px = flr((x-palette.x()) / palette.sx());
 		var py = flr((y-palette.y()) / palette.sy());
 		var newColor = px + n * py;
@@ -1383,35 +1314,49 @@ function code_draw(code){
 			var nodeX = x + (node.start - rowstart) * fontWidth;
 
 			switch(node.type){
-				case "VariableDeclaration":
-					print("var", nodeX, rowY, code.keywordColor);
-					break;
 				case "VariableDeclarator":
 					break;
 				case "Literal":
 					print(node.raw, nodeX, rowY, code.literalColor);
-					break;
-				case "FunctionDeclaration":
-					print("function", nodeX, rowY, code.keywordColor);
 					break;
 				case "Identifier":
 					var isApi = cartridgeIdentifiers.indexOf(node.name) !== -1;
 					var color = isApi ? code.apiColor : code.identifierColor;
 					print(node.name, nodeX, rowY, color);
 					break;
-				case "ForStatement":
-					print("for", nodeX, rowY, code.keywordColor);
-					break;
 				case "BinaryExpression":
-					break;
-				case "WhileStatement":
-					print("while", nodeX, rowY, code.keywordColor);
 					break;
 				case "Line":
 					print("//" + node.value, nodeX, rowY, code.commentColor);
 					break;
+				default:
+					var keywords = {
+						FunctionDeclaration: "function",
+						ForStatement: "for",
+						VariableDeclaration: "var",
+						IfStatement: "if",
+						DebuggerStatement: "debugger",
+						WithStatement: "with",
+						ReturnStatement: "return",
+						BreakStatement: "break",
+						ContinueStatement: "continue",
+						SwitchStatement: "switch",
+						SwitchCase: "case",
+						ThrowStatement: "throw",
+						TryStatement: "try",
+						CatchClause: "catch",
+						WhileStatement: "while",
+						ForStatement: "for",
+						ThisExpression: "this",
+						NewExpression: "new"
+					};
+					var keyword = keywords[node.type];
+					if(keyword){
+						print(keyword, nodeX, rowY, code.keywordColor);
+					}
+					break;
 			}
-			Object.values(node).forEach(add);
+			utils.values(node).forEach(add);
 		}
 
 		position += row.length + 1;
@@ -1521,7 +1466,7 @@ function code_stop(code){
 }
 
 function code_click(code,x,y){
-	if(!inrect(x,y,code.x,code.y,code.width(),code.height())){
+	if(!utils.inrect(x,y,code.x,code.y,code.width(),code.height())){
 		return false;
 	}
 
@@ -1594,7 +1539,7 @@ function code_keydown(code, evt){
 		code_clamp_ccol(code, codeArray);
 		evt.preventDefault();
 	} else {
-		var shouldJump = (evt.altKey && isMac()) || (evt.ctrlKey && !isMac());
+		var shouldJump = (evt.altKey && utils.isMac()) || (evt.ctrlKey && !utils.isMac());
 		switch(evt.keyCode){
 		case 37: // left
 			if(code.ccol === 0 && code.crow > 0){
@@ -1835,10 +1780,13 @@ function reset(){
 
 	// Code
 	code_set("");
-}
 
-function mod(a,b) { return ((a%b)+b)%b; }
-function isMac(){ return navigator.platform.match("Mac"); }
+	width(128);
+	height(128);
+	cellwidth(8);
+	cellheight(8);
+	ssset(16);
+}
 
 window.addEventListener('keydown', function(evt){
 	if(editor.mode === 'run'){
@@ -1854,9 +1802,9 @@ window.addEventListener('keydown', function(evt){
 	// alt + left or right, switch editor
 	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
 		var delta = evt.keyCode === 37 ? -1 : 1;
-		editor.mode = editor.modes[mod(modes.indexOf(editor.mode)+delta, editor.modes.length)];
+		editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
 		if(editor.mode === 'run')
-			editor.mode = editor.modes[mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
+			editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
 		editor.dirty = true;
 
 		// Prevent going back in history
@@ -1868,7 +1816,7 @@ window.addEventListener('keydown', function(evt){
 	}
 
 	// ctrl+enter -> run game
-	if(evt.keyCode === 13 && (isMac() ? evt.metaKey : evt.ctrlKey)){
+	if(evt.keyCode === 13 && (utils.isMac() ? evt.metaKey : evt.ctrlKey)){
 		code_run(code);
 		return;
 	}
@@ -1881,8 +1829,8 @@ window.addEventListener('keydown', function(evt){
 			case 70: if(editor.mode === 'sprite') flipSprite(sprites.current, true); break; // F
 			case 82: if(editor.mode === 'sprite') rotateSprite(sprites.current); break; // R
 			case 46: if(editor.mode === 'sprite') clearSprite(sprites.current); break; // delete
-			case 81: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=mod(sprites.current-1,ssget()*ssget()); break; // Q
-			case 87: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=mod(sprites.current+1,ssget()*ssget()); break; // W
+			case 81: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current-1,ssget()*ssget()); break; // Q
+			case 87: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current+1,ssget()*ssget()); break; // W
 			case 32: if(editor.mode === 'sfx') sfx(sfxSelector.current); break;
 		}
 	}
@@ -1893,13 +1841,13 @@ document.addEventListener('keydown', function(e){
 	if(editor.mode === 'run') return;
 
 	// ctrl + s
-	if (e.keyCode == 83 && (isMac() ? e.metaKey : e.ctrlKey)){
+	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
 		save('game.json');
 		e.preventDefault();
 	}
 
 	// ctrl + o
-	if (e.keyCode == 79 && (isMac() ? e.metaKey : e.ctrlKey)){
+	if (e.keyCode == 79 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
  		openfile();
 		e.preventDefault();
 	}
@@ -1923,29 +1871,20 @@ window.addEventListener('keypress', function(evt){
 });
 
 function openfile(){
-	var input = document.createElement('input');
-	input.type = 'file';
-	input.addEventListener('change', readSingleFile, false);
-	input.click();
-}
-
-function readSingleFile(e) {
-	var file = e.target.files[0];
-	if (!file) {
-		return;
-	}
-	var reader = new FileReader();
-	reader.onload = function(e) {
+	utils.opentextfile(function(err, text){
+		if(err){
+			console.error(err);
+			return;
+		}
 		try {
-			var json = JSON.parse(e.target.result);
+			var json = JSON.parse(text);
 			load(json);
 			syntaxTreeDirty = true;
 			editor.dirty = true;
 		} catch(err){
-			console.error("Could not open file.");
+			console.error('Could not load file');
 		}
-	};
-	reader.readAsText(file);
+	});
 }
 
 window.addEventListener('paste', handlepaste, false);
@@ -2007,9 +1946,9 @@ function handlePasteImage(file){
 				var distance = 1e10;
 				for(var k=0; k<16; k++){
 					var dec = palget(k);
-					var dr = decToR(dec);
-					var dg = decToG(dec);
-					var db = decToB(dec);
+					var dr = utils.decToR(dec);
+					var dg = utils.decToG(dec);
+					var db = utils.decToB(dec);
 					var da = palt(k) ? 0 : 255;
 					var newDistance = (r-dr)*(r-dr) + (g-dg)*(g-dg) + (b-db)*(b-db) + (a-da)*(a-da);
 					if(newDistance < distance){
@@ -2066,39 +2005,16 @@ document.addEventListener('copy', function(e){
 	}
 });
 
-function mobileAndTabletcheck() {
-  var check = false;
-  (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
-  return check;
-}
-var isMobile = mobileAndTabletcheck();
-cartridge({
-	containerId: 'container',
-	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (isMobile ? 1 : 0)
+var query = utils.parseQueryVariables(window.location.search, {
+	pixel_perfect: 'i',
+	run: 'b',
+	file: 's'
 });
 
-cellwidth(8);
-cellheight(8);
-width(128);
-height(128);
-sprites_clamp_pan(sprites);
-
-palset(0, 0x000000);
-palset(1, 0x0829fc);
-palset(2, 0x7e2500);
-palset(3, 0x008000);
-palset(4, 0xab5236);
-palset(5, 0x5f574f);
-palset(6, 0xc2c3c7);
-palset(7, 0xfff1e8);
-palset(8, 0xe40405);
-palset(9, 0xffa300);
-palset(10, 0xfff024);
-palset(11, 0x00e756);
-palset(12, 0x8bf9fc);
-palset(13, 0x83769c);
-palset(14, 0xff8e7d);
-palset(15, 0xffffff);
+cartridge({
+	containerId: 'container',
+	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0)
+});
 
 run();
 
@@ -2116,4 +2032,329 @@ window._load = function(){
 		code_run(code);
 };
 
+},{"../utils":2}],2:[function(require,module,exports){
+exports.disableImageSmoothing = function(ctx) {
+	if(ctx.imageSmoothingEnabled !== undefined){
+		ctx.imageSmoothingEnabled = false;
+	} else if(ctx.mozImageSmoothingEnabled !== undefined){
+		ctx.mozImageSmoothingEnabled = false;
+	} else if(ctx.webkitImageSmoothingEnabled !== undefined){
+		ctx.webkitImageSmoothingEnabled = false;
+	} else if(ctx.msImageSmoothingEnabled !== undefined){
+		ctx.msImageSmoothingEnabled = false;
+	}
+};
+
+exports.hexToRgb = function hexToRgb(hex) {
+	var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	return [
+		parseInt(result[1], 16),
+		parseInt(result[2], 16),
+		parseInt(result[3], 16)
+	];
+};
+
+exports.rgbToDec = function(r, g, b){
+	var c = r * (256*256) + g * 256 + b;
+	return c;
+};
+
+exports.decToR = function(c){
+	return Math.floor(c / (256*256));
+};
+
+exports.decToG = function(c){
+	return Math.floor(c / 256) % 256;
+};
+
+exports.decToB = function(c){
+	return c % 256;
+};
+
+function isSafari(){
+	return navigator.userAgent.indexOf('Safari') !== -1 && navigator.userAgent.indexOf('Chrome') === -1;
+}
+
+exports.isMac = function(){
+	return navigator.platform.match("Mac");
+};
+
+exports.makeGlobal = function(obj){
+	for(var key in obj){
+		window[key] = obj[key];
+	}
+};
+
+exports.scaleToFit = function scaleToFit(element, containerElement, pixelPerfectMode){
+	var containerWidth = window.innerWidth;
+	var containerHeight = window.innerHeight;
+	if(containerElement){
+		var rect = containerElement.getBoundingClientRect();
+		containerWidth = rect.width;
+		containerHeight = rect.height;
+	}
+	var scaleX = containerWidth / element.width;
+	var scaleY = containerHeight / element.height;
+	var scale = Math.min(scaleX, scaleY);
+
+	var dpr = window.devicePixelRatio || 1;
+
+	if(pixelPerfectMode){
+		scale = (Math.floor(scale * dpr)/dpr) || (1/dpr);
+	}
+
+	var offsetX = (containerWidth - element.width * scale) * 0.5;
+	var offsetY = (containerHeight - element.height * scale) * 0.5;
+
+	if(pixelPerfectMode){
+		offsetX = Math.floor(offsetX * dpr) / dpr;
+		offsetY = Math.floor(offsetY * dpr) / dpr;
+	}
+
+	// Safari doesn't have nearest neighbor rendering when using CSS3 scaling
+	if (isSafari()){
+		element.style.width = (element.width * scale) + "px";
+		element.style.height = (element.height * scale) + "px";
+		element.style.marginLeft = offsetX + 'px';
+		element.style.marginTop = offsetY + 'px';
+	} else {
+		element.style.transformOrigin = "0 0"; //scale from top left
+		element.style.transform = "translate(" + offsetX + "px, " + offsetY + "px) scale(" + scale + ")";
+	}
+};
+
+exports.fullscreen = function(element) {
+	if(document.fullscreenElement) return false;
+
+	// Use the specification method before using prefixed versions
+	if (element.requestFullscreen) {
+		element.requestFullscreen();
+	} else if (element.msRequestFullscreen) {
+		element.msRequestFullscreen();
+	} else if (element.mozRequestFullScreen) {
+		element.mozRequestFullScreen();
+	} else if (element.webkitRequestFullscreen) {
+		element.webkitRequestFullscreen();
+	} else {
+		return false;
+	}
+
+	return true;
+};
+
+exports.zeros = function(n, reusableArray){
+	if(reusableArray === undefined){
+		var a = [];
+		while(n--){
+			a.push(0);
+		}
+		return a;
+	} else {
+		for(var i=0; i<reusableArray.length; i++){
+			reusableArray[0] = 0;
+		}
+		while(reusableArray.length < n) reusableArray.push(0);
+		return reusableArray;
+	}
+};
+
+exports.createCanvas = function(w,h,pixelSmoothing){
+	pixelSmoothing = pixelSmoothing === undefined ? true : pixelSmoothing;
+
+	var canvas = document.createElement('canvas');
+	canvas.width = w;
+	canvas.height = h;
+	if(pixelSmoothing){
+		exports.disableImageSmoothing(canvas.getContext('2d'));
+	}
+
+	return canvas;
+}
+
+exports.createCanvasFromAscii = function(asciiArray, charToColorMap){
+	var width = asciiArray[0].length;
+	var height = asciiArray.length;
+	var canvas = exports.createCanvas(width, height);
+	var ctx = canvas.getContext('2d');
+	var imageData = ctx.createImageData(width, height);
+	for(var i=0; i<height; i++){
+		for(var j=0; j<width; j++){
+			var p = 4 * (i * width + j);
+			var rgba = charToColorMap[asciiArray[i][j]];
+			imageData.data[p+0] = rgba[0];
+			imageData.data[p+1] = rgba[1];
+			imageData.data[p+2] = rgba[2];
+			imageData.data[p+3] = rgba[3];
+		}
+	}
+	ctx.putImageData(imageData, 0, 0);
+	return canvas;
+};
+
+// Get the line and column of an error. Works in all major browsers.
+exports.getErrorInfo = function(err) {
+	var line = -1;
+	var column = -1;
+	if(err.lineNumber!==undefined && err.columnNumber!==undefined){
+		line = err.lineNumber;
+		column = err.columnNumber;
+	} else if(err.line!==undefined && err.column!==undefined){
+		line = err.line;
+		column = err.column;
+	}
+	var stack = err.stack;
+	var m = stack.match(/:(\d+):(\d+)/mg);
+	if(m){
+		var nums = m[1].split(':');
+		line = parseInt(nums[1]);
+		column = parseInt(nums[2]);
+	}
+	return {
+		message: err.message,
+		line: line,
+		column: column,
+		originalError: err
+	};
+};
+
+exports.loadJsonFromUrl = function(url, callback){
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(){
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+				callback(null, JSON.parse(xhr.responseText));
+			} else {
+				callback(xhr);
+			}
+		}
+	};
+	xhr.open("GET", url, true);
+	xhr.send();
+};
+
+exports.removeTrailingZeros = function(arr){
+	while(arr[arr.length-1] === 0){
+		arr.pop();
+	}
+};
+
+// iOS audio fix, to allow playing sounds from the first touch
+exports.iosAudioFix = function(element, callback){
+	var isUnlocked = false;
+	element.ontouchend = function(){
+		if(isUnlocked) return;
+
+		if(callback) callback();
+
+		// by checking the play state after some time, we know if we're really unlocked
+		setTimeout(function() {
+			if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
+				isUnlocked = true;
+			}
+		}, 0);
+	};
+};
+
+exports.values = function(obj){
+	var vals = [];
+	for(var key in obj) {
+		vals.push(obj[key]);
+	}
+	return vals;
+};
+
+// Parse query vars
+// "search" is window.location.search
+exports.parseQueryVariables = function(search,variables) {
+    var query = search.substring(1);
+    var vars = query.split('&');
+	var result = {};
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+		var varName = decodeURIComponent(pair[0]);
+		var type = variables[varName];
+        if (type === undefined) continue;
+
+		var value = decodeURIComponent(pair[1]);
+		var ok = false;
+		switch(type){
+			case 'i':
+				value = parseInt(value, 10);
+				ok = !isNaN(value);
+				break;
+			case 'b':
+				value = (value === "1");
+				ok = true;
+				break;
+			case 's':
+				ok = true;
+				break;
+		}
+		if(ok){
+			result[varName] = value;
+        }
+    }
+    return result;
+};
+
+exports.floodfill = function(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){
+	if(target === replace) return;
+	if(get(x,y) !== target) return;
+	var q = [];
+	q.push(x,y);
+	while(q.length){
+		var nx = q.shift();
+		var ny = q.shift();
+		if(get(nx,ny) === target){
+			set(nx,ny,replace);
+			if(nx > xmin && get(nx-1,ny) === target) q.push(nx-1,ny);
+			if(nx < xmax && get(nx+1,ny) === target) q.push(nx+1,ny);
+			if(ny < ymax && get(nx,ny+1) === target) q.push(nx,ny+1);
+			if(ny > ymin && get(nx,ny-1) === target) q.push(nx,ny-1);
+		}
+	}
+};
+
+// Reliable modulo
+exports.mod = function(a,b) {
+	return ((a%b)+b)%b;
+};
+
+var input = null;
+exports.opentextfile = function(callback){
+	if(!input){
+		input = document.createElement('input');
+		input.style.display = 'none';
+		input.type = 'file';
+		input.value = null;
+		document.body.appendChild(input);
+	}
+	input.onchange = function(e) {
+		var file = e.target.files[0];
+		if (!file) {
+			return callback(new Error('No file.'));
+		}
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			callback(null, e.target.result);
+		};
+		reader.onerror = function(e) {
+			callback(new Erorr('Could not open file.'));
+		};
+		reader.readAsText(file);
+		this.value = null;
+	};
+
+	input.click();
+};
+
+exports.inrect = function(x,y,rx,ry,rw,rh){
+	return x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+};
+
+exports.isMobile = function() {
+	var check = false;
+	(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+	return check;
+};
 },{}]},{},[1]);
