@@ -14,12 +14,6 @@ var editor = {
 	draw: null
 };
 
-function resizeHandler(){
-	editor.dirty = true;
-}
-window.addEventListener("resize", resizeHandler);
-window.addEventListener("mozfullscreenchange", resizeHandler);
-
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
 	panx: 0,
@@ -278,7 +272,71 @@ var code = {
 	apiColor: 11,
 	commentColor: 13,
 	identifierColor: 6,
-	errorMessage: ''
+	errorMessage: '',
+	syntaxTree: null,
+	syntaxTreeDirty: true,
+	syntaxComments: [],
+	cartridgeIdentifiers: [
+		"abs",
+		"alpha",
+		"assert",
+		"atan2",
+		"btn",
+		"btnp",
+		"camera",
+		"canvas",
+		"cartridge",
+		"ceil",
+		"cellheight",
+		"cellwidth",
+		"clamp",
+		"clip",
+		"cls",
+		"codeget",
+		"codeset",
+		"color",
+		"cos",
+		"fget",
+		"fit",
+		"flr",
+		"fset",
+		"fullscreen",
+		"height",
+		"load",
+		"map",
+		"max",
+		"mget",
+		"mid",
+		"min",
+		"mix",
+		"mousebtn",
+		"mousex",
+		"mousey",
+		"mset",
+		"palget",
+		"palset",
+		"palt",
+		"pget",
+		"print",
+		"pset",
+		"rect",
+		"rectfill",
+		"rnd",
+		"save",
+		"sfx",
+		"sget",
+		"sgn",
+		"sin",
+		"spr",
+		"sqrt",
+		"sset",
+		"time",
+		"width",
+		"inf",
+		"log",
+		"nan",
+		"def"
+	]
 };
 
 var mapPanX = 0;
@@ -753,7 +811,7 @@ editor.click = window._click = function _click(){
 				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
 			}
 			editor.dirty = true;
-			syntaxTreeDirty = true;
+			code.syntaxTreeDirty = true;
 			slotButtons.current = -1;
 		}
 
@@ -857,7 +915,7 @@ var editorLoad = window._init = function _init(){
 	}
 
 	editor.dirty = true;
-	syntaxTreeDirty = true;
+	code.syntaxTreeDirty = true;
 };
 
 editor.draw = window._draw = function _draw(){
@@ -1160,71 +1218,6 @@ function pitches_draw(pitches, source, col){
 	}
 }
 
-var syntaxTree;
-var syntaxTreeDirty = true;
-var syntaxComments = [];
-var cartridgeIdentifiers = [
-	"abs",
-	"alpha",
-	"assert",
-	"atan2",
-	"btn",
-	"btnp",
-	"camera",
-	"canvas",
-	"cartridge",
-	"ceil",
-	"cellheight",
-	"cellwidth",
-	"clamp",
-	"clip",
-	"cls",
-	"codeget",
-	"codeset",
-	"color",
-	"cos",
-	"fget",
-	"fit",
-	"flr",
-	"fset",
-	"fullscreen",
-	"height",
-	"load",
-	"map",
-	"max",
-	"mget",
-	"mid",
-	"min",
-	"mix",
-	"mousebtn",
-	"mousex",
-	"mousey",
-	"mset",
-	"palget",
-	"palset",
-	"palt",
-	"pget",
-	"print",
-	"pset",
-	"rect",
-	"rectfill",
-	"rnd",
-	"save",
-	"sfx",
-	"sget",
-	"sgn",
-	"sin",
-	"spr",
-	"sqrt",
-	"sset",
-	"time",
-	"width",
-	"inf",
-	"log",
-	"nan",
-	"def"
-];
-
 function code_draw(code){
 	var x = code.x;
 	var y = code.y;
@@ -1244,14 +1237,14 @@ function code_draw(code){
 		code.bgColor
 	);
 
-	if(syntaxTreeDirty){
-		syntaxComments.length = 0;
+	if(code.syntaxTreeDirty){
+		code.syntaxComments.length = 0;
 		try {
-			syntaxTree = acorn.parse(codeget(), { onComment: syntaxComments });
+			code.syntaxTree = acorn.parse(codeget(), { onComment: code.syntaxComments });
 		} catch(err){
-			syntaxTree = { body: [] };
+			code.syntaxTree = { body: [] };
 		}
-		syntaxTreeDirty = false;
+		code.syntaxTreeDirty = false;
 	}
 	var codeArray = codeget().split('\n');
 
@@ -1295,8 +1288,8 @@ function code_draw(code){
 		print(row.substr(code.wcol, cols), x, rowY, isInBlockComment ? code.commentColor : code.textColor);
 
 		// Any syntax highlighting on this row?
-		var queue = syntaxTree.body.slice(0);
-		queue.push.apply(queue, syntaxComments);
+		var queue = code.syntaxTree.body.slice(0);
+		queue.push.apply(queue, code.syntaxComments);
 		function add(prop){
 			if(!prop) return;
 			if(prop instanceof acorn.Node){
@@ -1314,17 +1307,13 @@ function code_draw(code){
 			var nodeX = x + (node.start - rowstart) * fontWidth;
 
 			switch(node.type){
-				case "VariableDeclarator":
-					break;
 				case "Literal":
 					print(node.raw, nodeX, rowY, code.literalColor);
 					break;
 				case "Identifier":
-					var isApi = cartridgeIdentifiers.indexOf(node.name) !== -1;
+					var isApi = code.cartridgeIdentifiers.indexOf(node.name) !== -1;
 					var color = isApi ? code.apiColor : code.identifierColor;
 					print(node.name, nodeX, rowY, color);
-					break;
-				case "BinaryExpression":
 					break;
 				case "Line":
 					print("//" + node.value, nodeX, rowY, code.commentColor);
@@ -1502,7 +1491,7 @@ function code_set(str, updateCursor){
 		code_clamp_crow(code);
 		code_clamp_ccol(code);
 	}
-	syntaxTreeDirty = true;
+	code.syntaxTreeDirty = true;
 }
 
 function code_paste(code, str){
@@ -1788,6 +1777,12 @@ function reset(){
 	ssset(16);
 }
 
+function resizeHandler(){
+	editor.dirty = true;
+}
+window.addEventListener("resize", resizeHandler);
+window.addEventListener("mozfullscreenchange", resizeHandler);
+
 window.addEventListener('keydown', function(evt){
 	if(editor.mode === 'run'){
 		if(evt.keyCode === 27){
@@ -1879,7 +1874,7 @@ function openfile(){
 		try {
 			var json = JSON.parse(text);
 			load(json);
-			syntaxTreeDirty = true;
+			code.syntaxTreeDirty = true;
 			editor.dirty = true;
 		} catch(err){
 			console.error('Could not load file');
@@ -1920,7 +1915,9 @@ function handlepaste (e) {
 }
 
 function handlePasteImage(file){
-	if(editor.mode !== 'sprite') return;
+	if(editor.mode !== 'sprite' || sprites.current === 0){
+		return;
+	}
 
 	var urlCreator = window.URL || window.webkitURL;
 	var img = new Image();
@@ -1932,9 +1929,10 @@ function handlePasteImage(file){
 		tmpCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
 		var imgData = tmpCanvas.getContext('2d').getImageData(0, 0, img.width, img.height);
 		var pixels = imgData.data;
-
-		for(var i=0; i<img.width && i < ssget() * cellwidth(); i++){
-			for(var j=0; j<img.height && j < ssget() * cellheight(); j++){
+		var x0 = ssx(sprites.current) * cellwidth();
+		var y0 = ssy(sprites.current) * cellheight();
+		for(var i=0; i<img.width && x0 + i < ssget() * cellwidth(); i++){
+			for(var j=0; j<img.height && y0 + j < ssget() * cellheight(); j++){
 				// Get best matching color
 				var p = 4 * (i + j*img.width);
 				var r = pixels[p + 0];
@@ -1944,7 +1942,7 @@ function handlePasteImage(file){
 
 				var bestColor = 0;
 				var distance = 1e10;
-				for(var k=0; k<16; k++){
+				for(var k=0; palget(k) !== undefined; k++){
 					var dec = palget(k);
 					var dr = utils.decToR(dec);
 					var dg = utils.decToG(dec);
@@ -1958,11 +1956,10 @@ function handlePasteImage(file){
 				}
 
 				// write to spritesheet at current position
-				var x = (ssx(sprites.current) * cellwidth() + i);
-				var y = (ssy(sprites.current) * cellheight() + j);
-				if(sprites.current !== 0){
-					sset(x, y, bestColor);
-				}
+				var x = x0 + i;
+				var y = y0 + j;
+				sset(x, y, bestColor);
+
 				editor.dirty = true;
 			}
 		}
@@ -2027,7 +2024,7 @@ window._load = function(){
 	delete window._load; // only need to load once!
 	editor.loading = false;
 	editor.dirty = true;
-	syntaxTreeDirty = true;
+	code.syntaxTreeDirty = true;
 	if(query.run)
 		code_run(code);
 };
