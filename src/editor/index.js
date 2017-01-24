@@ -277,7 +277,71 @@ var code = {
 	apiColor: 11,
 	commentColor: 13,
 	identifierColor: 6,
-	errorMessage: ''
+	errorMessage: '',
+	syntaxTree: null,
+	syntaxTreeDirty: true,
+	syntaxComments: [],
+	cartridgeIdentifiers: [
+		"abs",
+		"alpha",
+		"assert",
+		"atan2",
+		"btn",
+		"btnp",
+		"camera",
+		"canvas",
+		"cartridge",
+		"ceil",
+		"cellheight",
+		"cellwidth",
+		"clamp",
+		"clip",
+		"cls",
+		"codeget",
+		"codeset",
+		"color",
+		"cos",
+		"fget",
+		"fit",
+		"flr",
+		"fset",
+		"fullscreen",
+		"height",
+		"load",
+		"map",
+		"max",
+		"mget",
+		"mid",
+		"min",
+		"mix",
+		"mousebtn",
+		"mousex",
+		"mousey",
+		"mset",
+		"palget",
+		"palset",
+		"palt",
+		"pget",
+		"print",
+		"pset",
+		"rect",
+		"rectfill",
+		"rnd",
+		"save",
+		"sfx",
+		"sget",
+		"sgn",
+		"sin",
+		"spr",
+		"sqrt",
+		"sset",
+		"time",
+		"width",
+		"inf",
+		"log",
+		"nan",
+		"def"
+	]
 };
 
 var mapPanX = 0;
@@ -752,7 +816,7 @@ editor.click = window._click = function _click(){
 				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
 			}
 			editor.dirty = true;
-			syntaxTreeDirty = true;
+			code.syntaxTreeDirty = true;
 			slotButtons.current = -1;
 		}
 
@@ -856,7 +920,7 @@ var editorLoad = window._init = function _init(){
 	}
 
 	editor.dirty = true;
-	syntaxTreeDirty = true;
+	code.syntaxTreeDirty = true;
 };
 
 editor.draw = window._draw = function _draw(){
@@ -1159,71 +1223,6 @@ function pitches_draw(pitches, source, col){
 	}
 }
 
-var syntaxTree;
-var syntaxTreeDirty = true;
-var syntaxComments = [];
-var cartridgeIdentifiers = [
-	"abs",
-	"alpha",
-	"assert",
-	"atan2",
-	"btn",
-	"btnp",
-	"camera",
-	"canvas",
-	"cartridge",
-	"ceil",
-	"cellheight",
-	"cellwidth",
-	"clamp",
-	"clip",
-	"cls",
-	"codeget",
-	"codeset",
-	"color",
-	"cos",
-	"fget",
-	"fit",
-	"flr",
-	"fset",
-	"fullscreen",
-	"height",
-	"load",
-	"map",
-	"max",
-	"mget",
-	"mid",
-	"min",
-	"mix",
-	"mousebtn",
-	"mousex",
-	"mousey",
-	"mset",
-	"palget",
-	"palset",
-	"palt",
-	"pget",
-	"print",
-	"pset",
-	"rect",
-	"rectfill",
-	"rnd",
-	"save",
-	"sfx",
-	"sget",
-	"sgn",
-	"sin",
-	"spr",
-	"sqrt",
-	"sset",
-	"time",
-	"width",
-	"inf",
-	"log",
-	"nan",
-	"def"
-];
-
 function code_draw(code){
 	var x = code.x;
 	var y = code.y;
@@ -1243,14 +1242,14 @@ function code_draw(code){
 		code.bgColor
 	);
 
-	if(syntaxTreeDirty){
-		syntaxComments.length = 0;
+	if(code.syntaxTreeDirty){
+		code.syntaxComments.length = 0;
 		try {
-			syntaxTree = acorn.parse(codeget(), { onComment: syntaxComments });
+			code.syntaxTree = acorn.parse(codeget(), { onComment: code.syntaxComments });
 		} catch(err){
-			syntaxTree = { body: [] };
+			code.syntaxTree = { body: [] };
 		}
-		syntaxTreeDirty = false;
+		code.syntaxTreeDirty = false;
 	}
 	var codeArray = codeget().split('\n');
 
@@ -1294,8 +1293,8 @@ function code_draw(code){
 		print(row.substr(code.wcol, cols), x, rowY, isInBlockComment ? code.commentColor : code.textColor);
 
 		// Any syntax highlighting on this row?
-		var queue = syntaxTree.body.slice(0);
-		queue.push.apply(queue, syntaxComments);
+		var queue = code.syntaxTree.body.slice(0);
+		queue.push.apply(queue, code.syntaxComments);
 		function add(prop){
 			if(!prop) return;
 			if(prop instanceof acorn.Node){
@@ -1313,17 +1312,13 @@ function code_draw(code){
 			var nodeX = x + (node.start - rowstart) * fontWidth;
 
 			switch(node.type){
-				case "VariableDeclarator":
-					break;
 				case "Literal":
 					print(node.raw, nodeX, rowY, code.literalColor);
 					break;
 				case "Identifier":
-					var isApi = cartridgeIdentifiers.indexOf(node.name) !== -1;
+					var isApi = code.cartridgeIdentifiers.indexOf(node.name) !== -1;
 					var color = isApi ? code.apiColor : code.identifierColor;
 					print(node.name, nodeX, rowY, color);
-					break;
-				case "BinaryExpression":
 					break;
 				case "Line":
 					print("//" + node.value, nodeX, rowY, code.commentColor);
@@ -1501,7 +1496,7 @@ function code_set(str, updateCursor){
 		code_clamp_crow(code);
 		code_clamp_ccol(code);
 	}
-	syntaxTreeDirty = true;
+	code.syntaxTreeDirty = true;
 }
 
 function code_paste(code, str){
@@ -1878,7 +1873,7 @@ function openfile(){
 		try {
 			var json = JSON.parse(text);
 			load(json);
-			syntaxTreeDirty = true;
+			code.syntaxTreeDirty = true;
 			editor.dirty = true;
 		} catch(err){
 			console.error('Could not load file');
@@ -2026,7 +2021,7 @@ window._load = function(){
 	delete window._load; // only need to load once!
 	editor.loading = false;
 	editor.dirty = true;
-	syntaxTreeDirty = true;
+	code.syntaxTreeDirty = true;
 	if(query.run)
 		code_run(code);
 };
