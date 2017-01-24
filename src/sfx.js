@@ -94,7 +94,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 		var startTime = currentTime + j / speed;
 
 		if(prevType !== type && prevType !== null){
-			channel.gains[prevType].gain.setValueAtTime(0, startTime);
+			channel.gains[prevType].gain.setTargetAtTime(0, startTime, 0.00001);
 		}
 
 		var vol = volumes[j] / 255 * (1 / exports.rms[type]);
@@ -114,7 +114,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	if(prevType !== null){
 		var len = (endPosition - offset) / speed;
 		var endTime = currentTime + len;
-		channel.gains[prevType].gain.setValueAtTime(0, endTime);
+		channel.gains[prevType].gain.setTargetAtTime(0, endTime, 0.00001);
 	}
 
 	channel.occupiedUntil = endTime;
@@ -239,7 +239,7 @@ for(var j=0; j<4; j++){
 		osc.type = type;
 
 		var gain = context.createGain();
-		gain.gain.value = 0;
+		gain.gain.value = 0.0001;
 		gain.connect(masterGain);
 
 		osc.connect(gain);
@@ -250,7 +250,7 @@ for(var j=0; j<4; j++){
 
 	// Add square25 / pulse
 	var gain = context.createGain();
-	gain.gain.value = 0;
+	gain.gain.value = 0.0001;
 	gain.connect(masterGain);
 	var square25 = exports.createPulse(gain);
 	channel.oscillators.square25 = square25;
@@ -259,7 +259,7 @@ for(var j=0; j<4; j++){
 
 	// Add white noise
 	gain = context.createGain();
-	gain.gain.value = 0;
+	gain.gain.value = 0.0001;
 	gain.connect(masterGain);
 	var whiteNoise = exports.createWhiteNoise(gain);
 	channel.oscillators.white = whiteNoise;
