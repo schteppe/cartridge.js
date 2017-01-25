@@ -276,6 +276,12 @@ var code = {
 	syntaxTreeDirty: true,
 	syntaxComments: [],
 	cartridgeIdentifiers: [
+		"_click",
+		"_draw",
+		"_init",
+		"_kill",
+		"_update",
+		"_update60",
 		"abs",
 		"alpha",
 		"assert",
