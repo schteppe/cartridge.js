@@ -22,8 +22,8 @@ var paletteSize = 16; // colors
 // Clip state
 var clipX0 = 0;
 var clipY0 = 0;
-var clipX1 = screensizeX;
-var clipY1 = screensizeY;
+var clipX1 = screensizeX-1;
+var clipY1 = screensizeY-1;
 
 // DOM elements
 var container;
@@ -417,17 +417,23 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// Full clip
-	// TODO: partial clip
 	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
 		return;
 	}
 
-	pixelops.beforeChange();
+	x0 = Math.max(x0, clipX0);
+	y0 = Math.max(y0, clipY0);
+	x1 = Math.min(x1, clipX1);
+	y1 = Math.min(y1, clipY1);
 
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
-	ctx.fillStyle = paletteHex[col];
-	ctx.fillRect(x0, y0, w, h);
+
+	if(w > 0 && h > 0){
+		pixelops.beforeChange();
+		ctx.fillStyle = paletteHex[col];
+		ctx.fillRect(x0, y0, w, h);
+	}
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
