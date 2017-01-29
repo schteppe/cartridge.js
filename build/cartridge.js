@@ -2485,8 +2485,8 @@ var paletteSize = 16; // colors
 // Clip state
 var clipX0 = 0;
 var clipY0 = 0;
-var clipX1 = screensizeX;
-var clipY1 = screensizeY;
+var clipX1 = screensizeX-1;
+var clipY1 = screensizeY-1;
 
 // DOM elements
 var container;
@@ -2880,17 +2880,23 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// Full clip
-	// TODO: partial clip
 	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
 		return;
 	}
 
-	pixelops.beforeChange();
+	x0 = Math.max(x0, clipX0);
+	y0 = Math.max(y0, clipY0);
+	x1 = Math.min(x1, clipX1);
+	y1 = Math.min(y1, clipY1);
 
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
-	ctx.fillStyle = paletteHex[col];
-	ctx.fillRect(x0, y0, w, h);
+
+	if(w > 0 && h > 0){
+		pixelops.beforeChange();
+		ctx.fillStyle = paletteHex[col];
+		ctx.fillRect(x0, y0, w, h);
+	}
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
@@ -3283,7 +3289,7 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 6,
+		version: 7,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
@@ -3322,7 +3328,7 @@ function toJSON(){
 
 	// SFX data
 	// TODO: should be stored in the same way as sprites and map, just arrays of ints
-	for(var n=0; n<64; n++){
+	for(var n=0; asget(n) !== undefined; n++){
 		data.sfx[n] = {
 			speed: asget(n),
 			volumes: [],
@@ -3338,14 +3344,14 @@ function toJSON(){
 
 	// trackInfo
 	var maxGroups = 8;
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+	for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 		var speed = gsget(groupIndex);
 		var groupFlags = 0; // todo
 		data.trackInfo.push(speed, groupFlags);
 	}
 
 	// tracks
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+	for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 		for(var position=0; position<32; position++){
 			var pitch = npget(groupIndex, position);
 			var octave = noget(groupIndex, position);
@@ -3360,7 +3366,7 @@ function toJSON(){
 
 	// patterns
 	var maxPatterns = 8;
-	for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+	for(var patternIndex=0; mfget(patternIndex) !== undefined; patternIndex++){
 		var flags = mfget(patternIndex);
 		data.patterns.push(flags);
 		for(var channelIndex = 0; channelIndex < 4; channelIndex++){
@@ -3420,9 +3426,8 @@ function loadJSON(data){
 	}
 
 	// trackInfo
-	var maxGroups = 8;
 	if(data.trackInfo){
-		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 			var speed = data.trackInfo[groupIndex*2];
 			var flags = data.trackInfo[groupIndex*2+1];
 			gsset(groupIndex, speed);
@@ -3431,7 +3436,7 @@ function loadJSON(data){
 
 	// tracks
 	if(data.tracks){
-		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 			for(var position=0; position<32; position++){
 				var p = groupIndex * 32 * 5 + position * 5;
 
@@ -3440,6 +3445,11 @@ function loadJSON(data){
 				var instrument = data.tracks[p + 2] || 0;
 				var volume = data.tracks[p + 3] || 0;
 				var effect = data.tracks[p + 4] || 0; // todo
+
+				if(octave <= 6){
+					// in v7, all octaves were lowered by 1.
+					octave++;
+				}
 
 				npset(groupIndex, position, pitch);
 				noset(groupIndex, position, octave);
@@ -3450,9 +3460,8 @@ function loadJSON(data){
 	}
 
 	// patterns
-	var maxPatterns = 8;
 	if(data.patterns){
-		for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+		for(var patternIndex=0; mfget(patternIndex) !== undefined; patternIndex++){
 			var flags = data.patterns[patternIndex * 5] || 0;
 			mfset(patternIndex, flags);
 			for(var channelIndex = 0; channelIndex < 4; channelIndex++){
@@ -3767,7 +3776,11 @@ var aWeight = require('a-weighting/a');
  * Source: http://www.phy.mtu.edu/~suits/notefreqs.html
  */
 var frequencies = [
-	261.63, 277.18, 277.18, 293.66, 311.13, 311.13, 329.63, 349.23, 369.99, 369.99, 392.00, 415.30, 415.30, 440.00, 466.16, 466.16, 493.88, 523.25, 554.37, 554.37, 587.33, 622.25, 622.25, 659.26, 698.46, 739.99, 739.99, 783.99, 830.61, 830.61, 880.00, 932.33, 932.33, 987.77, 1046.50, 1108.73, 1108.73, 1174.66, 1244.51, 1244.51, 1318.51, 1396.91, 1479.98, 1479.98, 1567.98, 1661.22, 1661.22, 1760.00, 1864.66, 1864.66, 1975.53, 2093.00, 2217.46, 2217.46, 2349.32, 2489.02, 2489.02, 2637.02, 2793.83, 2959.96, 2959.96, 3135.96, 3322.44, 3322.44, 3520.00, 3729.31, 3729.31, 3951.07, 4186.01];
+	130.81,  138.59,  138.59,  146.83,  155.56,  155.56,  164.81,  174.61,  185.00,  185.00,  196.00,  207.65,  207.65,  220.00,  233.08,  233.08,  246.94,
+	261.63,  277.18,  277.18,  293.66,  311.13,  311.13,  329.63,  349.23,  369.99,  369.99,  392.00,  415.30,  415.30,  440.00,  466.16,  466.16,  493.88,
+	523.25,  554.37,  554.37,  587.33,  622.25,  622.25,  659.26,  698.46,  739.99,  739.99,  783.99,  830.61,  830.61,  880.00,  932.33,  932.33,  987.77,
+	1046.50, 1108.73, 1108.73, 1174.66, 1244.51, 1244.51, 1318.51, 1396.91, 1479.98, 1479.98, 1567.98, 1661.22, 1661.22, 1760.00, 1864.66, 1864.66, 1975.53,
+	2093.00, 2217.46, 2217.46, 2349.32, 2489.02, 2489.02, 2637.02, 2793.83, 2959.96, 2959.96, 3135.96, 3322.44, 3322.44, 3520.00, 3729.31, 3729.31, 3951.07, 4186.01];
 var noteNames = "C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B".split(' ');
 var PatternFlags = {
 	CONTINUE: 1,
@@ -3973,7 +3986,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		}
 		var startPosition = i;
 		var endPosition = i+1;
-		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && npget(groupIndex, endPosition) === pitch && endPosition < 32){
+		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && npget(groupIndex, endPosition) === pitch && noget(groupIndex, endPosition) === octave && endPosition < 32){
 			endPosition++;
 		}
 		var startTime = time + startPosition / speed;
@@ -4317,19 +4330,21 @@ function play(channel, types, frequencies, volumes, speed, offset){
 exports.asset = function(n, speed){
 	effects[n].speed = (speed === undefined ? defaultSpeed : speed);
 };
-exports.asget = function(n){ return effects[n].speed; };
+exports.asget = function(n){
+	return effects[n] && effects[n].speed;
+};
 
 // volume is 0 to 255
 exports.avset = function(n, offset, volume){ effects[n].volumes[offset] = (volume !== undefined ? volume : 0); };
-exports.avget = function(n, offset){ return effects[n].volumes[offset]; };
+exports.avget = function(n, offset){ return effects[n] && effects[n].volumes[offset]; };
 
 // frequency is 0 to 255
 exports.afset = function(n, offset, frequency){ effects[n].frequencies[offset] = (frequency !== undefined ? frequency : 0); };
-exports.afget = function(n, offset){ return effects[n].frequencies[offset]; };
+exports.afget = function(n, offset){ return effects[n] && effects[n].frequencies[offset]; };
 
 // wave is 0,1,2,3,4
 exports.awset = function(n, offset, waveform){ effects[n].types[offset] = (waveform !== undefined ? waveform : 0); };
-exports.awget = function(n, offset){ return effects[n].types[offset]; };
+exports.awget = function(n, offset){ return effects[n] && effects[n].types[offset]; };
 
 exports.sfx = function(n, channelIndex, offset){
 	channelIndex = channelIndex !== undefined ? channelIndex : -1;
