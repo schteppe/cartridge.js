@@ -124,19 +124,21 @@ function play(channel, types, frequencies, volumes, speed, offset){
 exports.asset = function(n, speed){
 	effects[n].speed = (speed === undefined ? defaultSpeed : speed);
 };
-exports.asget = function(n){ return effects[n].speed; };
+exports.asget = function(n){
+	return effects[n] && effects[n].speed;
+};
 
 // volume is 0 to 255
 exports.avset = function(n, offset, volume){ effects[n].volumes[offset] = (volume !== undefined ? volume : 0); };
-exports.avget = function(n, offset){ return effects[n].volumes[offset]; };
+exports.avget = function(n, offset){ return effects[n] && effects[n].volumes[offset]; };
 
 // frequency is 0 to 255
 exports.afset = function(n, offset, frequency){ effects[n].frequencies[offset] = (frequency !== undefined ? frequency : 0); };
-exports.afget = function(n, offset){ return effects[n].frequencies[offset]; };
+exports.afget = function(n, offset){ return effects[n] && effects[n].frequencies[offset]; };
 
 // wave is 0,1,2,3,4
 exports.awset = function(n, offset, waveform){ effects[n].types[offset] = (waveform !== undefined ? waveform : 0); };
-exports.awget = function(n, offset){ return effects[n].types[offset]; };
+exports.awget = function(n, offset){ return effects[n] && effects[n].types[offset]; };
 
 exports.sfx = function(n, channelIndex, offset){
 	channelIndex = channelIndex !== undefined ? channelIndex : -1;

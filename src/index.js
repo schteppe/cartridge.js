@@ -865,7 +865,7 @@ function toJSON(){
 
 	// SFX data
 	// TODO: should be stored in the same way as sprites and map, just arrays of ints
-	for(var n=0; n<64; n++){
+	for(var n=0; asget(n) !== undefined; n++){
 		data.sfx[n] = {
 			speed: asget(n),
 			volumes: [],
@@ -881,14 +881,14 @@ function toJSON(){
 
 	// trackInfo
 	var maxGroups = 8;
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+	for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 		var speed = gsget(groupIndex);
 		var groupFlags = 0; // todo
 		data.trackInfo.push(speed, groupFlags);
 	}
 
 	// tracks
-	for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+	for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 		for(var position=0; position<32; position++){
 			var pitch = npget(groupIndex, position);
 			var octave = noget(groupIndex, position);
@@ -903,7 +903,7 @@ function toJSON(){
 
 	// patterns
 	var maxPatterns = 8;
-	for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+	for(var patternIndex=0; mfget(patternIndex) !== undefined; patternIndex++){
 		var flags = mfget(patternIndex);
 		data.patterns.push(flags);
 		for(var channelIndex = 0; channelIndex < 4; channelIndex++){
@@ -963,9 +963,8 @@ function loadJSON(data){
 	}
 
 	// trackInfo
-	var maxGroups = 8;
 	if(data.trackInfo){
-		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 			var speed = data.trackInfo[groupIndex*2];
 			var flags = data.trackInfo[groupIndex*2+1];
 			gsset(groupIndex, speed);
@@ -974,7 +973,7 @@ function loadJSON(data){
 
 	// tracks
 	if(data.tracks){
-		for(var groupIndex=0; groupIndex<maxGroups; groupIndex++){
+		for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 			for(var position=0; position<32; position++){
 				var p = groupIndex * 32 * 5 + position * 5;
 
@@ -998,9 +997,8 @@ function loadJSON(data){
 	}
 
 	// patterns
-	var maxPatterns = 8;
 	if(data.patterns){
-		for(var patternIndex=0; patternIndex<maxPatterns; patternIndex++){
+		for(var patternIndex=0; mfget(patternIndex) !== undefined; patternIndex++){
 			var flags = data.patterns[patternIndex * 5] || 0;
 			mfset(patternIndex, flags);
 			for(var channelIndex = 0; channelIndex < 4; channelIndex++){

@@ -217,7 +217,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		}
 		var startPosition = i;
 		var endPosition = i+1;
-		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && npget(groupIndex, endPosition) === pitch && endPosition < 32){
+		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && npget(groupIndex, endPosition) === pitch && noget(groupIndex, endPosition) === octave && endPosition < 32){
 			endPosition++;
 		}
 		var startTime = time + startPosition / speed;
