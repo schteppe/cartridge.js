@@ -137,6 +137,28 @@ var keyToNote = {
 	U: 17 + 16 // B
 };
 
+function track_keydown(track, evt){
+	if(evt.ctrlKey || evt.metaKey || evt.altKey) return;
+
+	switch(evt.keyCode){
+	case 46:
+		nvset(trackGroupSelector.current, track.note, 0);
+		break;
+	case 37: // left
+		track.note = utils.mod(track.note-8, 32);
+		break;
+	case 39: // right
+		track.note = utils.mod(track.note+8, 32);
+		break;
+	case 38: // up
+		track.note = utils.mod(track.note-1, 32);
+		break;
+	case 40: // down
+		track.note = utils.mod(track.note+1, 32);
+		break;
+	}
+}
+
 function track_keypress(track, evt){
 	if(evt.ctrlKey || evt.metaKey || evt.altKey) return;
 
@@ -1823,6 +1845,8 @@ window.addEventListener('keydown', function(evt){
 
 	if(editor.mode === 'code'){
 		code_keydown(code, evt);
+	} else if(editor.mode === 'track'){
+		track_keydown(track, evt);
 	} else if(!evt.altKey && !evt.metaKey && !evt.ctrlKey){
 		switch(evt.keyCode){
 			case 86: if(editor.mode === 'sprite') flipSprite(sprites.current, false); break; // V
