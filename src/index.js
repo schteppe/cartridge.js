@@ -826,7 +826,7 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 6,
+		version: 7,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
@@ -983,6 +983,11 @@ function loadJSON(data){
 				var instrument = data.tracks[p + 2] || 0;
 				var volume = data.tracks[p + 3] || 0;
 				var effect = data.tracks[p + 4] || 0; // todo
+
+				if(octave <= 6){
+					// in v7, all octaves were lowered by 1.
+					octave++;
+				}
 
 				npset(groupIndex, position, pitch);
 				noset(groupIndex, position, octave);
