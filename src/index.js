@@ -826,7 +826,7 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 7,
+		version: 8,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
@@ -864,23 +864,36 @@ function toJSON(){
 	utils.removeTrailingZeros(data.map);
 
 	// SFX data
-	// TODO: should be stored in the same way as sprites and map, just arrays of ints
 	for(var n=0; asget(n) !== undefined; n++){
-		data.sfx[n] = {
+		var sfxData = {
 			speed: asget(n),
 			volumes: [],
 			pitches: [],
 			waves: []
 		};
 		for(var offset=0; offset<32; offset++){
-			data.sfx[n].volumes.push(avget(n, offset));
-			data.sfx[n].pitches.push(afget(n, offset));
-			data.sfx[n].waves.push(awget(n, offset));
+			sfxData.volumes.push(avget(n, offset));
+			sfxData.pitches.push(afget(n, offset));
+			sfxData.waves.push(awget(n, offset));
 		}
+		data.sfx.push(sfxData);
+	}
+	// Remove zero valued sfx data, added in v8
+	function isDefaultSfxData(d){
+		var onlyZeroVolumes = true;
+		for(var i=0;i<d.volumes.length; i++){
+			if(d.volumes[i] !== 0){
+				onlyZeroVolumes = false;
+				break;
+			}
+		}
+		return onlyZeroVolumes;
+	}
+	while(data.sfx.length && isDefaultSfxData(data.sfx[data.sfx.length-1])){
+		data.sfx.pop();
 	}
 
 	// trackInfo
-	var maxGroups = 8;
 	for(var groupIndex=0; gsget(groupIndex) !== undefined; groupIndex++){
 		var speed = gsget(groupIndex);
 		var groupFlags = 0; // todo
@@ -902,7 +915,6 @@ function toJSON(){
 	utils.removeTrailingZeros(data.tracks);
 
 	// patterns
-	var maxPatterns = 8;
 	for(var patternIndex=0; mfget(patternIndex) !== undefined; patternIndex++){
 		var flags = mfget(patternIndex);
 		data.patterns.push(flags);
@@ -953,12 +965,18 @@ function loadJSON(data){
 		}
 	}
 
-	for(var n=0; n<data.sfx.length; n++){
-		asset(n, data.sfx[n].speed);
-		for(var offset=0; offset<data.sfx[n].volumes.length; offset++){
-			avset(n, offset, data.sfx[n].volumes[offset]);
-			afset(n, offset, data.sfx[n].pitches[offset]);
-			awset(n, offset, data.sfx[n].waves[offset]);
+	for(var n=0; asget(n) !== undefined; n++){
+		var sfxData = data.sfx[n] || {
+			speed: 16,
+			volumes: [],
+			pitches: [],
+			waves: []
+		};
+		asset(n, sfxData.speed);
+		for(var offset=0; avget(n, offset) !== undefined; offset++){
+			avset(n, offset, sfxData.volumes[offset] || 0);
+			afset(n, offset, sfxData.pitches[offset] || 0);
+			awset(n, offset, sfxData.waves[offset] || 0);
 		}
 	}
 
