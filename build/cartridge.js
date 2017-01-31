@@ -2329,6 +2329,44 @@ if (module && typeof module.exports !== 'undefined') {
   };
 }
 },{}],3:[function(require,module,exports){
+module.exports = Rectangle;
+
+function Rectangle(x,y,w,h){
+	this.set(x,y,w,h);
+}
+
+Rectangle.prototype = {
+	set: function(x,y,w,h){
+		x |= 0;
+		y |= 0;
+		w |= 0;
+		h |= 0;
+		this.x0 = x;
+		this.y0 = y;
+		this.w = w;
+		this.h = h;
+		this.x1 = x + w - 1;
+		this.y1 = y + h - 1;
+		this.area = w*h;
+	},
+	excludesRect: function(x0,y0,x1,y1){
+		return x1 < this.x0 || y1 < this.y0 || x0 > this.x1 || y0 > this.y1;
+	},
+	excludesPoint: function(x,y){
+		return x < this.x0 || y < this.y0 || x > this.x1 || y > this.y1;
+	},
+	expandToPoint: function(x,y){
+		var x0 = Math.min(this.x0, x);
+		var y0 = Math.min(this.y0, y);
+		this.set(
+			x0,
+			y0,
+			Math.max(this.x1, x) - x0 + 1,
+			Math.max(this.y1, y) - y0 + 1
+		);
+	}
+};
+},{}],4:[function(require,module,exports){
 var code = '';
 
 exports.codeset = function(codeString){
@@ -2342,7 +2380,7 @@ exports.codeget = function(){
 exports.run = function(){
 	eval.call(null, code);
 };
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 exports.defaultPalette = function(){
 	return [
 		0x000000, // 0
@@ -2377,7 +2415,7 @@ exports.int2hex = function(int){
 
 	return hex;
 }
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var utils = require('./utils');
 
 var coloredFontCanvases = [];
@@ -2460,7 +2498,7 @@ exports.draw = function(ctx, text, x, y, col){
 	}
 };
 
-},{"./utils":13}],6:[function(require,module,exports){
+},{"./utils":14}],7:[function(require,module,exports){
 var input = require('./input');
 var mouse = require('./mouse');
 var utils = require('./utils');
@@ -2471,6 +2509,7 @@ var sfx = require('./sfx');
 var pixelops = require('./pixelops');
 var code = require('./code');
 var music = require('./music');
+var Rectangle = require('./Rectangle');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -2483,10 +2522,7 @@ var spriteSheetSizeY = 16; // sprites
 var paletteSize = 16; // colors
 
 // Clip state
-var clipX0 = 0;
-var clipY0 = 0;
-var clipX1 = screensizeX-1;
-var clipY1 = screensizeY-1;
+var clipRect = new Rectangle(0,0,screensizeX,screensizeY);
 
 // DOM elements
 var container;
@@ -2499,7 +2535,7 @@ var mapCacheCanvas;
 var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
-var spriteSheetDirty = false;
+var spriteSheetDirtyRect = new Rectangle();
 var spriteFlags;
 var spriteSheetPixels;
 var ctx;
@@ -2717,32 +2753,34 @@ function setCellSize(
 	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 
-	spriteSheetDirty = true;
+	spriteSheetDirtyRect.set(0,0,spriteSheetCanvas.width,spriteSheetCanvas.height);
 	mapDirty = true;
 }
 
 // Redraw the whole spritesheet
-function redrawSpriteSheet(){
+function flushSpriteSheet(){
+	if(!spriteSheetDirtyRect.area) return;
+
 	var w = spriteSheetSizeX*cellsizeX;
 	var h = spriteSheetSizeY*cellsizeY;
-	spriteSheetContext.clearRect(0, 0, w, h);
-	var imageData = spriteSheetContext.createImageData(w,h);
-	for(var i=0; i<w; i++){
-		for(var j=0; j<h; j++){
-			var p = j * w + i;
-			var col = spriteSheetPixels[p];
+	spriteSheetContext.clearRect(spriteSheetDirtyRect.x0, spriteSheetDirtyRect.y0, spriteSheetDirtyRect.w, spriteSheetDirtyRect.h);
+	var imageData = spriteSheetContext.createImageData(spriteSheetDirtyRect.w, spriteSheetDirtyRect.h);
+	for(var i=0; i<spriteSheetDirtyRect.w; i++){
+		for(var j=0; j<spriteSheetDirtyRect.h; j++){
+			var col = spriteSheetPixels[(j+spriteSheetDirtyRect.y0) * w + (i+spriteSheetDirtyRect.x0)];
 			var dec = palette[col];
 			var r = utils.decToR(dec);
 			var g = utils.decToG(dec);
 			var b = utils.decToB(dec);
-			imageData.data[4*(p) + 0] = utils.decToR(dec);
-			imageData.data[4*(p) + 1] = utils.decToG(dec);
-			imageData.data[4*(p) + 2] = utils.decToB(dec);
-			imageData.data[4*(p) + 3] = transparentColors[col] ? 0 : 255;
+			var p = 4 * (j * spriteSheetDirtyRect.w + i);
+			imageData.data[p + 0] = utils.decToR(dec);
+			imageData.data[p + 1] = utils.decToG(dec);
+			imageData.data[p + 2] = utils.decToB(dec);
+			imageData.data[p + 3] = transparentColors[col] ? 0 : 255;
 		}
 	}
-	spriteSheetContext.putImageData(imageData, 0, 0);
-	spriteSheetDirty = false;
+	spriteSheetContext.putImageData(imageData, spriteSheetDirtyRect.x0, spriteSheetDirtyRect.y0);
+	spriteSheetDirtyRect.set();
 }
 
 function setPalette(p){
@@ -2759,7 +2797,7 @@ function setPalette(p){
 			}
 		}
 	}
-	spriteSheetDirty = true;
+	spriteSheetDirtyRect.set(0,0,spriteSheetCanvas.width,spriteSheetCanvas.height);
 }
 
 exports.palset = function(n, hexColor){
@@ -2880,14 +2918,15 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// Full clip
-	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+	if(clipRect.excludesRect(x0,y0,x1,y1)){
 		return;
 	}
 
-	x0 = Math.max(x0, clipX0);
-	y0 = Math.max(y0, clipY0);
-	x1 = Math.min(x1, clipX1);
-	y1 = Math.min(y1, clipY1);
+	// Reduce it to the clip area
+	x0 = Math.max(x0, clipRect.x0);
+	y0 = Math.max(y0, clipRect.y0);
+	x1 = Math.min(x1, clipRect.x1);
+	y1 = Math.min(y1, clipRect.y1);
 
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
@@ -2908,7 +2947,7 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// full clip
-	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+	if(clipRect.excludesRect(x0,y0,x1,y1)){
 		return;
 	}
 
@@ -2934,10 +2973,7 @@ exports.clip = function(x,y,w,h){
 	w = w | 0;
 	h = h | 0;
 
-	clipX0 = x;
-	clipY0 = y;
-	clipX1 = x+w-1;
-	clipY1 = y+h-1;
+	clipRect.set(x,y,w,h);
 };
 
 exports.canvas = function canvas(n){
@@ -2972,7 +3008,7 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	var x1 = sx + cel_w * cellwidth();
 	var y0 = sy;
 	var y1 = sy + cel_h * cellheight();
-	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+	if(clipRect.excludesRect(x0,y0,x1,y1)){
 		return; // fully outside the clip area
 	}
 
@@ -3036,7 +3072,7 @@ exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
-	if(spriteSheetDirty) redrawSpriteSheet();
+	flushSpriteSheet();
 
 	w = w !== undefined ? w : 1;
 	h = h !== undefined ? h : 1;
@@ -3059,13 +3095,13 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	var sourceY = ssy(n) * cellsizeY;
 
 	// Clip lower
-	if(destX < clipX0){
-		sourceX = sourceX + clipX0 - destX;
-		destX = clipX0;
+	if(destX < clipRect.x0){
+		sourceX = sourceX + clipRect.x0 - destX;
+		destX = clipRect.x0;
 	}
-	if(destY < clipY0){
-		sourceY = sourceY + clipY0 - destY;
-		destY = clipY0;
+	if(destY < clipRect.y0){
+		sourceY = sourceY + clipRect.y0 - destY;
+		destY = clipRect.y0;
 	}
 
 	// TODO: clip upper
@@ -3138,7 +3174,7 @@ exports.pset = function(x, y, col){
 	y = y | 0;
 	col = col | 0;
 
-	if(x < clipX0 || y < clipY0 || x > clipX1 || y > clipY1) return;
+	if(clipRect.excludesPoint(x,y)) return;
 
 	// new style
 	var dec = palette[col];
@@ -3174,7 +3210,11 @@ exports.sset = function(x, y, col){
 
 	var w = spriteSheetSizeX * cellsizeX;
 	spriteSheetPixels[y * w + x] = col;
-	spriteSheetDirty = true;
+	if(spriteSheetDirtyRect.area){
+		spriteSheetDirtyRect.expandToPoint(x,y);
+	} else {
+		spriteSheetDirtyRect.set(x,y,1,1);
+	}
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
@@ -3276,14 +3316,7 @@ exports.load = function(key){
 function download(key){
 	key = key || 'export';
 	var data = toJSON();
-	var url = URL.createObjectURL(new Blob([JSON.stringify(data)]));
-	var a = document.createElement('a');
-	a.href = url;
-	a.download = key + '.json';
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	utils.downloadStringAsTextFile(JSON.stringify(data), key + '.json');
 }
 
 function toJSON(){
@@ -3416,12 +3449,15 @@ function loadJSON(data){
 	for(i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i] || 0);
 	}
+
 	setPalette(data.palette);
 	for(i=0; i<spriteSheetSizeX*cellwidth(); i++){
 		for(j=0; j<spriteSheetSizeY*cellheight(); j++){
 			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i] || 0);
 		}
 	}
+	spriteSheetDirtyRect.set(0,0,spriteSheetSizeX*cellwidth(),spriteSheetSizeY*cellheight());
+
 	for(i=0; i<mapSizeX; i++){
 		for(j=0; j<mapSizeY; j++){
 			mset(i,j,data.map[j*mapSizeX+i] || 0);
@@ -3464,7 +3500,7 @@ function loadJSON(data){
 				var volume = data.tracks[p + 3] || 0;
 				var effect = data.tracks[p + 4] || 0; // todo
 
-				if(octave <= 6){
+				if(data.version <= 6){
 					// in v7, all octaves were lowered by 1.
 					octave++;
 				}
@@ -3488,8 +3524,6 @@ function loadJSON(data){
 			}
 		}
 	}
-
-	spriteSheetDirty = true;
 
 	if(typeof(_load) === 'function'){
 		runUserFunction(_load);
@@ -3522,7 +3556,7 @@ function updateMapCacheCanvas(x,y,doClear){
 		// Sprite 0 is empty
 		return;
 	}
-	if(spriteSheetDirty) redrawSpriteSheet();
+	flushSpriteSheet();
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
 		ssx(n) * cellsizeX, ssy(n) * cellsizeY,
@@ -3548,7 +3582,7 @@ utils.makeGlobal(exports);
 utils.makeGlobal(input.global);
 utils.makeGlobal(mouse.global);
 
-},{"./code":3,"./colors":4,"./font":5,"./input":7,"./math":8,"./mouse":9,"./music":10,"./pixelops":11,"./sfx":12,"./utils":13}],7:[function(require,module,exports){
+},{"./Rectangle":3,"./code":4,"./colors":5,"./font":6,"./input":8,"./math":9,"./mouse":10,"./music":11,"./pixelops":12,"./sfx":13,"./utils":14}],8:[function(require,module,exports){
 var math = require('./math');
 var utils = require('./utils');
 
@@ -3652,7 +3686,7 @@ exports.global = {
 	btnp: exports.btnp
 };
 
-},{"./math":8,"./utils":13}],8:[function(require,module,exports){
+},{"./math":9,"./utils":14}],9:[function(require,module,exports){
 var tau = 2 * Math.PI;
 
 module.exports = {
@@ -3689,7 +3723,7 @@ module.exports = {
 		return Math.min(Math.max(x,min), max);
 	}
 };
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var math = require('./math');
 var utils = require('./utils');
 
@@ -3784,7 +3818,7 @@ exports.global = {
 	mousescroll: exports.mousescroll
 };
 
-},{"./math":8,"./utils":13}],10:[function(require,module,exports){
+},{"./math":9,"./utils":14}],11:[function(require,module,exports){
 var utils = require('./utils');
 var sfx = require('./sfx');
 var aWeight = require('a-weighting/a');
@@ -4137,7 +4171,7 @@ function getPatternLength(patternIndex){
 	return totalLength;
 }
 
-},{"./sfx":12,"./utils":13,"a-weighting/a":1}],11:[function(require,module,exports){
+},{"./sfx":13,"./utils":14,"a-weighting/a":1}],12:[function(require,module,exports){
 var ctx;
 var writeData = null;
 var readData = null;
@@ -4172,9 +4206,9 @@ exports.beforeChange = function(){
 };
 
 exports.pset = function(x,y,r,g,b){
+	if(x >= width || y >= height) throw new Error("Pixel coordinate out of bounds.");
 	var p = (y * width + x) * 4;
 	var data = writeData.data;
-	if(p < 0 || p+3 > data.length) return;
 	data[p + 0] = r;
 	data[p + 1] = g;
 	data[p + 2] = b;
@@ -4221,7 +4255,7 @@ exports.flush = function(){
 		}
 	}
 };
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
 var aWeight = require('a-weighting/a');
@@ -4526,7 +4560,7 @@ exports.global = {
 	awget: exports.awget,
 	sfx: exports.sfx
 };
-},{"./utils":13,"a-weighting/a":1,"dsp.js/dsp":2}],13:[function(require,module,exports){
+},{"./utils":14,"a-weighting/a":1,"dsp.js/dsp":2}],14:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
@@ -4851,4 +4885,15 @@ exports.isMobile = function() {
 	(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
 	return check;
 };
-},{}]},{},[6]);
+
+exports.downloadStringAsTextFile = function(str, filename){
+	var url = URL.createObjectURL(new Blob([str]));
+	var a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+};
+},{}]},{},[7]);
