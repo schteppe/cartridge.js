@@ -8,6 +8,7 @@ var sfx = require('./sfx');
 var pixelops = require('./pixelops');
 var code = require('./code');
 var music = require('./music');
+var Rectangle = require('./Rectangle');
 
 var cellsizeX = 8; // pixels
 var cellsizeY = 8; // pixels
@@ -20,10 +21,7 @@ var spriteSheetSizeY = 16; // sprites
 var paletteSize = 16; // colors
 
 // Clip state
-var clipX0 = 0;
-var clipY0 = 0;
-var clipX1 = screensizeX-1;
-var clipY1 = screensizeY-1;
+var clipRect = new Rectangle(0,0,screensizeX,screensizeY);
 
 // DOM elements
 var container;
@@ -417,14 +415,15 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// Full clip
-	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+	if(clipRect.excludesRect(x0,y0,x1,y1)){
 		return;
 	}
 
-	x0 = Math.max(x0, clipX0);
-	y0 = Math.max(y0, clipY0);
-	x1 = Math.min(x1, clipX1);
-	y1 = Math.min(y1, clipY1);
+	// Reduce it to the clip area
+	x0 = Math.max(x0, clipRect.x0);
+	y0 = Math.max(y0, clipRect.y0);
+	x1 = Math.min(x1, clipRect.x1);
+	y1 = Math.min(y1, clipRect.y1);
 
 	var w = x1 - x0 + 1;
 	var h = y1 - y0 + 1;
@@ -445,7 +444,7 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 	col = col !== undefined ? col : defaultColor;
 
 	// full clip
-	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+	if(clipRect.excludesRect(x0,y0,x1,y1)){
 		return;
 	}
 
@@ -471,10 +470,7 @@ exports.clip = function(x,y,w,h){
 	w = w | 0;
 	h = h | 0;
 
-	clipX0 = x;
-	clipY0 = y;
-	clipX1 = x+w-1;
-	clipY1 = y+h-1;
+	clipRect.set(x,y,w,h);
 };
 
 exports.canvas = function canvas(n){
@@ -509,7 +505,7 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
 	var x1 = sx + cel_w * cellwidth();
 	var y0 = sy;
 	var y1 = sy + cel_h * cellheight();
-	if(x1 < clipX0 || y1 < clipY0 || x0 > clipX1 || y0 > clipY1){
+	if(clipRect.excludesRect(x0,y0,x1,y1)){
 		return; // fully outside the clip area
 	}
 
@@ -596,13 +592,13 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	var sourceY = ssy(n) * cellsizeY;
 
 	// Clip lower
-	if(destX < clipX0){
-		sourceX = sourceX + clipX0 - destX;
-		destX = clipX0;
+	if(destX < clipRect.x0){
+		sourceX = sourceX + clipRect.x0 - destX;
+		destX = clipRect.x0;
 	}
-	if(destY < clipY0){
-		sourceY = sourceY + clipY0 - destY;
-		destY = clipY0;
+	if(destY < clipRect.y0){
+		sourceY = sourceY + clipRect.y0 - destY;
+		destY = clipRect.y0;
 	}
 
 	// TODO: clip upper
@@ -675,7 +671,7 @@ exports.pset = function(x, y, col){
 	y = y | 0;
 	col = col | 0;
 
-	if(x < clipX0 || y < clipY0 || x > clipX1 || y > clipY1) return;
+	if(clipRect.excludesPoint(x,y)) return;
 
 	// new style
 	var dec = palette[col];
