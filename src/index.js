@@ -34,7 +34,7 @@ var mapCacheCanvas;
 var mapCacheContext;
 var spriteSheetCanvas;
 var spriteSheetContext;
-var spriteSheetDirty = false;
+var spriteSheetDirtyRect = new Rectangle();
 var spriteFlags;
 var spriteSheetPixels;
 var ctx;
@@ -252,32 +252,34 @@ function setCellSize(
 	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
 	mapCacheContext = mapCacheCanvas.getContext('2d');
 
-	spriteSheetDirty = true;
+	spriteSheetDirtyRect.set(0,0,spriteSheetCanvas.width,spriteSheetCanvas.height);
 	mapDirty = true;
 }
 
 // Redraw the whole spritesheet
-function redrawSpriteSheet(){
+function flushSpriteSheet(){
+	if(!spriteSheetDirtyRect.area) return;
+
 	var w = spriteSheetSizeX*cellsizeX;
 	var h = spriteSheetSizeY*cellsizeY;
-	spriteSheetContext.clearRect(0, 0, w, h);
-	var imageData = spriteSheetContext.createImageData(w,h);
-	for(var i=0; i<w; i++){
-		for(var j=0; j<h; j++){
-			var p = j * w + i;
-			var col = spriteSheetPixels[p];
+	spriteSheetContext.clearRect(spriteSheetDirtyRect.x0, spriteSheetDirtyRect.y0, spriteSheetDirtyRect.w, spriteSheetDirtyRect.h);
+	var imageData = spriteSheetContext.createImageData(spriteSheetDirtyRect.w, spriteSheetDirtyRect.h);
+	for(var i=0; i<spriteSheetDirtyRect.w; i++){
+		for(var j=0; j<spriteSheetDirtyRect.h; j++){
+			var col = spriteSheetPixels[(j+spriteSheetDirtyRect.y0) * w + (i+spriteSheetDirtyRect.x0)];
 			var dec = palette[col];
 			var r = utils.decToR(dec);
 			var g = utils.decToG(dec);
 			var b = utils.decToB(dec);
-			imageData.data[4*(p) + 0] = utils.decToR(dec);
-			imageData.data[4*(p) + 1] = utils.decToG(dec);
-			imageData.data[4*(p) + 2] = utils.decToB(dec);
-			imageData.data[4*(p) + 3] = transparentColors[col] ? 0 : 255;
+			var p = 4 * (j * spriteSheetDirtyRect.w + i);
+			imageData.data[p + 0] = utils.decToR(dec);
+			imageData.data[p + 1] = utils.decToG(dec);
+			imageData.data[p + 2] = utils.decToB(dec);
+			imageData.data[p + 3] = transparentColors[col] ? 0 : 255;
 		}
 	}
-	spriteSheetContext.putImageData(imageData, 0, 0);
-	spriteSheetDirty = false;
+	spriteSheetContext.putImageData(imageData, spriteSheetDirtyRect.x0, spriteSheetDirtyRect.y0);
+	spriteSheetDirtyRect.set();
 }
 
 function setPalette(p){
@@ -294,7 +296,7 @@ function setPalette(p){
 			}
 		}
 	}
-	spriteSheetDirty = true;
+	spriteSheetDirtyRect.set(0,0,spriteSheetCanvas.width,spriteSheetCanvas.height);
 }
 
 exports.palset = function(n, hexColor){
@@ -569,7 +571,7 @@ exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
 
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
-	if(spriteSheetDirty) redrawSpriteSheet();
+	flushSpriteSheet();
 
 	w = w !== undefined ? w : 1;
 	h = h !== undefined ? h : 1;
@@ -707,7 +709,11 @@ exports.sset = function(x, y, col){
 
 	var w = spriteSheetSizeX * cellsizeX;
 	spriteSheetPixels[y * w + x] = col;
-	spriteSheetDirty = true;
+	if(spriteSheetDirtyRect.area){
+		spriteSheetDirtyRect.expandToPoint(x,y);
+	} else {
+		spriteSheetDirtyRect.set(x,y,1,1);
+	}
 
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
@@ -942,12 +948,15 @@ function loadJSON(data){
 	for(i=0; i<spriteFlags.length; i++){
 		fset(i, data.flags[i] || 0);
 	}
+
 	setPalette(data.palette);
 	for(i=0; i<spriteSheetSizeX*cellwidth(); i++){
 		for(j=0; j<spriteSheetSizeY*cellheight(); j++){
 			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i] || 0);
 		}
 	}
+	spriteSheetDirtyRect.set(0,0,spriteSheetSizeX*cellwidth(),spriteSheetSizeY*cellheight());
+
 	for(i=0; i<mapSizeX; i++){
 		for(j=0; j<mapSizeY; j++){
 			mset(i,j,data.map[j*mapSizeX+i] || 0);
@@ -1015,8 +1024,6 @@ function loadJSON(data){
 		}
 	}
 
-	spriteSheetDirty = true;
-
 	if(typeof(_load) === 'function'){
 		runUserFunction(_load);
 	}
@@ -1048,7 +1055,7 @@ function updateMapCacheCanvas(x,y,doClear){
 		// Sprite 0 is empty
 		return;
 	}
-	if(spriteSheetDirty) redrawSpriteSheet();
+	flushSpriteSheet();
 	mapCacheContext.drawImage(
 		spriteSheetCanvas,
 		ssx(n) * cellsizeX, ssy(n) * cellsizeY,

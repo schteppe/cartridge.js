@@ -16,6 +16,7 @@ Rectangle.prototype = {
 		this.h = h;
 		this.x1 = x + w - 1;
 		this.y1 = y + h - 1;
+		this.area = w*h;
 	},
 	excludesRect: function(x0,y0,x1,y1){
 		return x1 < this.x0 || y1 < this.y0 || x0 > this.x1 || y0 > this.y1;
