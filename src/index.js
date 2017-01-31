@@ -809,14 +809,7 @@ exports.load = function(key){
 function download(key){
 	key = key || 'export';
 	var data = toJSON();
-	var url = URL.createObjectURL(new Blob([JSON.stringify(data)]));
-	var a = document.createElement('a');
-	a.href = url;
-	a.download = key + '.json';
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	utils.downloadStringAsTextFile(JSON.stringify(data), key + '.json');
 }
 
 function toJSON(){
