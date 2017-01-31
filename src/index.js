@@ -999,7 +999,7 @@ function loadJSON(data){
 				var volume = data.tracks[p + 3] || 0;
 				var effect = data.tracks[p + 4] || 0; // todo
 
-				if(octave <= 6){
+				if(data.version <= 6){
 					// in v7, all octaves were lowered by 1.
 					octave++;
 				}
