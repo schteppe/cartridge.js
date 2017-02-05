@@ -4028,7 +4028,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 	var group = groups[groupIndex];
 	var channel = channels[channelIndex];
 	var speed = group.speed;
-	for(var i=0; i < 32; i++){ // all rows in the group
+	for(i=0; i < 32; i++){ // all rows in the group
 		var volume = nvget(groupIndex, i);
 		var pitch = npget(groupIndex, i);
 		var octave = noget(groupIndex, i);
@@ -4054,7 +4054,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 			if(frequency !== 0) volumeMultiplier /= aWeight(frequency);
 		}
 		gain.gain.setValueAtTime(volumeMultiplier * volume / 7, startTime);
-		gain.gain.setValueAtTime(0, endTime);
+		gain.gain.setValueAtTime(0, endTime-0.000001);
 
 		i = endPosition - 1;
 	}
