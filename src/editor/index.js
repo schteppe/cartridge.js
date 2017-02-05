@@ -35,7 +35,8 @@ var track = {
 	y: function(){ return 8+16+16; },
 	width: function(){ return width() - 3; },
 	height: function(){ return height() - 9; },
-	note: 0
+	note: 0,
+	col: 0
 };
 
 function track_click(track, mx, my){
@@ -48,6 +49,9 @@ function track_click(track, mx, my){
 	var row = Math.floor((my - y) / fontHeight);
 	if(column >= 0 && column < 4 && row >= 0 && row < 8){
 		track.note = column * 8 + row;
+		var col = Math.floor((mx - x - column*w) / fontWidth);
+		if(col >= 1) col--; // pitch uses 2 spaces
+		track.col = col;
 		return true;
 	}
 	return false;
@@ -64,13 +68,13 @@ function track_draw(track){
 		var x0 = x+i*(w+1);
 
 		// 4 columns
-		track_drawpart(x0, y, track.note, trackGroupSelector.current, n*8, n*8+8);
+		track_drawpart(x0, y, track.note, trackGroupSelector.current, n*8, n*8+8, track.col);
 
 		n++;
 	}
 }
 
-function track_drawpart(x, y, highlightedNote, trackIndex, start, end){
+function track_drawpart(x, y, highlightedNote, trackIndex, start, end, selectedCol){
 	var fontWidth = 4;
 	var fontHeight = 8;
 	var w = 6*fontWidth + 1;
@@ -89,6 +93,8 @@ function track_drawpart(x, y, highlightedNote, trackIndex, start, end){
 		// Highlight selected
 		if(highlightedNote === j){
 			rectfill(x, y0, x+w-1, y0+fontHeight-1, 5);
+			var highlightCol = selectedCol >= 1 ? selectedCol + 1 : selectedCol;
+			rectfill(x+highlightCol*fontWidth, y0, x+(highlightCol+1)*fontWidth, y0+fontHeight-1, 6);
 		}
 
 		// Pitch, 2 chars
@@ -165,7 +171,7 @@ function track_keypress(track, evt){
 	var char = String.fromCharCode(evt.charCode).toUpperCase();
 	if(evt.keyCode === 32){ // space
 		group(trackGroupSelector.current);
-	} else if(keyToNote[char] !== undefined){
+	} else if(track.col === 0 && keyToNote[char] !== undefined){
 		var pitch = keyToNote[char] % 17;
 		var octaveAdd = Math.floor(keyToNote[char] / 17);
 		var octave = Math.min(octaveButtons.current + octaveAdd, 3);
@@ -174,6 +180,22 @@ function track_keypress(track, evt){
 		nvset(trackGroupSelector.current, track.note, trackVolumeButtons.current);
 		noset(trackGroupSelector.current, track.note, octave);
 		track.note = (track.note+1)%32;
+	} else if(evt.keyCode >= 48 && evt.keyCode <= 57){ // 0-9
+		var num = evt.keyCode - 48;
+		var caught = true;
+		switch(track.col){
+		case 1:
+			if(num >= 1 && num <= 4) noset(trackGroupSelector.current, track.note, num-1);
+		case 2:
+			if(num >= 1 && num <= 6) niset(trackGroupSelector.current, track.note, num-1);
+			break;
+		case 3:
+			if(num >= 1 && num <= 8) nvset(trackGroupSelector.current, track.note, num-1);
+			break;
+		case 4: break; // effect - todo
+		default: caught = false; break;
+		}
+		if(caught) track.note = (track.note+1)%32;
 	}
 }
 
