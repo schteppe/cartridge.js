@@ -102,7 +102,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = frequencies[j] / 255 * (maxFrequency - minFrequency) + minFrequency;
 			osc.frequency.setValueAtTime(frequency, startTime);
-			if(frequency !== 0) vol /= aWeight(frequency);
+			//if(frequency !== 0) vol /= aWeight(frequency);
 		}
 
 		gain.gain.setValueAtTime(vol, startTime);

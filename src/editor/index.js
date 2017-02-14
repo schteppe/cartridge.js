@@ -195,7 +195,7 @@ function track_keypress(track, evt){
 			if(num >= 1 && num <= 8) nvset(trackGroupSelector.current, track.note, num-1);
 			break;
 		case 4:
-			if(num >= 0 && num <= 1) neset(trackGroupSelector.current, track.note, num);
+			if(num >= 0 && num <= 2) neset(trackGroupSelector.current, track.note, num);
 			break; // effect
 		default: caught = false; break;
 		}
@@ -466,7 +466,7 @@ var waveformButtons = {
 var effectButtons = {
 	x: function(){ return width() - 60; },
 	y: function(){ return 16+8+8; },
-	num: 2,
+	num: 3, // none, short, slide
 	current: 0,
 	padding: 2
 };

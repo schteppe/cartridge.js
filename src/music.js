@@ -229,6 +229,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		var startPosition = i;
 		var endPosition = i+1;
 
+		/*
 		while(
 			nvget(groupIndex, endPosition) === volume &&
 			niget(groupIndex, endPosition) === instrument &&
@@ -239,6 +240,7 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		){
 			endPosition++;
 		}
+		*/
 
 		var startTime = time + startPosition / speed;
 		var endTime = time + endPosition / speed;
@@ -255,8 +257,14 @@ function scheduleGroup(groupIndex, channelIndex, time){
 
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = getFrequency(pitch, octave);
-			osc.frequency.setValueAtTime(frequency, startTime);
-			if(frequency !== 0) volumeMultiplier /= aWeight(frequency);
+
+			if(effect === 2 && startPosition !== 0){
+				// slide frequency
+				osc.frequency.linearRampToValueAtTime(frequency, startTime);
+			} else {
+				osc.frequency.setValueAtTime(frequency, startTime);
+			}
+			//if(frequency !== 0) volumeMultiplier /= aWeight(frequency);
 		}
 		gain.gain.setValueAtTime(volumeMultiplier * volume / 7, startTime);
 		gain.gain.setValueAtTime(0, endTime-0.000001);
