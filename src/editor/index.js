@@ -89,6 +89,7 @@ function track_drawpart(x, y, highlightedNote, trackIndex, start, end, selectedC
 		var volume = nvget(trackIndex, j);
 		var octave = noget(trackIndex, j);
 		var instrument = niget(trackIndex, j);
+		var effect = neget(trackIndex, j);
 
 		// Highlight selected
 		if(highlightedNote === j){
@@ -111,7 +112,7 @@ function track_drawpart(x, y, highlightedNote, trackIndex, start, end, selectedC
 		print(volume === 0 ? '-' : (volume+1), x+1+fontWidth*4, y0+1,12);
 
 		// Effect (not yet supported)
-		print('-', x+1+fontWidth*5, y0+1,13);
+		print(effect === 0 ? '-' : (effect), x+1+fontWidth*5, y0+1,13);
 	}
 }
 
@@ -179,6 +180,7 @@ function track_keypress(track, evt){
 		niset(trackGroupSelector.current, track.note, waveformButtons.current);
 		nvset(trackGroupSelector.current, track.note, trackVolumeButtons.current);
 		noset(trackGroupSelector.current, track.note, octave);
+		neset(trackGroupSelector.current, track.note, effectButtons.current);
 		track.note = (track.note+1)%32;
 	} else if(evt.keyCode >= 48 && evt.keyCode <= 57){ // 0-9
 		var num = evt.keyCode - 48;
@@ -192,7 +194,9 @@ function track_keypress(track, evt){
 		case 3:
 			if(num >= 1 && num <= 8) nvset(trackGroupSelector.current, track.note, num-1);
 			break;
-		case 4: break; // effect - todo
+		case 4:
+			if(num >= 0 && num <= 1) neset(trackGroupSelector.current, track.note, num);
+			break; // effect
 		default: caught = false; break;
 		}
 		if(caught) track.note = (track.note+1)%32;
@@ -456,6 +460,14 @@ var waveformButtons = {
 	y: function(){ return 8; },
 	num: 6,
 	current: 4,
+	padding: 2
+};
+
+var effectButtons = {
+	x: function(){ return width() - 60; },
+	y: function(){ return 16+8+8; },
+	num: 2,
+	current: 0,
 	padding: 2
 };
 
@@ -911,6 +923,8 @@ editor.click = window._click = function _click(){
 			editor.dirty = true;
 		} else if(buttons_click(waveformButtons,mx,my)){
 			editor.dirty = true;
+		} else if(buttons_click(effectButtons,mx,my)){
+			editor.dirty = true;
 		} else if(buttons_click(octaveButtons,mx,my)){
 			editor.dirty = true;
 		} else if(buttons_click(trackVolumeButtons,mx,my)){
@@ -1055,6 +1069,7 @@ editor.draw = window._draw = function _draw(){
 		trackSpeedSelector.current = gsget(trackGroupSelector.current);
 		intsel_draw(trackSpeedSelector);
 		buttons_draw(waveformButtons);
+		buttons_draw(effectButtons);
 		print("octave", width() - 60, 17);
 		buttons_draw(octaveButtons);
 		print("vol", width() - 60, 25);

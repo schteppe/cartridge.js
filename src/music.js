@@ -109,6 +109,16 @@ exports.niget = function(group, position){
 	return groups[group].notes[5 * position + 2];
 };
 
+// effect for a note
+exports.neset = function(group, position, effect){
+	effect = effect !== undefined ? effect : 0;
+	groups[group].notes[5 * position + 4] = effect;
+};
+
+exports.neget = function(group, position){
+	return groups[group].notes[5 * position + 4];
+};
+
 // Set a group to be played in a channel in a pattern.
 exports.mgset = function(pattern, channel, group){
 	group = group !== undefined ? group : 0;
@@ -212,16 +222,32 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		var pitch = npget(groupIndex, i);
 		var octave = noget(groupIndex, i);
 		var instrument = niget(groupIndex, i);
+		var effect = neget(groupIndex, i);
 		if(volume === 0){
 			continue;
 		}
 		var startPosition = i;
 		var endPosition = i+1;
-		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && npget(groupIndex, endPosition) === pitch && noget(groupIndex, endPosition) === octave && endPosition < 32){
+
+		while(
+			nvget(groupIndex, endPosition) === volume &&
+			niget(groupIndex, endPosition) === instrument &&
+			npget(groupIndex, endPosition) === pitch &&
+			noget(groupIndex, endPosition) === octave &&
+			neget(groupIndex, endPosition) === 0 &&
+			endPosition < 32
+		){
 			endPosition++;
 		}
+
 		var startTime = time + startPosition / speed;
 		var endTime = time + endPosition / speed;
+
+		if(effect === 1){
+			// make note slightly shorter
+			startTime = time + (startPosition + 0.0) / speed;
+			endTime = time + (endPosition - 0.25) / speed;
+		}
 
 		var osc = channel.instruments[allTypes[instrument]];
 		var gain = channel.gains[allTypes[instrument]];

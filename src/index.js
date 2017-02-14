@@ -902,8 +902,7 @@ function toJSON(){
 			var octave = noget(groupIndex, position);
 			var instrument = niget(groupIndex, position);
 			var volume = nvget(groupIndex, position);
-			// TODO: effect
-			var effect = 0;
+			var effect = neget(groupIndex, position);
 			data.tracks.push(pitch, octave, instrument, volume, effect);
 		}
 	}
@@ -997,7 +996,7 @@ function loadJSON(data){
 				var octave = data.tracks[p + 1] || 0;
 				var instrument = data.tracks[p + 2] || 0;
 				var volume = data.tracks[p + 3] || 0;
-				var effect = data.tracks[p + 4] || 0; // todo
+				var effect = data.tracks[p + 4] || 0;
 
 				if(data.version <= 6){
 					// in v7, all octaves were lowered by 1.
@@ -1008,6 +1007,7 @@ function loadJSON(data){
 				noset(groupIndex, position, octave);
 				niset(groupIndex, position, instrument);
 				nvset(groupIndex, position, volume);
+				neset(groupIndex, position, effect);
 			}
 		}
 	}
