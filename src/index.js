@@ -1073,6 +1073,14 @@ exports.mousey = function(){
 	return Math.floor(mouse.mouseyNormalized() * (screensizeY-1));
 };
 
+exports.touchx = function(id){
+	return Math.floor(mouse.touchxNormalized(id) * (screensizeX-1));
+};
+
+exports.touchy = function(id){
+	return Math.floor(mouse.touchyNormalized(id) * (screensizeY-1));
+};
+
 utils.makeGlobal(music);
 utils.makeGlobal(math);
 utils.makeGlobal(sfx.global);
