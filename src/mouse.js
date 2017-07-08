@@ -47,10 +47,17 @@ function addListeners(canvases){
 		touchstart: function(evt){
 			evt.preventDefault();
 			evt.stopPropagation();
+			updateMouseCoords(evt, canvases);
 		},
 		touchend: function(evt){
 			evt.preventDefault();
 			evt.stopPropagation();
+			updateMouseCoords(evt, canvases);
+		},
+		touchmove: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			updateMouseCoords(evt, canvases);
 		}
 	};
 	canvasListeners.DOMMouseScroll = canvasListeners.mousewheel;
@@ -87,8 +94,14 @@ function updateMouseCoords(evt, canvases){
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var subx = 0;
 	var suby = 0;
-	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
-	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
+	var clientX = evt.clientX;
+	var clientY = evt.clientY;
+	if(evt.changedTouches){
+		clientX = evt.changedTouches[0].clientX;
+		clientY = evt.changedTouches[0].clientY;
+	}
+	_mousex = math.clamp((clientX - rect.left - subx) / rect.width, 0, 1);
+	_mousey = math.clamp((clientY - rect.top - suby) / rect.height, 0, 1);
 }
 
 exports.mousexNormalized = function(){ return _mousex; };
