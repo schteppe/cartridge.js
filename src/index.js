@@ -51,9 +51,12 @@ var loaded = false; // Loaded state
 var _alpha = 0;
 var pixelPerfectMode = 0;
 var autoFit = false;
+var responsive = false;
+var responsiveRect = new Rectangle(0,0,128,128);
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
+	responsive = options.responsive !== undefined ? options.responsive : false;
 	pixelPerfectMode = options.pixelPerfect !== undefined ? options.pixelPerfect : 0;
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
@@ -104,11 +107,11 @@ exports.cartridge = function(options){
 	});
 
 	if(autoFit){
-		fit(pixelPerfectMode);
 		// Resize (fit) the canvas when the container changes size
 		var resizeHandler = function(){
-			fit(pixelPerfectMode);
+			fit(pixelPerfectMode, responsive);
 		};
+		resizeHandler();
 		window.addEventListener('resize', resizeHandler);
 		window.addEventListener('mozfullscreenchange', resizeHandler);
 	}
@@ -325,7 +328,7 @@ function resizeCanvases(){
 		canvases[i].height = screensizeY;
 	}
 	if(autoFit){
-		fit(pixelPerfectMode);
+		fit(pixelPerfectMode, responsive);
 	}
 	pixelops.resize(canvases[0]);
 
@@ -338,11 +341,12 @@ exports.alpha = function(){ return _alpha; }; // for interpolation
 // TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
+		newWidth = newWidth | 0;
 		if(screensizeX === newWidth){
 			// unchanged
 			return;
 		}
-		screensizeX = newWidth | 0;
+		screensizeX = newWidth;
 		resizeCanvases();
 	}
 	return screensizeX;
@@ -351,11 +355,12 @@ exports.width = function(newWidth){
 // TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
+		newHeight = newHeight | 0;
 		if(screensizeY === newHeight){
 			// unchanged
 			return;
 		}
-		screensizeY = newHeight | 0;
+		screensizeY = newHeight;
 		resizeCanvases();
 	}
 	return screensizeY;
@@ -750,7 +755,23 @@ exports.print = function(text, x, y, col){
 	font.draw(ctx, text.toString().toUpperCase(), x, y, col);
 };
 
-exports.fit = function fit(stretchMode){
+exports.fit = function fit(stretchMode, responsive){
+	if(responsive){
+		var rect = container.getBoundingClientRect();
+		var aspect = rect.width / rect.height;
+		var responsiveAspect = responsiveRect.w / responsiveRect.h;
+		var newWidth = responsiveRect.w;
+		var newHeight = responsiveRect.h;
+		if(aspect > responsiveAspect){
+			// Increase width
+			newWidth *= aspect / responsiveAspect;
+		} else {
+			newHeight *= responsiveAspect / aspect;
+		}
+		width(newWidth);
+		height(newHeight);
+	}
+
 	stretchMode = stretchMode !== undefined ? stretchMode : 0;
 	var pixelPerfect = (stretchMode === 0);
 	var i = canvases.length;
