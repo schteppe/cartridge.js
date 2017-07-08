@@ -43,6 +43,14 @@ function addListeners(canvases){
 		mousewheel: function(evt){
 			var delta = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
 			_mousescroll += delta;
+		},
+		touchstart: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+		},
+		touchend: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
 		}
 	};
 	canvasListeners.DOMMouseScroll = canvasListeners.mousewheel;
