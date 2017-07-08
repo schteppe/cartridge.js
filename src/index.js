@@ -569,11 +569,13 @@ function ssy(n){
 	return Math.floor(n / spriteSheetSizeX) % (spriteSheetSizeX * spriteSheetSizeY);
 }
 
+// Render a sprite at position X,Y in the sprite sheet
 exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
 	var n = ny * spriteSheetSizeX + nx;
 	return spr(n, x, y, w, h, flip_x, flip_y);
 };
 
+// Render a sprite given its id
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
 	flushSpriteSheet();
