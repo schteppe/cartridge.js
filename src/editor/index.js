@@ -437,7 +437,7 @@ var patternEndButtons = {
 var saveLoadButtons = {
 	x: function(){ return 25; },
 	y: function(){ return 13; },
-	options: ['save', 'load', 'reset', 'export'],
+	options: ['save..', 'load..', 'reset', 'export'],
 	padding: 10
 };
 
