@@ -2105,6 +2105,15 @@ function exportHtml(engineUrl, callback){
 	xhr.onreadystatechange = function(){
 		if (xhr.readyState === XMLHttpRequest.DONE) {
 			if (xhr.status === 200) {
+
+				// TODO: Use a sprite as icon
+				var canvas = document.createElement('canvas');
+				canvas.width = canvas.height = 8;
+				canvas.getContext('2d').fillStyle='red';
+				canvas.getContext('2d').fillRect(0,0,8,8);
+				var iconUrl = canvas.toDataURL('image/png');
+
+				// Generate HTML
 				var htmlExport = [
 					'<html>',
 					'<head>',
@@ -2112,6 +2121,7 @@ function exportHtml(engineUrl, callback){
 					'	<meta name="apple-mobile-web-app-capable" content="yes">',
 					'	<meta name="mobile-web-app-capable" content="yes">',
 					'	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+					'	<link rel="icon" type="image/png" href="' + iconUrl + '" />',
 					'	<meta charset="UTF-8">',
 					'	<title>Game</title>',
 					'	<style>',
@@ -2164,6 +2174,7 @@ function exportHtml(engineUrl, callback){
 				utils.downloadStringAsTextFile(htmlExport, "game.html");
 				callback(null);
 			} else {
+				// Error
 				callback(xhr);
 			}
 		}
