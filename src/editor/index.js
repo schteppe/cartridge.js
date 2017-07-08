@@ -437,8 +437,8 @@ var patternEndButtons = {
 var saveLoadButtons = {
 	x: function(){ return 25; },
 	y: function(){ return 13; },
-	options: ['save', 'load', 'reset'],
-	padding: 8
+	options: ['save', 'load', 'reset', 'export'],
+	padding: 10
 };
 
 var slotButtons = {
@@ -881,6 +881,7 @@ editor.click = window._click = function _click(){
 				case 0: save('game.json'); break;
 				case 1: openfile(); break;
 				case 2: reset(); break;
+				case 3: exportHtml('../build/cartridge.js'); break;
 			}
 			saveLoadButtons.current = -1;
 			editor.dirty = true;
@@ -2095,3 +2096,78 @@ window._load = function(){
 	if(query.run)
 		code_run(code);
 };
+
+function exportHtml(engineUrl, callback){
+	callback = callback || function(){};
+
+	// Get engine source
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(){
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+				var htmlExport = [
+					'<html>',
+					'<head>',
+					'	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />',
+					'	<meta name="apple-mobile-web-app-capable" content="yes">',
+					'	<meta name="mobile-web-app-capable" content="yes">',
+					'	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+					'	<meta charset="UTF-8">',
+					'	<title>Game</title>',
+					'	<style>',
+					'	body, html {',
+					'		width: 100%;',
+					'		height: 100%;',
+					'		padding: 0;',
+					'		margin: 0;',
+					'		overflow: hidden;',
+					'	}',
+					'	#container {',
+					'		width: 100%;',
+					'		height: 100%;',
+					'		background-color: black;',
+					'	}',
+					'	canvas {',
+					'		cursor: none;',
+					'	}',
+					'	* {',
+					'		-webkit-touch-callout: none; /* iOS Safari */',
+					'			-webkit-user-select: none; /* Chrome/Safari/Opera */',
+					'			-khtml-user-select: none; /* Konqueror */',
+					'			-moz-user-select: none; /* Firefox */',
+					'				-ms-user-select: none; /* Internet Explorer/Edge */',
+					'					user-select: none; /* Non-prefixed version, currently not supported by any browser */',
+
+					'		-webkit-tap-highlight-color: transparent; /* disable iOS Safari tap effect */',
+					'	}',
+					'	</style>',
+					'</head>',
+					'<body>',
+					'	<div id="container"></div>',
+					'	<script id="json" type="text/json">' + JSON.stringify(json()) + '</script>',
+					'	<script>' + xhr.responseText + '</script>',
+					'	<script>',
+					'		// Disable "bouncy scroll" on iOS',
+					'		document.body.addEventListener("touchmove", function(event) {',
+					'			event.stopPropagation();',
+					'			event.preventDefault();',
+					'		});',
+					'		var theJSON = JSON.parse(document.getElementById("json").innerHTML);',
+					'		cartridge({ containerId: "container" });',
+					'		load(theJSON);',
+					'		run();',
+					'	</script>',
+					'</body>',
+					'</html>',
+
+				].join('\n');
+				utils.downloadStringAsTextFile(htmlExport, "game.html");
+				callback(null);
+			} else {
+				callback(xhr);
+			}
+		}
+	};
+	xhr.open("GET", engineUrl, true);
+	xhr.send();
+}

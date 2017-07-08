@@ -809,6 +809,10 @@ exports.save = function(key){
 	}
 };
 
+exports.json = function(){
+	return toJSON();
+};
+
 exports.load = function(key){
 	if(typeof(key) === 'object'){
 		loadJSON(key);
