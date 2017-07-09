@@ -285,13 +285,20 @@ function viewport_draw(viewport){
 	for(var i=0; i<cellwidth(); i++){
 		for(var j=0; j<cellheight(); j++){
 			var col = sget(x+i, y+j);
-			rectfill(
-				viewport.x + i * viewport.sx(),
-				viewport.y + j * viewport.sy(),
-				viewport.x + (i+1) * viewport.sx()-1,
-				viewport.y + (j+1) * viewport.sy()-1,
-				col
-			);
+			var x0 = viewport.x + i * viewport.sx();
+			var y0 = viewport.y + j * viewport.sy();
+			var x1 = viewport.x + (i+1) * viewport.sx()-1;
+			var y1 = viewport.y + (j+1) * viewport.sy()-1;
+			if(palt(col)){
+				// transparent
+				for(var k=x0; k<=x1; k++){
+					for(var l=y0; l<=y1; l++){
+						pset(k, l, ((k+l)%2) === 0 ? 6 : 7);
+					}
+				}
+			} else {
+				rectfill(x0, y0, x1, y1, col);
+			}
 		}
 	}
 }
