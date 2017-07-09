@@ -2097,6 +2097,38 @@ window._load = function(){
 		code_run(code);
 };
 
+function spriteToDataURL(spriteX, spriteY, scale, mimetype){
+	mimetype = mimetype || 'image/png';
+	scale = scale !== undefined ? scale : 1;
+	var canvas = document.createElement('canvas');
+	canvas.width = cellwidth()*scale;
+	canvas.height = cellheight()*scale;
+	var c = canvas.getContext('2d');
+	c.clearRect(0,0,cellwidth()*scale,cellheight()*scale); // needed?
+	var data = c.createImageData(cellwidth()*scale,cellheight()*scale);
+	for(var x=0; x<cellwidth(); x++){
+		for(var y=0; y<cellheight(); y++){
+			for(var sx=0; sx<scale; sx++){
+				for(var sy=0; sy<scale; sy++){
+					var p = (x*scale+sx + (y*scale+sy)*(cellwidth()*scale)) * 4;
+					var col = sget(x+cellwidth()*spriteX,y+cellheight()*spriteY);
+					if(!palt(col)){
+						var dec = palget(col);
+						data.data[p + 0] = utils.decToR(dec);
+						data.data[p + 1] = utils.decToG(dec);
+						data.data[p + 2] = utils.decToB(dec);
+						data.data[p + 3] = 255;
+					} else {
+						data.data[p + 3] = 0;
+					}
+				}
+			}
+		}
+	}
+	c.putImageData(data,0,0);
+	return canvas.toDataURL(mimetype);
+}
+
 function exportHtml(engineUrl, callback){
 	callback = callback || function(){};
 
@@ -2106,12 +2138,7 @@ function exportHtml(engineUrl, callback){
 		if (xhr.readyState === XMLHttpRequest.DONE) {
 			if (xhr.status === 200) {
 
-				// TODO: Use a sprite as icon
-				var canvas = document.createElement('canvas');
-				canvas.width = canvas.height = 8;
-				canvas.getContext('2d').fillStyle='red';
-				canvas.getContext('2d').fillRect(0,0,8,8);
-				var iconUrl = canvas.toDataURL('image/png');
+				var iconUrl = spriteToDataURL(1,0,4); // scale=4 enough?
 
 				// Generate HTML
 				var htmlExport = [
@@ -2122,6 +2149,7 @@ function exportHtml(engineUrl, callback){
 					'	<meta name="mobile-web-app-capable" content="yes">',
 					'	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
 					'	<link rel="icon" type="image/png" href="' + iconUrl + '" />',
+					'	<link rel="apple-touch-icon" href="' + iconUrl + '">',
 					'	<meta charset="UTF-8">',
 					'	<title>Game</title>',
 					'	<style>',
@@ -2163,7 +2191,10 @@ function exportHtml(engineUrl, callback){
 					'			event.preventDefault();',
 					'		});',
 					'		var theJSON = JSON.parse(document.getElementById("json").innerHTML);',
-					'		cartridge({ containerId: "container" });',
+					'		cartridge({',
+					'			containerId: "container",',
+					'			pixelPerfect: 1,', // ??
+					'		});',
 					'		load(theJSON);',
 					'		run();',
 					'	</script>',
