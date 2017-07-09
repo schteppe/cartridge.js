@@ -10,7 +10,11 @@ var editor = {
 	lastmy: 0,
 	previousScroll: 0,
 	keysdown: {},
-	draw: null
+	draw: null,
+	gameWidth: 128,
+	gameHeight: 128,
+	editorWidth: 128,
+	editorHeight: 128
 };
 
 var sprites = {
@@ -38,6 +42,29 @@ var track = {
 	note: 0,
 	col: 0
 };
+
+function editorSave(destination){
+	if(editor.mode !== 'run'){
+		width(editor.gameWidth);
+		height(editor.gameHeight);
+		save(destination);
+		width(editor.editorWidth);
+		height(editor.editorHeight);
+		editor.dirty = true; // make sure to re-render after the resize
+	}
+}
+
+function editorLoad2(source){
+	var result = true;
+	if(editor.mode !== 'run'){
+		result = load(source);
+		editor.gameWidth = width();
+		editor.gameHeight = height();
+		width(editor.editorWidth);
+		height(editor.editorHeight);
+	}
+	return result;
+}
 
 function track_click(track, mx, my){
 	var x = track.x();
@@ -589,7 +616,7 @@ var spriteSheetPageSelector = {
 var resolutionSelectorX = {
 	x: function(){ return 50; },
 	y: function(){ return 80; },
-	current: width(),
+	current: editor.gameWidth,
 	padding: 4,
 	min: function(){ return 128; },
 	max: function(){ return 512; },
@@ -600,7 +627,7 @@ var resolutionSelectorX = {
 var resolutionSelectorY = {
 	x: function(){ return 50; },
 	y: function(){ return 88; },
-	current: height(),
+	current: editor.gameHeight,
 	padding: resolutionSelectorX.padding,
 	min: resolutionSelectorX.min,
 	max: resolutionSelectorX.max,
@@ -873,7 +900,7 @@ editor.click = window._click = function _click(){
 		editor.dirty = true;
 	} else if(editor.mode === 'game'){
 		if(buttons_click(slotButtons,mx,my)){
-			if(load('slot' + slotButtons.current)){
+			if(editorLoad2('slot' + slotButtons.current)){
 				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
 			} else {
 				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
@@ -885,7 +912,7 @@ editor.click = window._click = function _click(){
 
 		if(buttons_click(saveLoadButtons,mx,my)){
 			switch(saveLoadButtons.current){
-				case 0: save('game.json'); break;
+				case 0: editorSave('game.json'); break;
 				case 1: openfile(); break;
 				case 2: reset(); break;
 				case 3: exportHtml('../build/cartridge.min.js'); break;
@@ -895,19 +922,19 @@ editor.click = window._click = function _click(){
 		}
 
 		if(buttons_click(saveButtons,mx,my)){
-			save('slot' + saveButtons.current);
+			editorSave('slot' + saveButtons.current);
 			alert('Saved game to slot ' + (saveButtons.current + 1) + '.');
 			editor.dirty = true;
 			saveButtons.current = -1;
 		}
 
 		if(intsel_click(resolutionSelectorX, mx, my)){
-			width(resolutionSelectorX.current);
+			editor.gameWidth = resolutionSelectorX.current;
 			editor.dirty = true;
 		}
 
 		if(intsel_click(resolutionSelectorY, mx, my)){
-			height(resolutionSelectorY.current);
+			editor.gameHeight = resolutionSelectorY.current;
 			editor.dirty = true;
 		}
 		if(buttons_click(spriteSheetSizeButtons,mx,my)){
@@ -965,10 +992,10 @@ editor.click = window._click = function _click(){
 var editorLoad = window._init = function _init(){
 
 	setInterval(function(){
-		save('autosave');
+		editorSave('autosave');
 	}, 10000);
 
-	if(!load('autosave')){
+	if(!editorLoad2('autosave')){
 		// TODO: Load default JSON
 		code_set([
 			'var x=10,y=10;',
@@ -1056,8 +1083,8 @@ editor.draw = window._draw = function _draw(){
 		buttons_draw(saveLoadButtons);
 
 		print('Resolution:', 5,80);
-		resolutionSelectorX.current = width();
-		resolutionSelectorY.current = height();
+		resolutionSelectorX.current = editor.gameWidth;
+		resolutionSelectorY.current = editor.gameHeight;
 		intsel_draw(resolutionSelectorX);
 		intsel_draw(resolutionSelectorY);
 
@@ -1482,6 +1509,9 @@ function code_run(code){
 	delete window._draw;
 	delete window._click;
 
+	width(editor.gameWidth);
+	height(editor.gameHeight);
+
 	try {
 		run();
 		// Manually run the init
@@ -1524,6 +1554,9 @@ function code_stop(code){
 	camera(0,0);
 	clip(); // reset clip
 	music(-1); // stop music
+
+	width(editor.editorWidth);
+	height(editor.editorHeight);
 }
 
 function code_click(code,x,y){
@@ -1911,7 +1944,7 @@ document.addEventListener('keydown', function(e){
 
 	// ctrl + s
 	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
-		save('game.json');
+		editorSave('game.json');
 		e.preventDefault();
 	}
 
@@ -1947,7 +1980,7 @@ function openfile(){
 		}
 		try {
 			var json = JSON.parse(text);
-			load(json);
+			editorLoad2(json);
 			code.syntaxTreeDirty = true;
 			editor.dirty = true;
 		} catch(err){
@@ -2092,7 +2125,7 @@ run();
 
 if(query.file){
 	editor.loading = true;
-	load(query.file);
+	editorLoad2(query.file);
 }
 
 window._load = function(){
@@ -2151,6 +2184,10 @@ function exportHtml(engineUrl, callback){
 					display: "fullscreen",
 					orientation: "portrait"
 				}));
+				var gameJson = json();
+				gameJson.width = editor.gameWidth;
+				gameJson.height = editor.gameHeight;
+				gameJson = JSON.stringify(gameJson);
 
 				// Generate HTML
 				var htmlExport = [
@@ -2196,7 +2233,7 @@ function exportHtml(engineUrl, callback){
 					'</head>',
 					'<body>',
 					'	<div id="container"></div>',
-					'	<script id="json" type="text/json">' + JSON.stringify(json()) + '</script>',
+					'	<script id="json" type="text/json">' + gameJson + '</script>',
 					'	<script>' + xhr.responseText + '</script>',
 					'	<script>',
 					'		// Disable "bouncy scroll" on iOS',
