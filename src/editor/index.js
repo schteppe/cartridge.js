@@ -2148,7 +2148,7 @@ function exportHtml(engineUrl, callback){
 				var scale = 4;
 				var iconUrl = spriteToDataURL(1,0,scale); // scale=4 enough?
 				var manifest = 'data:application/manifest+json;base64,' + btoa(JSON.stringify({
-					display: "standalone",
+					display: "fullscreen",
 					orientation: "portrait"
 				}));
 
@@ -2165,7 +2165,7 @@ function exportHtml(engineUrl, callback){
 					'	<link rel="icon" type="image/png" href="' + iconUrl + '" />',
 					'	<link rel="apple-touch-icon" href="' + iconUrl + '">',
 					'	<link rel="manifest" href="' + manifest + '" />',
-					'	<title>Game</title>',
+					'	<title>' + title() + '</title>',
 					'	<style>',
 					'	body, html {',
 					'		width: 100%;',

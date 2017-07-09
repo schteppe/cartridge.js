@@ -53,6 +53,7 @@ var pixelPerfectMode = 0;
 var autoFit = false;
 var responsive = false;
 var responsiveRect = new Rectangle(0,0,128,128);
+var gameTitle = 'game';
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
@@ -725,6 +726,14 @@ exports.sset = function(x, y, col){
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
 
+// Game title
+exports.title = function(newTitle){
+	if(newTitle !== undefined){
+		gameTitle = newTitle;
+	}
+	return gameTitle;
+};
+
 exports.fullscreen = function fullscreen(){
 	utils.fullscreen(container);
 };
@@ -848,12 +857,13 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 8,
+		version: 9,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
 		cellheight: cellheight(), // added in v4
 		spritesheetsize: ssget(), // added in v5
+		title: title(), // added in v9
 		map: [],
 		sprites: [],
 		flags: [],
@@ -952,6 +962,8 @@ function toJSON(){
 function loadJSON(data){
 	var i,j;
 	code.codeset(data.code || '');
+
+	title(data.title || 'game');
 
 	if(data.width !== undefined){
 		width(data.width);
