@@ -888,7 +888,7 @@ editor.click = window._click = function _click(){
 				case 0: save('game.json'); break;
 				case 1: openfile(); break;
 				case 2: reset(); break;
-				case 3: exportHtml('../build/cartridge.js'); break;
+				case 3: exportHtml('../build/cartridge.min.js'); break;
 			}
 			saveLoadButtons.current = -1;
 			editor.dirty = true;
