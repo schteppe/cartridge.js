@@ -1120,6 +1120,10 @@ exports.touchy = function(id){
 	return Math.floor(mouse.touchyNormalized(id) * (screensizeY-1));
 };
 
+exports.mobile = function(){
+	return utils.isMobile();
+};
+
 utils.makeGlobal(music);
 utils.makeGlobal(math);
 utils.makeGlobal(sfx.global);
