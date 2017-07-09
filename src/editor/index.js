@@ -2145,19 +2145,26 @@ function exportHtml(engineUrl, callback){
 		if (xhr.readyState === XMLHttpRequest.DONE) {
 			if (xhr.status === 200) {
 
-				var iconUrl = spriteToDataURL(1,0,4); // scale=4 enough?
+				var scale = 4;
+				var iconUrl = spriteToDataURL(1,0,scale); // scale=4 enough?
+				var manifest = 'data:application/manifest+json;base64,' + btoa(JSON.stringify({
+					display: "standalone",
+					orientation: "portrait"
+				}));
 
 				// Generate HTML
 				var htmlExport = [
-					'<html>',
+					'<!DOCTYPE HTML>',
+					'<html lang="en">',
 					'<head>',
+					'	<meta charset="utf-8">',
 					'	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />',
 					'	<meta name="apple-mobile-web-app-capable" content="yes">',
 					'	<meta name="mobile-web-app-capable" content="yes">',
 					'	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
 					'	<link rel="icon" type="image/png" href="' + iconUrl + '" />',
 					'	<link rel="apple-touch-icon" href="' + iconUrl + '">',
-					'	<meta charset="UTF-8">',
+					'	<link rel="manifest" href="' + manifest + '" />',
 					'	<title>Game</title>',
 					'	<style>',
 					'	body, html {',
