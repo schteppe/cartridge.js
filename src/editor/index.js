@@ -396,6 +396,8 @@ var code = {
 var mapPanX = 0;
 var mapPanY = 0;
 var mapShowGrid = false;
+var mapCellX = 0;
+var mapCellY = 0;
 
 var palette = {
 	n: function(){
@@ -728,6 +730,10 @@ function mousemovehandler(forceMouseDown){
 		var dx = mousex() - editor.lastmx;
 		var dy = mousey() - editor.lastmy;
 		if(utils.inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
+
+			mapCellX = flr((mousex() - mapPanX) / cellwidth());
+			mapCellY = flr((mousey() - mapPanY) / cellheight());
+
 			if(editor.keysdown[32] || mousebtn(2) || mousebtn(3)){
 				// Pan map
 				// TODO: clamp panning
@@ -738,8 +744,8 @@ function mousemovehandler(forceMouseDown){
 			} else if((forceMouseDown || mousebtn(1))){
 				// Draw on map
 				mset(
-					flr((mousex() - mapPanX) / cellwidth()),
-					flr((mousey() - mapPanY) / cellheight()),
+					mapCellX,
+					mapCellY,
 					sprites.current
 				);
 				editor.dirty = true;
@@ -1056,6 +1062,8 @@ editor.draw = window._draw = function _draw(){
 		}
 		sprites_draw(sprites);
 		intsel_draw(spriteSheetPageSelector);
+		if(mapCellX>0 && mapCellY>0)
+			print(mapCellX + ',' + mapCellY, 1, spriteSheetPageSelector.y()+1, 0);
 		break;
 	case 'sfx':
 		pitches_draw(pitches, 0);
