@@ -8,6 +8,7 @@ var editor = {
 	dirty: true,
 	lastmx: 0,
 	lastmy: 0,
+	lastmousebtn: {},
 	previousScroll: 0,
 	keysdown: {},
 	draw: null
@@ -394,6 +395,7 @@ var code = {
 
 var mapPanX = 0;
 var mapPanY = 0;
+var mapShowGrid = false;
 
 var palette = {
 	n: function(){
@@ -671,6 +673,8 @@ function ssx(n){ return n % ssget(); }
 function ssy(n){ return Math.floor(n / ssget()) % (ssget() * ssget()); }
 
 function mousemovehandler(forceMouseDown){
+	mapShowGrid = false;
+
 	switch(editor.mode){
 	case 'sprite':
 		if(mousebtn(1) || forceMouseDown){
@@ -729,6 +733,7 @@ function mousemovehandler(forceMouseDown){
 				// TODO: clamp panning
 				mapPanX += dx;
 				mapPanY += dy;
+				mapShowGrid = true;
 				editor.dirty = true;
 			} else if((forceMouseDown || mousebtn(1))){
 				// Draw on map
@@ -981,6 +986,13 @@ var editorLoad = window._init = function _init(){
 	code.syntaxTreeDirty = true;
 };
 
+function mousebtnchanged(i, value){
+	if(!value){
+		mapShowGrid = false;
+		editor.dirty = true;
+	}
+}
+
 editor.draw = window._draw = function _draw(){
 	if(editor.loading) return;
 
@@ -993,6 +1005,13 @@ editor.draw = window._draw = function _draw(){
 	}
 	editor.lastmx = mx;
 	editor.lastmy = my;
+	for(var i=0; i<4; i++){
+		var current = mousebtn(i);
+		if(editor.lastmousebtn[i] !== current){
+			mousebtnchanged(i, current);
+		}
+		editor.lastmousebtn[i] = current;
+	}
 
 	// mouse scroll
 	var currentScroll = mousescroll();
@@ -1027,6 +1046,14 @@ editor.draw = window._draw = function _draw(){
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX-1, mapPanY-1, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
+		if(mapShowGrid){
+			for(var y=mapPanY%cellheight(); y<height(); y+=cellheight()){
+				rect(0, y, width(), 0, 3);
+			}
+			for(var x=mapPanX%cellwidth(); x<width(); x+=cellwidth()){
+				rect(x, 0, 0, height(), 3);
+			}
+		}
 		sprites_draw(sprites);
 		intsel_draw(spriteSheetPageSelector);
 		break;
