@@ -636,7 +636,7 @@ var resolutionSelectorX = {
 };
 
 var resolutionSelectorY = {
-	x: function(){ return 50; },
+	x: function(){ return resolutionSelectorX.x(); },
 	y: function(){ return 88; },
 	current: editor.gameHeight,
 	padding: resolutionSelectorX.padding,
