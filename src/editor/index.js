@@ -11,7 +11,11 @@ var editor = {
 	lastmousebtn: {},
 	previousScroll: 0,
 	keysdown: {},
-	draw: null
+	draw: null,
+	gameWidth: 128,
+	gameHeight: 128,
+	editorWidth: 128,
+	editorHeight: 128
 };
 
 var sprites = {
@@ -39,6 +43,29 @@ var track = {
 	note: 0,
 	col: 0
 };
+
+function editorSave(destination){
+	if(editor.mode !== 'run'){
+		width(editor.gameWidth);
+		height(editor.gameHeight);
+		save(destination);
+		width(editor.editorWidth);
+		height(editor.editorHeight);
+		editor.dirty = true; // make sure to re-render after the resize
+	}
+}
+
+function editorLoad2(source){
+	var result = true;
+	if(editor.mode !== 'run'){
+		result = load(source);
+		editor.gameWidth = width();
+		editor.gameHeight = height();
+		width(editor.editorWidth);
+		height(editor.editorHeight);
+	}
+	return result;
+}
 
 function track_click(track, mx, my){
 	var x = track.x();
@@ -286,13 +313,20 @@ function viewport_draw(viewport){
 	for(var i=0; i<cellwidth(); i++){
 		for(var j=0; j<cellheight(); j++){
 			var col = sget(x+i, y+j);
-			rectfill(
-				viewport.x + i * viewport.sx(),
-				viewport.y + j * viewport.sy(),
-				viewport.x + (i+1) * viewport.sx()-1,
-				viewport.y + (j+1) * viewport.sy()-1,
-				col
-			);
+			var x0 = viewport.x + i * viewport.sx();
+			var y0 = viewport.y + j * viewport.sy();
+			var x1 = viewport.x + (i+1) * viewport.sx()-1;
+			var y1 = viewport.y + (j+1) * viewport.sy()-1;
+			if(palt(col)){
+				// transparent
+				for(var k=x0; k<=x1; k++){
+					for(var l=y0; l<=y1; l++){
+						pset(k, l, ((k+l)%2) === 0 ? 6 : 7);
+					}
+				}
+			} else {
+				rectfill(x0, y0, x1, y1, col);
+			}
 		}
 	}
 }
@@ -441,8 +475,8 @@ var patternEndButtons = {
 var saveLoadButtons = {
 	x: function(){ return 25; },
 	y: function(){ return 13; },
-	options: ['save', 'load', 'reset'],
-	padding: 8
+	options: ['save', 'load..', 'reset', 'export'],
+	padding: 10
 };
 
 var slotButtons = {
@@ -586,7 +620,7 @@ var spriteSheetPageSelector = {
 var resolutionSelectorX = {
 	x: function(){ return 50; },
 	y: function(){ return 80; },
-	current: width(),
+	current: editor.gameWidth,
 	padding: 4,
 	min: function(){ return 128; },
 	max: function(){ return 512; },
@@ -597,7 +631,7 @@ var resolutionSelectorX = {
 var resolutionSelectorY = {
 	x: function(){ return 50; },
 	y: function(){ return 88; },
-	current: height(),
+	current: editor.gameHeight,
 	padding: resolutionSelectorX.padding,
 	min: resolutionSelectorX.min,
 	max: resolutionSelectorX.max,
@@ -877,7 +911,7 @@ editor.click = window._click = function _click(){
 		editor.dirty = true;
 	} else if(editor.mode === 'game'){
 		if(buttons_click(slotButtons,mx,my)){
-			if(load('slot' + slotButtons.current)){
+			if(editorLoad2('slot' + slotButtons.current)){
 				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
 			} else {
 				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
@@ -889,28 +923,29 @@ editor.click = window._click = function _click(){
 
 		if(buttons_click(saveLoadButtons,mx,my)){
 			switch(saveLoadButtons.current){
-				case 0: save('game.json'); break;
+				case 0: editorSave('game.json'); break;
 				case 1: openfile(); break;
 				case 2: reset(); break;
+				case 3: exportHtml('../build/cartridge.min.js'); break;
 			}
 			saveLoadButtons.current = -1;
 			editor.dirty = true;
 		}
 
 		if(buttons_click(saveButtons,mx,my)){
-			save('slot' + saveButtons.current);
+			editorSave('slot' + saveButtons.current);
 			alert('Saved game to slot ' + (saveButtons.current + 1) + '.');
 			editor.dirty = true;
 			saveButtons.current = -1;
 		}
 
 		if(intsel_click(resolutionSelectorX, mx, my)){
-			width(resolutionSelectorX.current);
+			editor.gameWidth = resolutionSelectorX.current;
 			editor.dirty = true;
 		}
 
 		if(intsel_click(resolutionSelectorY, mx, my)){
-			height(resolutionSelectorY.current);
+			editor.gameHeight = resolutionSelectorY.current;
 			editor.dirty = true;
 		}
 		if(buttons_click(spriteSheetSizeButtons,mx,my)){
@@ -968,10 +1003,10 @@ editor.click = window._click = function _click(){
 var editorLoad = window._init = function _init(){
 
 	setInterval(function(){
-		save('autosave');
+		editorSave('autosave');
 	}, 10000);
 
-	if(!load('autosave')){
+	if(!editorLoad2('autosave')){
 		// TODO: Load default JSON
 		code_set([
 			'var x=10,y=10;',
@@ -1083,8 +1118,8 @@ editor.draw = window._draw = function _draw(){
 		buttons_draw(saveLoadButtons);
 
 		print('Resolution:', 5,80);
-		resolutionSelectorX.current = width();
-		resolutionSelectorY.current = height();
+		resolutionSelectorX.current = editor.gameWidth;
+		resolutionSelectorY.current = editor.gameHeight;
 		intsel_draw(resolutionSelectorX);
 		intsel_draw(resolutionSelectorY);
 
@@ -1518,6 +1553,9 @@ function code_run(code){
 	delete window._draw;
 	delete window._click;
 
+	width(editor.gameWidth);
+	height(editor.gameHeight);
+
 	try {
 		run();
 		// Manually run the init
@@ -1560,6 +1598,9 @@ function code_stop(code){
 	camera(0,0);
 	clip(); // reset clip
 	music(-1); // stop music
+
+	width(editor.editorWidth);
+	height(editor.editorHeight);
 }
 
 function code_click(code,x,y){
@@ -1947,7 +1988,7 @@ document.addEventListener('keydown', function(e){
 
 	// ctrl + s
 	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
-		save('game.json');
+		editorSave('game.json');
 		e.preventDefault();
 	}
 
@@ -1983,7 +2024,7 @@ function openfile(){
 		}
 		try {
 			var json = JSON.parse(text);
-			load(json);
+			editorLoad2(json);
 			code.syntaxTreeDirty = true;
 			editor.dirty = true;
 		} catch(err){
@@ -2115,19 +2156,20 @@ document.addEventListener('copy', function(e){
 var query = utils.parseQueryVariables(window.location.search, {
 	pixel_perfect: 'i',
 	run: 'b',
+	responsive: 'b',
 	file: 's'
 });
-
 cartridge({
 	containerId: 'container',
-	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0)
+	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
+	responsive: query.responsive !== undefined ? query.responsive : utils.isMobile()
 });
 
 run();
 
 if(query.file){
 	editor.loading = true;
-	load(query.file);
+	editorLoad2(query.file);
 }
 
 window._load = function(){
@@ -2138,3 +2180,131 @@ window._load = function(){
 	if(query.run)
 		code_run(code);
 };
+
+function spriteToDataURL(spriteX, spriteY, scale, mimetype){
+	mimetype = mimetype || 'image/png';
+	scale = scale !== undefined ? scale : 1;
+	var canvas = document.createElement('canvas');
+	canvas.width = cellwidth()*scale;
+	canvas.height = cellheight()*scale;
+	var c = canvas.getContext('2d');
+	c.clearRect(0,0,cellwidth()*scale,cellheight()*scale); // needed?
+	var data = c.createImageData(cellwidth()*scale,cellheight()*scale);
+	for(var x=0; x<cellwidth(); x++){
+		for(var y=0; y<cellheight(); y++){
+			for(var sx=0; sx<scale; sx++){
+				for(var sy=0; sy<scale; sy++){
+					var p = (x*scale+sx + (y*scale+sy)*(cellwidth()*scale)) * 4;
+					var col = sget(x+cellwidth()*spriteX,y+cellheight()*spriteY);
+					if(!palt(col)){
+						var dec = palget(col);
+						data.data[p + 0] = utils.decToR(dec);
+						data.data[p + 1] = utils.decToG(dec);
+						data.data[p + 2] = utils.decToB(dec);
+						data.data[p + 3] = 255;
+					} else {
+						data.data[p + 3] = 0;
+					}
+				}
+			}
+		}
+	}
+	c.putImageData(data,0,0);
+	return canvas.toDataURL(mimetype);
+}
+
+function exportHtml(engineUrl, callback){
+	callback = callback || function(){};
+
+	// Get engine source
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(){
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+
+				var scale = 4;
+				var iconUrl = spriteToDataURL(1,0,scale); // scale=4 enough?
+				var manifest = 'data:application/manifest+json;base64,' + btoa(JSON.stringify({
+					display: "fullscreen",
+					orientation: "portrait"
+				}));
+				var gameJson = json();
+				gameJson.width = editor.gameWidth;
+				gameJson.height = editor.gameHeight;
+				gameJson = JSON.stringify(gameJson);
+
+				// Generate HTML
+				var htmlExport = [
+					'<!DOCTYPE HTML>',
+					'<html lang="en">',
+					'<head>',
+					'	<meta charset="utf-8">',
+					'	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />',
+					'	<meta name="apple-mobile-web-app-capable" content="yes">',
+					'	<meta name="mobile-web-app-capable" content="yes">',
+					'	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+					'	<link rel="icon" type="image/png" href="' + iconUrl + '" />',
+					'	<link rel="apple-touch-icon" href="' + iconUrl + '">',
+					'	<link rel="manifest" href="' + manifest + '" />',
+					'	<title>' + title() + '</title>',
+					'	<style>',
+					'	body, html {',
+					'		width: 100%;',
+					'		height: 100%;',
+					'		padding: 0;',
+					'		margin: 0;',
+					'		overflow: hidden;',
+					'	}',
+					'	#container {',
+					'		width: 100%;',
+					'		height: 100%;',
+					'		background-color: black;',
+					'	}',
+					'	canvas {',
+					'		cursor: none;',
+					'	}',
+					'	* {',
+					'		-webkit-touch-callout: none; /* iOS Safari */',
+					'			-webkit-user-select: none; /* Chrome/Safari/Opera */',
+					'			-khtml-user-select: none; /* Konqueror */',
+					'			-moz-user-select: none; /* Firefox */',
+					'				-ms-user-select: none; /* Internet Explorer/Edge */',
+					'					user-select: none; /* Non-prefixed version, currently not supported by any browser */',
+
+					'		-webkit-tap-highlight-color: transparent; /* disable iOS Safari tap effect */',
+					'	}',
+					'	</style>',
+					'</head>',
+					'<body>',
+					'	<div id="container"></div>',
+					'	<script id="json" type="text/json">' + gameJson + '</script>',
+					'	<script>' + xhr.responseText + '</script>',
+					'	<script>',
+					'		// Disable "bouncy scroll" on iOS',
+					'		document.body.addEventListener("touchmove", function(event) {',
+					'			event.stopPropagation();',
+					'			event.preventDefault();',
+					'		});',
+					'		var theJSON = JSON.parse(document.getElementById("json").innerHTML);',
+					'		cartridge({',
+					'			containerId: "container",',
+					'			pixelPerfect: 1,', // ??
+					'		});',
+					'		load(theJSON);',
+					'		run();',
+					'	</script>',
+					'</body>',
+					'</html>',
+
+				].join('\n');
+				utils.downloadStringAsTextFile(htmlExport, "game.html");
+				callback(null);
+			} else {
+				// Error
+				callback(xhr);
+			}
+		}
+	};
+	xhr.open("GET", engineUrl, true);
+	xhr.send();
+}

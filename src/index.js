@@ -51,9 +51,13 @@ var loaded = false; // Loaded state
 var _alpha = 0;
 var pixelPerfectMode = 0;
 var autoFit = false;
+var responsive = false;
+var responsiveRect = new Rectangle(0,0,128,128);
+var gameTitle = 'game';
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
+	responsive = options.responsive !== undefined ? options.responsive : false;
 	pixelPerfectMode = options.pixelPerfect !== undefined ? options.pixelPerfect : 0;
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
@@ -104,11 +108,11 @@ exports.cartridge = function(options){
 	});
 
 	if(autoFit){
-		fit(pixelPerfectMode);
 		// Resize (fit) the canvas when the container changes size
 		var resizeHandler = function(){
-			fit(pixelPerfectMode);
+			fit(pixelPerfectMode, responsive);
 		};
+		resizeHandler();
 		window.addEventListener('resize', resizeHandler);
 		window.addEventListener('mozfullscreenchange', resizeHandler);
 	}
@@ -325,7 +329,7 @@ function resizeCanvases(){
 		canvases[i].height = screensizeY;
 	}
 	if(autoFit){
-		fit(pixelPerfectMode);
+		fit(pixelPerfectMode, responsive);
 	}
 	pixelops.resize(canvases[0]);
 
@@ -338,11 +342,12 @@ exports.alpha = function(){ return _alpha; }; // for interpolation
 // TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
+		newWidth = newWidth | 0;
 		if(screensizeX === newWidth){
 			// unchanged
 			return;
 		}
-		screensizeX = newWidth | 0;
+		screensizeX = newWidth;
 		resizeCanvases();
 	}
 	return screensizeX;
@@ -351,11 +356,12 @@ exports.width = function(newWidth){
 // TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
+		newHeight = newHeight | 0;
 		if(screensizeY === newHeight){
 			// unchanged
 			return;
 		}
-		screensizeY = newHeight | 0;
+		screensizeY = newHeight;
 		resizeCanvases();
 	}
 	return screensizeY;
@@ -564,11 +570,13 @@ function ssy(n){
 	return Math.floor(n / spriteSheetSizeX) % (spriteSheetSizeX * spriteSheetSizeY);
 }
 
+// Render a sprite at position X,Y in the sprite sheet
 exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
 	var n = ny * spriteSheetSizeX + nx;
 	return spr(n, x, y, w, h, flip_x, flip_y);
 };
 
+// Render a sprite given its id
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
 	flushSpriteSheet();
@@ -718,6 +726,14 @@ exports.sset = function(x, y, col){
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
 
+// Game title
+exports.title = function(newTitle){
+	if(newTitle !== undefined){
+		gameTitle = newTitle;
+	}
+	return gameTitle;
+};
+
 exports.fullscreen = function fullscreen(){
 	utils.fullscreen(container);
 };
@@ -750,7 +766,23 @@ exports.print = function(text, x, y, col){
 	font.draw(ctx, text.toString().toUpperCase(), x, y, col);
 };
 
-exports.fit = function fit(stretchMode){
+exports.fit = function fit(stretchMode, responsive){
+	if(responsive){
+		var rect = container.getBoundingClientRect();
+		var aspect = rect.width / rect.height;
+		var responsiveAspect = responsiveRect.w / responsiveRect.h;
+		var newWidth = responsiveRect.w;
+		var newHeight = responsiveRect.h;
+		if(aspect > responsiveAspect){
+			// Increase width
+			newWidth *= aspect / responsiveAspect;
+		} else {
+			newHeight *= responsiveAspect / aspect;
+		}
+		width(newWidth);
+		height(newHeight);
+	}
+
 	stretchMode = stretchMode !== undefined ? stretchMode : 0;
 	var pixelPerfect = (stretchMode === 0);
 	var i = canvases.length;
@@ -788,6 +820,10 @@ exports.save = function(key){
 	}
 };
 
+exports.json = function(){
+	return toJSON();
+};
+
 exports.load = function(key){
 	if(typeof(key) === 'object'){
 		loadJSON(key);
@@ -821,12 +857,13 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 8,
+		version: 9,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
 		cellheight: cellheight(), // added in v4
 		spritesheetsize: ssget(), // added in v5
+		title: title(), // added in v9
 		map: [],
 		sprites: [],
 		flags: [],
@@ -925,6 +962,8 @@ function toJSON(){
 function loadJSON(data){
 	var i,j;
 	code.codeset(data.code || '');
+
+	title(data.title || 'game');
 
 	if(data.width !== undefined){
 		width(data.width);
@@ -1071,6 +1110,18 @@ exports.mousex = function(){
 
 exports.mousey = function(){
 	return Math.floor(mouse.mouseyNormalized() * (screensizeY-1));
+};
+
+exports.touchx = function(id){
+	return Math.floor(mouse.touchxNormalized(id) * (screensizeX-1));
+};
+
+exports.touchy = function(id){
+	return Math.floor(mouse.touchyNormalized(id) * (screensizeY-1));
+};
+
+exports.mobile = function(){
+	return utils.isMobile();
 };
 
 utils.makeGlobal(music);

@@ -18,6 +18,27 @@ exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
 };
 
+var _touches = {};
+exports.touchn = function touchn(){ return Object.keys(_touches).length; };
+exports.touchid = function touchn(i){
+	var key = Object.keys(_touches)[i];
+	return _touches[ key ].identifier;
+};
+exports.touchdown = function touchdown(id){
+	return !!_touches[id];
+};
+exports.touchxNormalized = function touchxNormalized(id){
+	var clientX = _touches[id].clientX;
+	var rect = _touches[id].target.getBoundingClientRect(); // cache this?
+	return math.clamp((clientX - rect.left) / rect.width, 0, 1);
+};
+exports.touchyNormalized = function touchyNormalized(id){
+	var clientY = _touches[id].clientY;
+	var rect = _touches[id].target.getBoundingClientRect(); // cache this?
+	var y = math.clamp((clientY - rect.top) / rect.height, 0, 1);
+	return y;
+};
+
 function addListeners(canvases){
 	canvasListeners = {
 		click: function(evt){
@@ -43,6 +64,27 @@ function addListeners(canvases){
 		mousewheel: function(evt){
 			var delta = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
 			_mousescroll += delta;
+		},
+		touchstart: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			for(var i=0; i<evt.changedTouches.length; i++){
+				_touches[evt.changedTouches[i].identifier] = evt.changedTouches[i];
+			}
+		},
+		touchmove: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			for(var i=0; i<evt.changedTouches.length; i++){
+				_touches[evt.changedTouches[i].identifier] = evt.changedTouches[i];
+			}
+		},
+		touchend: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			for(var i=0; i<evt.changedTouches.length; i++){
+				delete _touches[evt.changedTouches[i].identifier];
+			}
 		}
 	};
 	canvasListeners.DOMMouseScroll = canvasListeners.mousewheel;
@@ -79,8 +121,14 @@ function updateMouseCoords(evt, canvases){
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var subx = 0;
 	var suby = 0;
-	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
-	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
+	var clientX = evt.clientX;
+	var clientY = evt.clientY;
+	if(evt.changedTouches){
+		clientX = evt.changedTouches[0].clientX;
+		clientY = evt.changedTouches[0].clientY;
+	}
+	_mousex = math.clamp((clientX - rect.left - subx) / rect.width, 0, 1);
+	_mousey = math.clamp((clientY - rect.top - suby) / rect.height, 0, 1);
 }
 
 exports.mousexNormalized = function(){ return _mousex; };
@@ -89,5 +137,8 @@ exports.mouseyNormalized = function(){ return _mousey; };
 exports.global = {
 	mousebtn: exports.mousebtn,
 	click: exports.click,
-	mousescroll: exports.mousescroll
+	mousescroll: exports.mousescroll,
+	touchn: exports.touchn,
+	touchid: exports.touchid,
+	touchdown: exports.touchdown
 };
