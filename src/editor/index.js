@@ -1097,7 +1097,7 @@ editor.draw = window._draw = function _draw(){
 		}
 		sprites_draw(sprites);
 		intsel_draw(spriteSheetPageSelector);
-		if(mapCellX>0 && mapCellY>0)
+		if(mapCellX>=0 && mapCellY>=0)
 			print(mapCellX + ',' + mapCellY, 1, spriteSheetPageSelector.y()+1, 0);
 		break;
 	case 'sfx':
