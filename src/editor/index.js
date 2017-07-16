@@ -479,16 +479,23 @@ var saveLoadButtons = {
 	padding: 10
 };
 
+var nameButton = {
+	x: function(){ return 30; },
+	y: function(){ return 21; },
+	options: [title()],
+	padding: 40
+};
+
 var slotButtons = {
-	x: function(){ return 5; },
-	y: function(){ return 38; },
+	x: function(){ return 58; },
+	y: function(){ return 29; },
 	num: 8,
 	padding: 1
 };
 
 var saveButtons = {
-	x: function(){ return 5; },
-	y: function(){ return 57; },
+	x: function(){ return slotButtons.x(); },
+	y: function(){ return 37; },
 	num: slotButtons.num,
 	padding: slotButtons.padding
 };
@@ -919,6 +926,13 @@ editor.click = window._click = function _click(){
 			editor.dirty = true;
 			code.syntaxTreeDirty = true;
 			slotButtons.current = -1;
+		} else if(buttons_click(nameButton,mx,my)){
+			var newTitle = prompt('Name?');
+			if(newTitle){
+				title(newTitle);
+				nameButton.options[0] = title();
+				nameButton.current = -1;
+			}
 		}
 
 		if(buttons_click(saveLoadButtons,mx,my)){
@@ -1109,13 +1123,17 @@ editor.draw = window._draw = function _draw(){
 		intsel_draw(sfxSelector);
 		break;
 	case 'game':
-		print("Load slot:", 5,29);
-		buttons_draw(slotButtons);
-		print("Save in slot:", 5,50);
-		buttons_draw(saveButtons);
-
 		print("file:", 5,14);
 		buttons_draw(saveLoadButtons);
+
+		print("title:", 5,22);
+		buttons_draw(nameButton);
+
+		print("Load slot:", 5,30);
+		buttons_draw(slotButtons);
+
+		print("Save in slot:", 5,38);
+		buttons_draw(saveButtons);
 
 		print('Resolution:', 5,80);
 		resolutionSelectorX.current = editor.gameWidth;
