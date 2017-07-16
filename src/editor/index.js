@@ -1279,9 +1279,18 @@ function palette_draw(palette){
 			var ry = y+j*sy;
 			var rw = x+(i+1)*sx-1;
 			var rh = y+(j+1)*sy-1;
-			rectfill(rx, ry, rw, rh, n);
+			if(n=== 0){
+				// transparent
+				for(var x1=rx; x1<rx+rw; x1++){
+					for(var y1=ry; y1<ry+rh; y1++){
+						pset(x1,y1,(x1+y1)%2 ? 6 : 7);
+					}
+				}
+			} else {
+				rectfill(rx, ry, rw, rh, n);
+			}
 			if(current === n){
-				rect(rx, ry, rw, rh, current === 0 ? 7 : 0);
+				rect(rx, ry, rw, rh, 0);
 			}
 			n++;
 		}
