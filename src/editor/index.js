@@ -1,22 +1,9 @@
 var utils = require('../utils');
+var Editor = require('./Editor');
 
-var editorModes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
-var editor = {
-	modes: editorModes,
-	mode: editorModes[0],
-	loading: false,
-	dirty: true,
-	lastmx: 0,
-	lastmy: 0,
-	lastmousebtn: {},
-	previousScroll: 0,
-	keysdown: {},
-	draw: null,
-	gameWidth: 128,
-	gameHeight: 128,
-	editorWidth: 128,
-	editorHeight: 128
-};
+var editor = new Editor({
+	mode: Editor.modes[0]
+});
 
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
@@ -905,11 +892,11 @@ editor.click = window._click = function _click(){
 
 	// top mode switcher
 	if(buttons_click(topButtons,mx,my)){
-		if(editor.modes[topButtons.current] === 'run'){
+		if(Editor.modes[topButtons.current] === 'run'){
 			code_run(code);
 			editor.dirty = true;
 		} else {
-			editor.mode = editor.modes[topButtons.current];
+			editor.mode = Editor.modes[topButtons.current];
 		}
 		editor.dirty = true;
 	}
@@ -1082,7 +1069,7 @@ editor.draw = window._draw = function _draw(){
 
 	rectfill(0, 0, width(), height(), 7);
 
-	topButtons.current = editor.modes.indexOf(editor.mode);
+	topButtons.current = Editor.modes.indexOf(editor.mode);
 
 	switch(editor.mode){
 	case 'code':
@@ -1964,9 +1951,9 @@ window.addEventListener('keydown', function(evt){
 	// alt + left or right, switch editor
 	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
 		var delta = evt.keyCode === 37 ? -1 : 1;
-		editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
+		editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
 		if(editor.mode === 'run')
-			editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
+			editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
 		editor.dirty = true;
 
 		// Prevent going back in history
