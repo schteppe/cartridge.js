@@ -2552,9 +2552,13 @@ var loaded = false; // Loaded state
 var _alpha = 0;
 var pixelPerfectMode = 0;
 var autoFit = false;
+var responsive = false;
+var responsiveRect = new Rectangle(0,0,128,128);
+var gameTitle = 'game';
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
+	responsive = options.responsive !== undefined ? options.responsive : false;
 	pixelPerfectMode = options.pixelPerfect !== undefined ? options.pixelPerfect : 0;
 	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
@@ -2605,11 +2609,11 @@ exports.cartridge = function(options){
 	});
 
 	if(autoFit){
-		fit(pixelPerfectMode);
 		// Resize (fit) the canvas when the container changes size
 		var resizeHandler = function(){
-			fit(pixelPerfectMode);
+			fit(pixelPerfectMode, responsive);
 		};
+		resizeHandler();
 		window.addEventListener('resize', resizeHandler);
 		window.addEventListener('mozfullscreenchange', resizeHandler);
 	}
@@ -2826,7 +2830,7 @@ function resizeCanvases(){
 		canvases[i].height = screensizeY;
 	}
 	if(autoFit){
-		fit(pixelPerfectMode);
+		fit(pixelPerfectMode, responsive);
 	}
 	pixelops.resize(canvases[0]);
 
@@ -2839,11 +2843,12 @@ exports.alpha = function(){ return _alpha; }; // for interpolation
 // TODO: rename to wget/set() ?
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
+		newWidth = newWidth | 0;
 		if(screensizeX === newWidth){
 			// unchanged
 			return;
 		}
-		screensizeX = newWidth | 0;
+		screensizeX = newWidth;
 		resizeCanvases();
 	}
 	return screensizeX;
@@ -2852,11 +2857,12 @@ exports.width = function(newWidth){
 // TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
+		newHeight = newHeight | 0;
 		if(screensizeY === newHeight){
 			// unchanged
 			return;
 		}
-		screensizeY = newHeight | 0;
+		screensizeY = newHeight;
 		resizeCanvases();
 	}
 	return screensizeY;
@@ -3065,11 +3071,13 @@ function ssy(n){
 	return Math.floor(n / spriteSheetSizeX) % (spriteSheetSizeX * spriteSheetSizeY);
 }
 
+// Render a sprite at position X,Y in the sprite sheet
 exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
 	var n = ny * spriteSheetSizeX + nx;
 	return spr(n, x, y, w, h, flip_x, flip_y);
 };
 
+// Render a sprite given its id
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	pixelops.beforeChange();
 	flushSpriteSheet();
@@ -3219,6 +3227,14 @@ exports.sset = function(x, y, col){
 	mapDirty = true; // TODO: Only invalidate matching map positions
 };
 
+// Game title
+exports.title = function(newTitle){
+	if(newTitle !== undefined){
+		gameTitle = newTitle;
+	}
+	return gameTitle;
+};
+
 exports.fullscreen = function fullscreen(){
 	utils.fullscreen(container);
 };
@@ -3251,7 +3267,23 @@ exports.print = function(text, x, y, col){
 	font.draw(ctx, text.toString().toUpperCase(), x, y, col);
 };
 
-exports.fit = function fit(stretchMode){
+exports.fit = function fit(stretchMode, responsive){
+	if(responsive){
+		var rect = container.getBoundingClientRect();
+		var aspect = rect.width / rect.height;
+		var responsiveAspect = responsiveRect.w / responsiveRect.h;
+		var newWidth = responsiveRect.w;
+		var newHeight = responsiveRect.h;
+		if(aspect > responsiveAspect){
+			// Increase width
+			newWidth *= aspect / responsiveAspect;
+		} else {
+			newHeight *= responsiveAspect / aspect;
+		}
+		width(newWidth);
+		height(newHeight);
+	}
+
 	stretchMode = stretchMode !== undefined ? stretchMode : 0;
 	var pixelPerfect = (stretchMode === 0);
 	var i = canvases.length;
@@ -3289,6 +3321,10 @@ exports.save = function(key){
 	}
 };
 
+exports.json = function(){
+	return toJSON();
+};
+
 exports.load = function(key){
 	if(typeof(key) === 'object'){
 		loadJSON(key);
@@ -3322,12 +3358,13 @@ function download(key){
 function toJSON(){
 	var i,j;
 	var data = {
-		version: 8,
+		version: 9,
 		width: width(), // added in v3
 		height: height(), // added in v3
 		cellwidth: cellwidth(), // added in v4
 		cellheight: cellheight(), // added in v4
 		spritesheetsize: ssget(), // added in v5
+		title: title(), // added in v9
 		map: [],
 		sprites: [],
 		flags: [],
@@ -3403,8 +3440,7 @@ function toJSON(){
 			var octave = noget(groupIndex, position);
 			var instrument = niget(groupIndex, position);
 			var volume = nvget(groupIndex, position);
-			// TODO: effect
-			var effect = 0;
+			var effect = neget(groupIndex, position);
 			data.tracks.push(pitch, octave, instrument, volume, effect);
 		}
 	}
@@ -3427,6 +3463,8 @@ function toJSON(){
 function loadJSON(data){
 	var i,j;
 	code.codeset(data.code || '');
+
+	title(data.title || 'game');
 
 	if(data.width !== undefined){
 		width(data.width);
@@ -3498,7 +3536,7 @@ function loadJSON(data){
 				var octave = data.tracks[p + 1] || 0;
 				var instrument = data.tracks[p + 2] || 0;
 				var volume = data.tracks[p + 3] || 0;
-				var effect = data.tracks[p + 4] || 0; // todo
+				var effect = data.tracks[p + 4] || 0;
 
 				if(data.version <= 6){
 					// in v7, all octaves were lowered by 1.
@@ -3509,6 +3547,7 @@ function loadJSON(data){
 				noset(groupIndex, position, octave);
 				niset(groupIndex, position, instrument);
 				nvset(groupIndex, position, volume);
+				neset(groupIndex, position, effect);
 			}
 		}
 	}
@@ -3572,6 +3611,18 @@ exports.mousex = function(){
 
 exports.mousey = function(){
 	return Math.floor(mouse.mouseyNormalized() * (screensizeY-1));
+};
+
+exports.touchx = function(id){
+	return Math.floor(mouse.touchxNormalized(id) * (screensizeX-1));
+};
+
+exports.touchy = function(id){
+	return Math.floor(mouse.touchyNormalized(id) * (screensizeY-1));
+};
+
+exports.mobile = function(){
+	return utils.isMobile();
 };
 
 utils.makeGlobal(music);
@@ -3744,6 +3795,27 @@ exports.mousebtn = function mousebtn(i){
 	return !!_mousebtns[i];
 };
 
+var _touches = {};
+exports.touchn = function touchn(){ return Object.keys(_touches).length; };
+exports.touchid = function touchn(i){
+	var key = Object.keys(_touches)[i];
+	return _touches[ key ].identifier;
+};
+exports.touchdown = function touchdown(id){
+	return !!_touches[id];
+};
+exports.touchxNormalized = function touchxNormalized(id){
+	var clientX = _touches[id].clientX;
+	var rect = _touches[id].target.getBoundingClientRect(); // cache this?
+	return math.clamp((clientX - rect.left) / rect.width, 0, 1);
+};
+exports.touchyNormalized = function touchyNormalized(id){
+	var clientY = _touches[id].clientY;
+	var rect = _touches[id].target.getBoundingClientRect(); // cache this?
+	var y = math.clamp((clientY - rect.top) / rect.height, 0, 1);
+	return y;
+};
+
 function addListeners(canvases){
 	canvasListeners = {
 		click: function(evt){
@@ -3769,6 +3841,27 @@ function addListeners(canvases){
 		mousewheel: function(evt){
 			var delta = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
 			_mousescroll += delta;
+		},
+		touchstart: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			for(var i=0; i<evt.changedTouches.length; i++){
+				_touches[evt.changedTouches[i].identifier] = evt.changedTouches[i];
+			}
+		},
+		touchmove: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			for(var i=0; i<evt.changedTouches.length; i++){
+				_touches[evt.changedTouches[i].identifier] = evt.changedTouches[i];
+			}
+		},
+		touchend: function(evt){
+			evt.preventDefault();
+			evt.stopPropagation();
+			for(var i=0; i<evt.changedTouches.length; i++){
+				delete _touches[evt.changedTouches[i].identifier];
+			}
 		}
 	};
 	canvasListeners.DOMMouseScroll = canvasListeners.mousewheel;
@@ -3805,8 +3898,14 @@ function updateMouseCoords(evt, canvases){
 	var parentRect = evt.target.parentNode.getBoundingClientRect(); // cache this?
 	var subx = 0;
 	var suby = 0;
-	_mousex = math.clamp((evt.clientX - rect.left - subx) / rect.width, 0, 1);
-	_mousey = math.clamp((evt.clientY - rect.top - suby) / rect.height, 0, 1);
+	var clientX = evt.clientX;
+	var clientY = evt.clientY;
+	if(evt.changedTouches){
+		clientX = evt.changedTouches[0].clientX;
+		clientY = evt.changedTouches[0].clientY;
+	}
+	_mousex = math.clamp((clientX - rect.left - subx) / rect.width, 0, 1);
+	_mousey = math.clamp((clientY - rect.top - suby) / rect.height, 0, 1);
 }
 
 exports.mousexNormalized = function(){ return _mousex; };
@@ -3815,7 +3914,10 @@ exports.mouseyNormalized = function(){ return _mousey; };
 exports.global = {
 	mousebtn: exports.mousebtn,
 	click: exports.click,
-	mousescroll: exports.mousescroll
+	mousescroll: exports.mousescroll,
+	touchn: exports.touchn,
+	touchid: exports.touchid,
+	touchdown: exports.touchdown
 };
 
 },{"./math":9,"./utils":14}],11:[function(require,module,exports){
@@ -3930,6 +4032,16 @@ exports.niget = function(group, position){
 	return groups[group].notes[5 * position + 2];
 };
 
+// effect for a note
+exports.neset = function(group, position, effect){
+	effect = effect !== undefined ? effect : 0;
+	groups[group].notes[5 * position + 4] = effect;
+};
+
+exports.neget = function(group, position){
+	return groups[group].notes[5 * position + 4];
+};
+
 // Set a group to be played in a channel in a pattern.
 exports.mgset = function(pattern, channel, group){
 	group = group !== undefined ? group : 0;
@@ -4033,16 +4145,34 @@ function scheduleGroup(groupIndex, channelIndex, time){
 		var pitch = npget(groupIndex, i);
 		var octave = noget(groupIndex, i);
 		var instrument = niget(groupIndex, i);
+		var effect = neget(groupIndex, i);
 		if(volume === 0){
 			continue;
 		}
 		var startPosition = i;
 		var endPosition = i+1;
-		while(nvget(groupIndex, endPosition) === volume && niget(groupIndex, endPosition) === instrument && npget(groupIndex, endPosition) === pitch && noget(groupIndex, endPosition) === octave && endPosition < 32){
+
+		/*
+		while(
+			nvget(groupIndex, endPosition) === volume &&
+			niget(groupIndex, endPosition) === instrument &&
+			npget(groupIndex, endPosition) === pitch &&
+			noget(groupIndex, endPosition) === octave &&
+			neget(groupIndex, endPosition) === 0 &&
+			endPosition < 32
+		){
 			endPosition++;
 		}
+		*/
+
 		var startTime = time + startPosition / speed;
 		var endTime = time + endPosition / speed;
+
+		if(effect === 1){
+			// make note slightly shorter
+			startTime = time + (startPosition + 0.0) / speed;
+			endTime = time + (endPosition - 0.25) / speed;
+		}
 
 		var osc = channel.instruments[allTypes[instrument]];
 		var gain = channel.gains[allTypes[instrument]];
@@ -4050,8 +4180,14 @@ function scheduleGroup(groupIndex, channelIndex, time){
 
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = getFrequency(pitch, octave);
-			osc.frequency.setValueAtTime(frequency, startTime);
-			if(frequency !== 0) volumeMultiplier /= aWeight(frequency);
+
+			if(effect === 2 && startPosition !== 0){
+				// slide frequency
+				osc.frequency.linearRampToValueAtTime(frequency, startTime);
+			} else {
+				osc.frequency.setValueAtTime(frequency, startTime);
+			}
+			//if(frequency !== 0) volumeMultiplier /= aWeight(frequency);
 		}
 		gain.gain.setValueAtTime(volumeMultiplier * volume / 7, startTime);
 		gain.gain.setValueAtTime(0, endTime-0.000001);
@@ -4360,7 +4496,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 		if(osc.frequency){ // noise doesn't have frequency
 			var frequency = frequencies[j] / 255 * (maxFrequency - minFrequency) + minFrequency;
 			osc.frequency.setValueAtTime(frequency, startTime);
-			if(frequency !== 0) vol /= aWeight(frequency);
+			//if(frequency !== 0) vol /= aWeight(frequency);
 		}
 
 		gain.gain.setValueAtTime(vol, startTime);
@@ -4794,14 +4930,14 @@ exports.values = function(obj){
 // Parse query vars
 // "search" is window.location.search
 exports.parseQueryVariables = function(search,variables) {
-    var query = search.substring(1);
-    var vars = query.split('&');
+	var query = search.substring(1);
+	var vars = query.split('&');
 	var result = {};
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=');
+	for (var i = 0; i < vars.length; i++) {
+		var pair = vars[i].split('=');
 		var varName = decodeURIComponent(pair[0]);
 		var type = variables[varName];
-        if (type === undefined) continue;
+		if (type === undefined) continue;
 
 		var value = decodeURIComponent(pair[1]);
 		var ok = false;
@@ -4820,9 +4956,9 @@ exports.parseQueryVariables = function(search,variables) {
 		}
 		if(ok){
 			result[varName] = value;
-        }
-    }
-    return result;
+		}
+	}
+	return result;
 };
 
 exports.floodfill = function(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){

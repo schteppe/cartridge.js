@@ -1,18 +1,142 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var utils = require('../utils');
-
-var editorModes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
-var editor = {
-	modes: editorModes,
-	mode: editorModes[0],
-	loading: false,
-	dirty: true,
-	lastmx: 0,
-	lastmy: 0,
-	previousScroll: 0,
-	keysdown: {},
-	draw: null
+function Action(editor,hasDiff){
+	this.editor = editor;
+	this.valid = hasDiff;
+}
+Action.prototype = {
+	undo: function(){},
+	redo: function(){},
+	merge: function(otherAction){ return null; }
 };
+
+function PsetAction(editor,x,y,newColor){
+	this.x = x;
+	this.y = y;
+	this.oldColor = pget(x,y);
+	this.newColor = newColor;
+	Action.call(this,editor,this.oldColor != this.newColor);
+}
+PsetAction.prototype = Object.create(Action.prototype);
+Object.assign(PsetAction.prototype, {
+	undo: function(){ pset(this.x, this.y, this.oldColor); this.editor.dirty = true; },
+	redo: function(){ pset(this.x, this.y, this.newColor); this.editor.dirty = true; },
+});
+
+function SsetAction(editor,x,y,newColor){
+	this.x = x;
+	this.y = y;
+	this.oldColor = sget(x,y);
+	this.newColor = newColor;
+	Action.call(this,editor,this.oldColor != this.newColor);
+}
+SsetAction.prototype = Object.create(Action.prototype);
+Object.assign(SsetAction.prototype, {
+	undo: function(){ sset(this.x, this.y, this.oldColor); this.editor.dirty = true; },
+	redo: function(){ sset(this.x, this.y, this.newColor); this.editor.dirty = true; },
+});
+
+function MsetAction(editor,x,y,newSpriteId){
+	this.x = x;
+	this.y = y;
+	this.oldSpriteId = mget(x,y);
+	this.newSpriteId = newSpriteId;
+	Action.call(this,editor,this.oldSpriteId != this.newSpriteId);
+}
+MsetAction.prototype = Object.create(Action.prototype);
+Object.assign(MsetAction.prototype, {
+	undo: function(){ mset(this.x, this.y, this.oldSpriteId); this.editor.dirty = true; },
+	redo: function(){ mset(this.x, this.y, this.newSpriteId); this.editor.dirty = true; },
+});
+
+module.exports = {
+	Action: Action,
+	PsetAction: PsetAction,
+	SsetAction: SsetAction,
+	MsetAction: MsetAction
+};
+},{}],2:[function(require,module,exports){
+var actionClasses = require('./Action');
+
+function Editor(){
+	this.mode = Editor.modes[0];
+	this.loading = false;
+	this.dirty = true;
+	this.lastmx = 0;
+	this.lastmy = 0;
+	this.lastmousebtn = {};
+	this.previousScroll = 0;
+	this.keysdown = {};
+	this.draw = null;
+	this.gameWidth = 128;
+	this.gameHeight = 128;
+	this.editorWidth = 128;
+	this.editorHeight = 128;
+
+	this.actions = [];
+	this.currentAction = -1;
+	this.maxActions = 100;
+}
+
+Editor.prototype = {
+	doAction: function(action){
+		if(!action.valid) return;
+
+		if(this.actions.length === 0){
+			this.currentAction = 0;
+		} else if(this.currentAction === this.actions.length-1){
+			this.currentAction = this.actions.length;
+		} else {
+			// Between first and last, need to cut the forward history
+			this.actions = this.actions.slice(0, this.currentAction+1);
+			this.currentAction = this.actions.length;
+		}
+
+		this.actions.push(action);
+		action.redo();
+
+		// Merge the last two actions?
+		if(this.actions.length > 1){
+			var merged = this.actions[this.actions.length-2].merge(this.actions[this.actions.length-1]);
+			if(merged){
+				this.actions.pop();
+				this.actions.pop();
+				this.actions.push(merged);
+			}
+		}
+
+		// Only keep max actions in the history
+		while(this.actions.length > this.maxActions){
+			this.actions.shift();
+			this.currentAction--;
+		}
+	},
+	undo: function(){
+		if(this.currentAction > -1){
+			this.actions[this.currentAction].undo();
+			this.currentAction--;
+		}
+	},
+	redo: function(){
+		if(this.currentAction+1 < this.actions.length){
+			this.currentAction++;
+			this.actions[this.currentAction].redo();
+		}
+	},
+	pset: function(x,y,color){ this.doAction(new actionClasses.PsetAction(this,x,y,color)); },
+	sset: function(x,y,color){ this.doAction(new actionClasses.SsetAction(this,x,y,color));	},
+	mset: function(x,y,sprite){ this.doAction(new actionClasses.MsetAction(this,x,y,sprite));	},
+};
+
+Editor.modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
+
+module.exports = Editor;
+},{"./Action":1}],3:[function(require,module,exports){
+var utils = require('../utils');
+var Editor = require('./Editor');
+
+var editor = new Editor({
+	mode: Editor.modes[0]
+});
 
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
@@ -39,6 +163,29 @@ var track = {
 	note: 0,
 	col: 0
 };
+
+function editorSave(destination){
+	if(editor.mode !== 'run'){
+		width(editor.gameWidth);
+		height(editor.gameHeight);
+		save(destination);
+		width(editor.editorWidth);
+		height(editor.editorHeight);
+		editor.dirty = true; // make sure to re-render after the resize
+	}
+}
+
+function editorLoad2(source){
+	var result = true;
+	if(editor.mode !== 'run'){
+		result = load(source);
+		editor.gameWidth = width();
+		editor.gameHeight = height();
+		width(editor.editorWidth);
+		height(editor.editorHeight);
+	}
+	return result;
+}
 
 function track_click(track, mx, my){
 	var x = track.x();
@@ -90,6 +237,7 @@ function track_drawpart(x, y, highlightedNote, trackIndex, start, end, selectedC
 		var volume = nvget(trackIndex, j);
 		var octave = noget(trackIndex, j);
 		var instrument = niget(trackIndex, j);
+		var effect = neget(trackIndex, j);
 
 		// Highlight selected
 		if(highlightedNote === j){
@@ -112,7 +260,7 @@ function track_drawpart(x, y, highlightedNote, trackIndex, start, end, selectedC
 		print(volume === 0 ? '-' : (volume+1), x+1+fontWidth*4, y0+1,12);
 
 		// Effect (not yet supported)
-		print('-', x+1+fontWidth*5, y0+1,13);
+		print(effect === 0 ? '-' : (effect), x+1+fontWidth*5, y0+1,13);
 	}
 }
 
@@ -180,6 +328,7 @@ function track_keypress(track, evt){
 		niset(trackGroupSelector.current, track.note, waveformButtons.current);
 		nvset(trackGroupSelector.current, track.note, trackVolumeButtons.current);
 		noset(trackGroupSelector.current, track.note, octave);
+		neset(trackGroupSelector.current, track.note, effectButtons.current);
 		track.note = (track.note+1)%32;
 	} else if(evt.keyCode >= 48 && evt.keyCode <= 57){ // 0-9
 		var num = evt.keyCode - 48;
@@ -193,7 +342,9 @@ function track_keypress(track, evt){
 		case 3:
 			if(num >= 1 && num <= 8) nvset(trackGroupSelector.current, track.note, num-1);
 			break;
-		case 4: break; // effect - todo
+		case 4:
+			if(num >= 0 && num <= 2) neset(trackGroupSelector.current, track.note, num);
+			break; // effect
 		default: caught = false; break;
 		}
 		if(caught) track.note = (track.note+1)%32;
@@ -282,13 +433,20 @@ function viewport_draw(viewport){
 	for(var i=0; i<cellwidth(); i++){
 		for(var j=0; j<cellheight(); j++){
 			var col = sget(x+i, y+j);
-			rectfill(
-				viewport.x + i * viewport.sx(),
-				viewport.y + j * viewport.sy(),
-				viewport.x + (i+1) * viewport.sx()-1,
-				viewport.y + (j+1) * viewport.sy()-1,
-				col
-			);
+			var x0 = viewport.x + i * viewport.sx();
+			var y0 = viewport.y + j * viewport.sy();
+			var x1 = viewport.x + (i+1) * viewport.sx()-1;
+			var y1 = viewport.y + (j+1) * viewport.sy()-1;
+			if(palt(col)){
+				// transparent
+				for(var k=x0; k<=x1; k++){
+					for(var l=y0; l<=y1; l++){
+						pset(k, l, ((k+l)%2) === 0 ? 6 : 7);
+					}
+				}
+			} else {
+				rectfill(x0, y0, x1, y1, col);
+			}
 		}
 	}
 }
@@ -391,6 +549,9 @@ var code = {
 
 var mapPanX = 0;
 var mapPanY = 0;
+var mapShowGrid = false;
+var mapCellX = 0;
+var mapCellY = 0;
 
 var palette = {
 	n: function(){
@@ -434,20 +595,27 @@ var patternEndButtons = {
 var saveLoadButtons = {
 	x: function(){ return 25; },
 	y: function(){ return 13; },
-	options: ['save', 'load', 'reset'],
-	padding: 8
+	options: ['save', 'load..', 'reset', 'export'],
+	padding: 10
+};
+
+var nameButton = {
+	x: function(){ return 30; },
+	y: function(){ return 21; },
+	options: [title()],
+	padding: 40
 };
 
 var slotButtons = {
-	x: function(){ return 5; },
-	y: function(){ return 38; },
+	x: function(){ return 58; },
+	y: function(){ return 29; },
 	num: 8,
 	padding: 1
 };
 
 var saveButtons = {
-	x: function(){ return 5; },
-	y: function(){ return 57; },
+	x: function(){ return slotButtons.x(); },
+	y: function(){ return 37; },
 	num: slotButtons.num,
 	padding: slotButtons.padding
 };
@@ -457,6 +625,14 @@ var waveformButtons = {
 	y: function(){ return 8; },
 	num: 6,
 	current: 4,
+	padding: 2
+};
+
+var effectButtons = {
+	x: function(){ return width() - 60; },
+	y: function(){ return 16+8+8; },
+	num: 3, // none, short, slide
+	current: 0,
 	padding: 2
 };
 
@@ -571,7 +747,7 @@ var spriteSheetPageSelector = {
 var resolutionSelectorX = {
 	x: function(){ return 50; },
 	y: function(){ return 80; },
-	current: width(),
+	current: editor.gameWidth,
 	padding: 4,
 	min: function(){ return 128; },
 	max: function(){ return 512; },
@@ -580,9 +756,9 @@ var resolutionSelectorX = {
 };
 
 var resolutionSelectorY = {
-	x: function(){ return 50; },
+	x: function(){ return resolutionSelectorX.x(); },
 	y: function(){ return 88; },
-	current: height(),
+	current: editor.gameHeight,
 	padding: resolutionSelectorX.padding,
 	min: resolutionSelectorX.min,
 	max: resolutionSelectorX.max,
@@ -660,6 +836,8 @@ function ssx(n){ return n % ssget(); }
 function ssy(n){ return Math.floor(n / ssget()) % (ssget() * ssget()); }
 
 function mousemovehandler(forceMouseDown){
+	mapShowGrid = false;
+
 	switch(editor.mode){
 	case 'sprite':
 		if(mousebtn(1) || forceMouseDown){
@@ -670,7 +848,7 @@ function mousemovehandler(forceMouseDown){
 			if(sprites.current !== 0 && utils.inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				if(toolButtons.current === 0){
 					// Draw!
-					sset(
+					editor.sset(
 						ssx(sprites.current) * cellwidth() + x,
 						ssy(sprites.current) * cellheight() + y,
 						palette.current
@@ -713,17 +891,22 @@ function mousemovehandler(forceMouseDown){
 		var dx = mousex() - editor.lastmx;
 		var dy = mousey() - editor.lastmy;
 		if(utils.inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
+
+			mapCellX = flr((mousex() - mapPanX) / cellwidth());
+			mapCellY = flr((mousey() - mapPanY) / cellheight());
+
 			if(editor.keysdown[32] || mousebtn(2) || mousebtn(3)){
 				// Pan map
 				// TODO: clamp panning
 				mapPanX += dx;
 				mapPanY += dy;
+				mapShowGrid = true;
 				editor.dirty = true;
 			} else if((forceMouseDown || mousebtn(1))){
 				// Draw on map
-				mset(
-					flr((mousex() - mapPanX) / cellwidth()),
-					flr((mousey() - mapPanY) / cellheight()),
+				editor.mset(
+					mapCellX,
+					mapCellY,
 					sprites.current
 				);
 				editor.dirty = true;
@@ -842,11 +1025,11 @@ editor.click = window._click = function _click(){
 
 	// top mode switcher
 	if(buttons_click(topButtons,mx,my)){
-		if(editor.modes[topButtons.current] === 'run'){
+		if(Editor.modes[topButtons.current] === 'run'){
 			code_run(code);
 			editor.dirty = true;
 		} else {
-			editor.mode = editor.modes[topButtons.current];
+			editor.mode = Editor.modes[topButtons.current];
 		}
 		editor.dirty = true;
 	}
@@ -855,7 +1038,7 @@ editor.click = window._click = function _click(){
 		editor.dirty = true;
 	} else if(editor.mode === 'game'){
 		if(buttons_click(slotButtons,mx,my)){
-			if(load('slot' + slotButtons.current)){
+			if(editorLoad2('slot' + slotButtons.current)){
 				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
 			} else {
 				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
@@ -863,32 +1046,40 @@ editor.click = window._click = function _click(){
 			editor.dirty = true;
 			code.syntaxTreeDirty = true;
 			slotButtons.current = -1;
+		} else if(buttons_click(nameButton,mx,my)){
+			var newTitle = prompt('Name?');
+			if(newTitle){
+				title(newTitle);
+				nameButton.options[0] = title();
+				nameButton.current = -1;
+			}
 		}
 
 		if(buttons_click(saveLoadButtons,mx,my)){
 			switch(saveLoadButtons.current){
-				case 0: save('game.json'); break;
+				case 0: editorSave('game.json'); break;
 				case 1: openfile(); break;
 				case 2: reset(); break;
+				case 3: exportHtml('../build/cartridge.min.js'); break;
 			}
 			saveLoadButtons.current = -1;
 			editor.dirty = true;
 		}
 
 		if(buttons_click(saveButtons,mx,my)){
-			save('slot' + saveButtons.current);
+			editorSave('slot' + saveButtons.current);
 			alert('Saved game to slot ' + (saveButtons.current + 1) + '.');
 			editor.dirty = true;
 			saveButtons.current = -1;
 		}
 
 		if(intsel_click(resolutionSelectorX, mx, my)){
-			width(resolutionSelectorX.current);
+			editor.gameWidth = resolutionSelectorX.current;
 			editor.dirty = true;
 		}
 
 		if(intsel_click(resolutionSelectorY, mx, my)){
-			height(resolutionSelectorY.current);
+			editor.gameHeight = resolutionSelectorY.current;
 			editor.dirty = true;
 		}
 		if(buttons_click(spriteSheetSizeButtons,mx,my)){
@@ -911,6 +1102,8 @@ editor.click = window._click = function _click(){
 		} else if(intsel_click(trackGroupSelector, mx, my)){
 			editor.dirty = true;
 		} else if(buttons_click(waveformButtons,mx,my)){
+			editor.dirty = true;
+		} else if(buttons_click(effectButtons,mx,my)){
 			editor.dirty = true;
 		} else if(buttons_click(octaveButtons,mx,my)){
 			editor.dirty = true;
@@ -944,10 +1137,10 @@ editor.click = window._click = function _click(){
 var editorLoad = window._init = function _init(){
 
 	setInterval(function(){
-		save('autosave');
+		editorSave('autosave');
 	}, 10000);
 
-	if(!load('autosave')){
+	if(!editorLoad2('autosave')){
 		// TODO: Load default JSON
 		code_set([
 			'var x=10,y=10;',
@@ -968,6 +1161,13 @@ var editorLoad = window._init = function _init(){
 	code.syntaxTreeDirty = true;
 };
 
+function mousebtnchanged(i, value){
+	if(!value){
+		mapShowGrid = false;
+		editor.dirty = true;
+	}
+}
+
 editor.draw = window._draw = function _draw(){
 	if(editor.loading) return;
 
@@ -980,6 +1180,13 @@ editor.draw = window._draw = function _draw(){
 	}
 	editor.lastmx = mx;
 	editor.lastmy = my;
+	for(var i=0; i<4; i++){
+		var current = mousebtn(i);
+		if(editor.lastmousebtn[i] !== current){
+			mousebtnchanged(i, current);
+		}
+		editor.lastmousebtn[i] = current;
+	}
 
 	// mouse scroll
 	var currentScroll = mousescroll();
@@ -995,7 +1202,7 @@ editor.draw = window._draw = function _draw(){
 
 	rectfill(0, 0, width(), height(), 7);
 
-	topButtons.current = editor.modes.indexOf(editor.mode);
+	topButtons.current = Editor.modes.indexOf(editor.mode);
 
 	switch(editor.mode){
 	case 'code':
@@ -1014,8 +1221,18 @@ editor.draw = window._draw = function _draw(){
 	case 'map':
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX-1, mapPanY-1, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
+		if(mapShowGrid){
+			for(var y=mapPanY%cellheight(); y<height(); y+=cellheight()){
+				rect(0, y, width(), 0, 3);
+			}
+			for(var x=mapPanX%cellwidth(); x<width(); x+=cellwidth()){
+				rect(x, 0, 0, height(), 3);
+			}
+		}
 		sprites_draw(sprites);
 		intsel_draw(spriteSheetPageSelector);
+		if(mapCellX>=0 && mapCellY>=0)
+			print(mapCellX + ',' + mapCellY, 1, spriteSheetPageSelector.y()+1, 0);
 		break;
 	case 'sfx':
 		pitches_draw(pitches, 0);
@@ -1026,17 +1243,21 @@ editor.draw = window._draw = function _draw(){
 		intsel_draw(sfxSelector);
 		break;
 	case 'game':
-		print("Load slot:", 5,29);
-		buttons_draw(slotButtons);
-		print("Save in slot:", 5,50);
-		buttons_draw(saveButtons);
-
 		print("file:", 5,14);
 		buttons_draw(saveLoadButtons);
 
+		print("title:", 5,22);
+		buttons_draw(nameButton);
+
+		print("Load slot:", 5,30);
+		buttons_draw(slotButtons);
+
+		print("Save in slot:", 5,38);
+		buttons_draw(saveButtons);
+
 		print('Resolution:', 5,80);
-		resolutionSelectorX.current = width();
-		resolutionSelectorY.current = height();
+		resolutionSelectorX.current = editor.gameWidth;
+		resolutionSelectorY.current = editor.gameHeight;
 		intsel_draw(resolutionSelectorX);
 		intsel_draw(resolutionSelectorY);
 
@@ -1056,6 +1277,7 @@ editor.draw = window._draw = function _draw(){
 		trackSpeedSelector.current = gsget(trackGroupSelector.current);
 		intsel_draw(trackSpeedSelector);
 		buttons_draw(waveformButtons);
+		buttons_draw(effectButtons);
 		print("octave", width() - 60, 17);
 		buttons_draw(octaveButtons);
 		print("vol", width() - 60, 25);
@@ -1230,9 +1452,18 @@ function palette_draw(palette){
 			var ry = y+j*sy;
 			var rw = x+(i+1)*sx-1;
 			var rh = y+(j+1)*sy-1;
-			rectfill(rx, ry, rw, rh, n);
+			if(n=== 0){
+				// transparent
+				for(var x1=rx; x1<rx+rw; x1++){
+					for(var y1=ry; y1<ry+rh; y1++){
+						pset(x1,y1,(x1+y1)%2 ? 6 : 7);
+					}
+				}
+			} else {
+				rectfill(rx, ry, rw, rh, n);
+			}
 			if(current === n){
-				rect(rx, ry, rw, rh, current === 0 ? 7 : 0);
+				rect(rx, ry, rw, rh, 0);
 			}
 			n++;
 		}
@@ -1460,6 +1691,9 @@ function code_run(code){
 	delete window._draw;
 	delete window._click;
 
+	width(editor.gameWidth);
+	height(editor.gameHeight);
+
 	try {
 		run();
 		// Manually run the init
@@ -1502,6 +1736,9 @@ function code_stop(code){
 	camera(0,0);
 	clip(); // reset clip
 	music(-1); // stop music
+
+	width(editor.editorWidth);
+	height(editor.editorHeight);
 }
 
 function code_click(code,x,y){
@@ -1847,23 +2084,39 @@ window.addEventListener('keydown', function(evt){
 	// alt + left or right, switch editor
 	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
 		var delta = evt.keyCode === 37 ? -1 : 1;
-		editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
+		editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
 		if(editor.mode === 'run')
-			editor.mode = editor.modes[utils.mod(editor.modes.indexOf(editor.mode)+delta, editor.modes.length)];
+			editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
 		editor.dirty = true;
 
 		// Prevent going back in history
 		evt.cancelBubble = true;
-        evt.returnValue = false;
+		evt.returnValue = false;
 		evt.preventDefault();
 
 		return;
 	}
 
-	// ctrl+enter -> run game
-	if(evt.keyCode === 13 && (utils.isMac() ? evt.metaKey : evt.ctrlKey)){
-		code_run(code);
-		return;
+	if(utils.isMac() ? evt.metaKey : evt.ctrlKey){
+		// ctrl+enter -> run game
+		if(evt.keyCode === 13){
+			code_run(code);
+			return;
+		}
+
+		// ctrl+z -> undo
+		if(evt.keyCode === 90){
+			editor.undo();
+			evt.preventDefault();
+			return;
+		}
+
+		// ctrl+y -> undo
+		if(evt.keyCode === 89){
+			editor.redo();
+			evt.preventDefault();
+			return;
+		}
 	}
 
 	if(editor.mode === 'code'){
@@ -1889,7 +2142,7 @@ document.addEventListener('keydown', function(e){
 
 	// ctrl + s
 	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
-		save('game.json');
+		editorSave('game.json');
 		e.preventDefault();
 	}
 
@@ -1925,7 +2178,7 @@ function openfile(){
 		}
 		try {
 			var json = JSON.parse(text);
-			load(json);
+			editorLoad2(json);
 			code.syntaxTreeDirty = true;
 			editor.dirty = true;
 		} catch(err){
@@ -2057,19 +2310,20 @@ document.addEventListener('copy', function(e){
 var query = utils.parseQueryVariables(window.location.search, {
 	pixel_perfect: 'i',
 	run: 'b',
+	responsive: 'b',
 	file: 's'
 });
-
 cartridge({
 	containerId: 'container',
-	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0)
+	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
+	responsive: query.responsive !== undefined ? query.responsive : utils.isMobile()
 });
 
 run();
 
 if(query.file){
 	editor.loading = true;
-	load(query.file);
+	editorLoad2(query.file);
 }
 
 window._load = function(){
@@ -2081,7 +2335,135 @@ window._load = function(){
 		code_run(code);
 };
 
-},{"../utils":2}],2:[function(require,module,exports){
+function spriteToDataURL(spriteX, spriteY, scale, mimetype){
+	mimetype = mimetype || 'image/png';
+	scale = scale !== undefined ? scale : 1;
+	var canvas = document.createElement('canvas');
+	canvas.width = cellwidth()*scale;
+	canvas.height = cellheight()*scale;
+	var c = canvas.getContext('2d');
+	c.clearRect(0,0,cellwidth()*scale,cellheight()*scale); // needed?
+	var data = c.createImageData(cellwidth()*scale,cellheight()*scale);
+	for(var x=0; x<cellwidth(); x++){
+		for(var y=0; y<cellheight(); y++){
+			for(var sx=0; sx<scale; sx++){
+				for(var sy=0; sy<scale; sy++){
+					var p = (x*scale+sx + (y*scale+sy)*(cellwidth()*scale)) * 4;
+					var col = sget(x+cellwidth()*spriteX,y+cellheight()*spriteY);
+					if(!palt(col)){
+						var dec = palget(col);
+						data.data[p + 0] = utils.decToR(dec);
+						data.data[p + 1] = utils.decToG(dec);
+						data.data[p + 2] = utils.decToB(dec);
+						data.data[p + 3] = 255;
+					} else {
+						data.data[p + 3] = 0;
+					}
+				}
+			}
+		}
+	}
+	c.putImageData(data,0,0);
+	return canvas.toDataURL(mimetype);
+}
+
+function exportHtml(engineUrl, callback){
+	callback = callback || function(){};
+
+	// Get engine source
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(){
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+
+				var scale = 4;
+				var iconUrl = spriteToDataURL(1,0,scale); // scale=4 enough?
+				var manifest = 'data:application/manifest+json;base64,' + btoa(JSON.stringify({
+					display: "fullscreen",
+					orientation: "portrait"
+				}));
+				var gameJson = json();
+				gameJson.width = editor.gameWidth;
+				gameJson.height = editor.gameHeight;
+				gameJson = JSON.stringify(gameJson);
+
+				// Generate HTML
+				var htmlExport = [
+					'<!DOCTYPE HTML>',
+					'<html lang="en">',
+					'<head>',
+					'	<meta charset="utf-8">',
+					'	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />',
+					'	<meta name="apple-mobile-web-app-capable" content="yes">',
+					'	<meta name="mobile-web-app-capable" content="yes">',
+					'	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+					'	<link rel="icon" type="image/png" href="' + iconUrl + '" />',
+					'	<link rel="apple-touch-icon" href="' + iconUrl + '">',
+					'	<link rel="manifest" href="' + manifest + '" />',
+					'	<title>' + title() + '</title>',
+					'	<style>',
+					'	body, html {',
+					'		width: 100%;',
+					'		height: 100%;',
+					'		padding: 0;',
+					'		margin: 0;',
+					'		overflow: hidden;',
+					'	}',
+					'	#container {',
+					'		width: 100%;',
+					'		height: 100%;',
+					'		background-color: black;',
+					'	}',
+					'	canvas {',
+					'		cursor: none;',
+					'	}',
+					'	* {',
+					'		-webkit-touch-callout: none; /* iOS Safari */',
+					'			-webkit-user-select: none; /* Chrome/Safari/Opera */',
+					'			-khtml-user-select: none; /* Konqueror */',
+					'			-moz-user-select: none; /* Firefox */',
+					'				-ms-user-select: none; /* Internet Explorer/Edge */',
+					'					user-select: none; /* Non-prefixed version, currently not supported by any browser */',
+
+					'		-webkit-tap-highlight-color: transparent; /* disable iOS Safari tap effect */',
+					'	}',
+					'	</style>',
+					'</head>',
+					'<body>',
+					'	<div id="container"></div>',
+					'	<script id="json" type="text/json">' + gameJson + '</script>',
+					'	<script>' + xhr.responseText + '</script>',
+					'	<script>',
+					'		// Disable "bouncy scroll" on iOS',
+					'		document.body.addEventListener("touchmove", function(event) {',
+					'			event.stopPropagation();',
+					'			event.preventDefault();',
+					'		});',
+					'		var theJSON = JSON.parse(document.getElementById("json").innerHTML);',
+					'		cartridge({',
+					'			containerId: "container",',
+					'			pixelPerfect: 1,', // ??
+					'		});',
+					'		load(theJSON);',
+					'		run();',
+					'	</script>',
+					'</body>',
+					'</html>',
+
+				].join('\n');
+				utils.downloadStringAsTextFile(htmlExport, "game.html");
+				callback(null);
+			} else {
+				// Error
+				callback(xhr);
+			}
+		}
+	};
+	xhr.open("GET", engineUrl, true);
+	xhr.send();
+}
+
+},{"../utils":4,"./Editor":2}],4:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
@@ -2315,14 +2697,14 @@ exports.values = function(obj){
 // Parse query vars
 // "search" is window.location.search
 exports.parseQueryVariables = function(search,variables) {
-    var query = search.substring(1);
-    var vars = query.split('&');
+	var query = search.substring(1);
+	var vars = query.split('&');
 	var result = {};
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=');
+	for (var i = 0; i < vars.length; i++) {
+		var pair = vars[i].split('=');
 		var varName = decodeURIComponent(pair[0]);
 		var type = variables[varName];
-        if (type === undefined) continue;
+		if (type === undefined) continue;
 
 		var value = decodeURIComponent(pair[1]);
 		var ok = false;
@@ -2341,9 +2723,9 @@ exports.parseQueryVariables = function(search,variables) {
 		}
 		if(ok){
 			result[varName] = value;
-        }
-    }
-    return result;
+		}
+	}
+	return result;
 };
 
 exports.floodfill = function(get, set, x, y, target, replace, xmin, xmax, ymin, ymax){
@@ -2417,4 +2799,4 @@ exports.downloadStringAsTextFile = function(str, filename){
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
 };
-},{}]},{},[1]);
+},{}]},{},[3]);
