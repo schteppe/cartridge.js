@@ -715,7 +715,7 @@ function mousemovehandler(forceMouseDown){
 			if(sprites.current !== 0 && utils.inrect(x, y, 0, 0, cellwidth(), cellheight())){
 				if(toolButtons.current === 0){
 					// Draw!
-					sset(
+					editor.sset(
 						ssx(sprites.current) * cellwidth() + x,
 						ssy(sprites.current) * cellheight() + y,
 						palette.current
@@ -1958,16 +1958,32 @@ window.addEventListener('keydown', function(evt){
 
 		// Prevent going back in history
 		evt.cancelBubble = true;
-        evt.returnValue = false;
+		evt.returnValue = false;
 		evt.preventDefault();
 
 		return;
 	}
 
-	// ctrl+enter -> run game
-	if(evt.keyCode === 13 && (utils.isMac() ? evt.metaKey : evt.ctrlKey)){
-		code_run(code);
-		return;
+	if(utils.isMac() ? evt.metaKey : evt.ctrlKey){
+		// ctrl+enter -> run game
+		if(evt.keyCode === 13){
+			code_run(code);
+			return;
+		}
+
+		// ctrl+z -> undo
+		if(evt.keyCode === 90){
+			editor.undo();
+			evt.preventDefault();
+			return;
+		}
+
+		// ctrl+y -> undo
+		if(evt.keyCode === 89){
+			editor.redo();
+			evt.preventDefault();
+			return;
+		}
 	}
 
 	if(editor.mode === 'code'){

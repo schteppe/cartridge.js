@@ -15,26 +15,46 @@ function Editor(){
 	this.editorWidth = 128;
 	this.editorHeight = 128;
 	this.actions = [];
-	this.currentAction = 0;
-};
+	this.currentAction = -1;
+	this.maxActions = 100;
+}
 
 Editor.prototype = {
-	pset: function(){
-		this.actions.push(new actionClasses.PsetAction(x,y,color));
-		this.redo();
+	doAction: function(action){
+		if(!action.valid) return;
+
+		if(this.actions.length === 0){
+			this.currentAction = 0;
+		} else if(this.currentAction === this.actions.length-1){
+			this.currentAction = this.actions.length;
+		} else {
+			// Between first and last, need to cut the forward history
+			this.actions = this.actions.slice(0, this.currentAction+1);
+			this.currentAction = this.actions.length;
+		}
+		this.actions.push(action);
+		action.redo();
+
+		// Only keep max actions
+		while(this.actions.length > this.maxActions){
+			this.actions.shift();
+			this.currentAction--;
+		}
 	},
 	undo: function(){
-		if(this.currentAction > 0){
+		if(this.currentAction > -1){
 			this.actions[this.currentAction].undo();
 			this.currentAction--;
 		}
 	},
 	redo: function(){
-		if(this.currentAction < this.actions.length){
-			this.actions[this.currentAction].redo();
+		if(this.currentAction+1 < this.actions.length){
 			this.currentAction++;
+			this.actions[this.currentAction].redo();
 		}
-	}
+	},
+	pset: function(x,y,color){ this.doAction(new actionClasses.PsetAction(this,x,y,color)); },
+	sset: function(x,y,color){ this.doAction(new actionClasses.SsetAction(this,x,y,color));	},
 };
 
 Editor.modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
