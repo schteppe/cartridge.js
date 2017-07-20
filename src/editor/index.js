@@ -771,7 +771,7 @@ function mousemovehandler(forceMouseDown){
 				editor.dirty = true;
 			} else if((forceMouseDown || mousebtn(1))){
 				// Draw on map
-				mset(
+				editor.mset(
 					mapCellX,
 					mapCellY,
 					sprites.current

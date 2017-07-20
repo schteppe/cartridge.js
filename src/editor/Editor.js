@@ -14,6 +14,7 @@ function Editor(){
 	this.gameHeight = 128;
 	this.editorWidth = 128;
 	this.editorHeight = 128;
+
 	this.actions = [];
 	this.currentAction = -1;
 	this.maxActions = 100;
@@ -32,10 +33,21 @@ Editor.prototype = {
 			this.actions = this.actions.slice(0, this.currentAction+1);
 			this.currentAction = this.actions.length;
 		}
+
 		this.actions.push(action);
 		action.redo();
 
-		// Only keep max actions
+		// Merge the last two actions?
+		if(this.actions.length > 1){
+			var merged = this.actions[this.actions.length-2].merge(this.actions[this.actions.length-1]);
+			if(merged){
+				this.actions.pop();
+				this.actions.pop();
+				this.actions.push(merged);
+			}
+		}
+
+		// Only keep max actions in the history
 		while(this.actions.length > this.maxActions){
 			this.actions.shift();
 			this.currentAction--;
@@ -55,6 +67,7 @@ Editor.prototype = {
 	},
 	pset: function(x,y,color){ this.doAction(new actionClasses.PsetAction(this,x,y,color)); },
 	sset: function(x,y,color){ this.doAction(new actionClasses.SsetAction(this,x,y,color));	},
+	mset: function(x,y,sprite){ this.doAction(new actionClasses.MsetAction(this,x,y,sprite));	},
 };
 
 Editor.modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
