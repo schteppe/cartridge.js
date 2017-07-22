@@ -434,9 +434,55 @@ var palette = {
 	sy: function(){
 		return flr((height() * 0.3) / this.n());
 	},
-	x: function(){ return width() - palette.sx() * this.n() - 1; },
+	x: function(){ return width() - this.sx() * this.n() - 1; },
 	y: function(){ return 8; },
-	current: 1
+	current: 1,
+	click: function(x,y){
+		var n = this.n();
+		if(utils.inrect(x,y,this.x(),this.y(),this.sx()*n,this.sy()*n)){
+			var px = flr((x-this.x()) / this.sx());
+			var py = flr((y-this.y()) / this.sy());
+			var newColor = px + n * py;
+			if(palget(newColor) !== undefined && this.current !== newColor){
+				this.current = newColor;
+				editor.dirty = true;
+			}
+		}
+	},
+	draw: function(){
+		var x = this.x();
+		var y = this.y();
+		var sx = this.sx();
+		var sy = this.sy();
+		var current = this.current;
+		var n=0;
+		var size = this.n();
+		for(var j=0; j<size; j++){
+			for(var i=0; i<size; i++){
+				if(palget(n) === undefined){
+					break;
+				}
+				var rx = x+i*sx;
+				var ry = y+j*sy;
+				var rw = x+(i+1)*sx-1;
+				var rh = y+(j+1)*sy-1;
+				if(n=== 0){
+					// transparent
+					for(var x1=rx; x1<rx+rw; x1++){
+						for(var y1=ry; y1<ry+rh; y1++){
+							pset(x1,y1,(x1+y1)%2 ? 6 : 7);
+						}
+					}
+				} else {
+					rectfill(rx, ry, rw, rh, n);
+				}
+				if(current === n){
+					rect(rx, ry, rw, rh, 0);
+				}
+				n++;
+			}
+		}
+	}
 };
 
 var flags = {
@@ -837,8 +883,8 @@ editor.click = window._click = function _click(){
 	var my = mousey();
 	mousemovehandler(true);
 	if(mode === Editor.Modes.SPRITE){
-		if(palette_click(palette,mx,my)){
-			editor.dirty = true;
+		if(palette.click(mx,my)){
+
 		} else if(flags_click(flags,mx,my)){
 			editor.dirty = true;
 		} else if(buttons_click(toolButtons,mx,my)){
@@ -1078,7 +1124,7 @@ editor.draw = window._draw = function _draw(){
 	case Editor.Modes.SPRITE:
 		viewport_draw(viewport);
 		sprites_draw(sprites);
-		palette_draw(palette);
+		palette.draw();
 		buttons_draw(toolButtons);
 		intsel_draw(spriteSheetPageSelector);
 		var currentText = "sprite "+sprites.current + "/(" + ssx(sprites.current) + "," + ssy(sprites.current) + ")";
@@ -1303,54 +1349,6 @@ function sprites_clamp_pan(sprites){
 	sprites.pany = clamp(sprites.pany, 0, Math.max(0,ssget()*cellheight()-sprites.h()));
 }
 
-function palette_draw(palette){
-	var x = palette.x();
-	var y = palette.y();
-	var sx = palette.sx();
-	var sy = palette.sy();
-	var current = palette.current;
-	var n=0;
-	var size = palette.n();
-	for(var j=0; j<size; j++){
-		for(var i=0; i<size; i++){
-			if(palget(n) === undefined){
-				break;
-			}
-			var rx = x+i*sx;
-			var ry = y+j*sy;
-			var rw = x+(i+1)*sx-1;
-			var rh = y+(j+1)*sy-1;
-			if(n=== 0){
-				// transparent
-				for(var x1=rx; x1<rx+rw; x1++){
-					for(var y1=ry; y1<ry+rh; y1++){
-						pset(x1,y1,(x1+y1)%2 ? 6 : 7);
-					}
-				}
-			} else {
-				rectfill(rx, ry, rw, rh, n);
-			}
-			if(current === n){
-				rect(rx, ry, rw, rh, 0);
-			}
-			n++;
-		}
-	}
-}
-
-function palette_click(palette,x,y){
-	var n = palette.n();
-	if(utils.inrect(x,y,palette.x(),palette.y(),palette.sx()*n,palette.sy()*n)){
-		var px = flr((x-palette.x()) / palette.sx());
-		var py = flr((y-palette.y()) / palette.sy());
-		var newColor = px + n * py;
-		if(palget(newColor) !== undefined && palette.current !== newColor){
-			palette.current = newColor;
-			return true;
-		}
-	}
-	return false;
-}
 
 function pitches_draw(pitches, source, col){
 	var x = pitches.x();
