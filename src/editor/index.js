@@ -1,5 +1,6 @@
 var utils = require('../utils');
 var Editor = require('./Editor');
+var Rectangle = require('../Rectangle');
 
 var editor = new Editor({
 	mode: Editor.modes[0]
@@ -420,7 +421,20 @@ var mapShowGrid = false;
 var mapCellX = 0;
 var mapCellY = 0;
 
-var palette = {
+function Palette(options){
+	options = options || {};
+	Rectangle.call(this);
+
+	if(options.x){ this.x = options.x; }
+	if(options.y){ this.y = options.y; }
+	if(options.sx){ this.sx = options.sx; }
+	if(options.sy){ this.sy = options.sy; }
+	this.onclick = options.onclick || function(){};
+
+	this.current = options.current === undefined ? 1 : options.current;
+}
+Palette.prototype = Object.create(Rectangle.prototype);
+Object.assign(Palette.prototype, {
 	n: function(){
 		var n = 2;
 		var palsize = 0;
@@ -428,15 +442,10 @@ var palette = {
 		while(n*n<palsize) n *= 2;
 		return n;
 	},
-	sx: function(){
-		return flr((width() * 0.4) / this.n());
-	},
-	sy: function(){
-		return flr((height() * 0.3) / this.n());
-	},
-	x: function(){ return width() - this.sx() * this.n() - 1; },
-	y: function(){ return 8; },
-	current: 1,
+	sx: function(){ return 4; },
+	sy: function(){ return 4; },
+	x: function(){ return 0; },
+	y: function(){ return 0; },
 	click: function(x,y){
 		var n = this.n();
 		if(utils.inrect(x,y,this.x(),this.y(),this.sx()*n,this.sy()*n)){
@@ -445,9 +454,11 @@ var palette = {
 			var newColor = px + n * py;
 			if(palget(newColor) !== undefined && this.current !== newColor){
 				this.current = newColor;
-				editor.dirty = true;
+				this.onclick();
+				return true;
 			}
 		}
+		return false;
 	},
 	draw: function(){
 		var x = this.x();
@@ -483,7 +494,15 @@ var palette = {
 			}
 		}
 	}
-};
+});
+
+var palette = new Palette({
+	sx: function(){ return flr((width() * 0.4) / this.n()); },
+	sy: function(){ return flr((height() * 0.3) / this.n()); },
+	x: function(){ return width() - this.sx() * this.n() - 1; },
+	y: function(){ return 8; },
+	onclick: function(){ editor.dirty = true; }
+});
 
 var flags = {
 	x: function(){ return palette.x(); },
