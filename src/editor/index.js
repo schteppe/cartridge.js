@@ -1114,6 +1114,7 @@ editor.draw = window._draw = function _draw(){
 		buttons_draw(saveLoadButtons);
 
 		print("title:", 5,22);
+		nameButton.options[0] = title();
 		buttons_draw(nameButton);
 
 		print("Load slot:", 5,30);
