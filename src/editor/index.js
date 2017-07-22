@@ -1081,7 +1081,7 @@ editor.draw = window._draw = function _draw(){
 		palette_draw(palette);
 		buttons_draw(toolButtons);
 		intsel_draw(spriteSheetPageSelector);
-		var currentText = "sprite "+sprites.current;
+		var currentText = "sprite "+sprites.current + "/(" + ssx(sprites.current) + "," + ssy(sprites.current) + ")";
 		print(currentText, spriteSheetPageSelector.x()-currentText.length*4-1, spriteSheetPageSelector.y()+1, 0);
 		flags_draw(flags);
 		break;
