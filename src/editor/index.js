@@ -32,7 +32,7 @@ var track = {
 };
 
 function editorSave(destination){
-	if(editor.mode !== 'run'){
+	if(editor.mode !== Editor.Modes.RUN){
 		width(editor.gameWidth);
 		height(editor.gameHeight);
 		save(destination);
@@ -44,7 +44,7 @@ function editorSave(destination){
 
 function editorLoad2(source){
 	var result = true;
-	if(editor.mode !== 'run'){
+	if(editor.mode !== Editor.Modes.RUN){
 		result = load(source);
 		editor.gameWidth = width();
 		editor.gameHeight = height();
@@ -706,7 +706,7 @@ function mousemovehandler(forceMouseDown){
 	mapShowGrid = false;
 
 	switch(editor.mode){
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		if(mousebtn(1) || forceMouseDown){
 			// Draw on sprite
 			var x = flr((mousex()-viewport.x) / viewport.sx());
@@ -754,7 +754,7 @@ function mousemovehandler(forceMouseDown){
 		}
 		break;
 
-	case 'map':
+	case Editor.Modes.MAP:
 		var dx = mousex() - editor.lastmx;
 		var dy = mousey() - editor.lastmy;
 		if(utils.inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
@@ -790,7 +790,7 @@ function mousemovehandler(forceMouseDown){
 		}
 		break;
 
-	case 'sfx':
+	case Editor.Modes.SFX:
 		if(mousebtn(1) || mousebtn(3) || forceMouseDown){
 			var n = flr(mousex() / width() * 32);
 			var pitch = flr((pitches.h() - mousey() + pitches.y()) / pitches.h() * 255);
@@ -823,7 +823,7 @@ function mousemovehandler(forceMouseDown){
 
 function scrollhandler(delta){
 	switch(editor.mode){
-		case 'code':
+		case Editor.Modes.CODE:
 			code.crow -= delta;
 			code_clamp_crow(code);
 			code_clamp_ccol(code);
@@ -836,7 +836,7 @@ editor.click = window._click = function _click(){
 	var mx = mousex();
 	var my = mousey();
 	mousemovehandler(true);
-	if(mode === 'sprite'){
+	if(mode === Editor.Modes.SPRITE){
 		if(palette_click(palette,mx,my)){
 			editor.dirty = true;
 		} else if(flags_click(flags,mx,my)){
@@ -847,7 +847,7 @@ editor.click = window._click = function _click(){
 		}
 	}
 
-	if(mode === 'sprite' || mode === 'map'){
+	if(mode === Editor.Modes.SPRITE || mode === Editor.Modes.MAP){
 		// Sprite select
 		var spritesHeight = sprites.h();
 		if(my >= sprites.y()){
@@ -877,7 +877,7 @@ editor.click = window._click = function _click(){
 
 			editor.dirty = true;
 		}
-	} else if(mode === 'sfx'){
+	} else if(mode === Editor.Modes.SFX){
 		if(buttons_click(waveformButtons,mx,my)){
 			editor.dirty = true;
 		}
@@ -892,7 +892,7 @@ editor.click = window._click = function _click(){
 
 	// top mode switcher
 	if(buttons_click(topButtons,mx,my)){
-		if(Editor.modes[topButtons.current] === 'run'){
+		if(Editor.modes[topButtons.current] === Editor.Modes.RUN){
 			code_run(code);
 			editor.dirty = true;
 		} else {
@@ -901,9 +901,9 @@ editor.click = window._click = function _click(){
 		editor.dirty = true;
 	}
 
-	if(editor.mode === 'code' && code_click(code,mx,my)){
+	if(editor.mode === Editor.Modes.CODE && code_click(code,mx,my)){
 		editor.dirty = true;
-	} else if(editor.mode === 'game'){
+	} else if(editor.mode === Editor.Modes.GAME){
 		if(buttons_click(slotButtons,mx,my)){
 			if(editorLoad2('slot' + slotButtons.current)){
 				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
@@ -962,7 +962,7 @@ editor.click = window._click = function _click(){
 			sprites_clamp_pan(sprites);
 			editor.dirty = true;
 		}
-	} else if(editor.mode === 'track'){
+	} else if(editor.mode === Editor.Modes.TRACK){
 		if(intsel_click(trackSpeedSelector, mx, my)){
 			gsset(trackGroupSelector.current, trackSpeedSelector.current);
 			editor.dirty = true;
@@ -979,7 +979,7 @@ editor.click = window._click = function _click(){
 		} else if(track_click(track,mx,my)){
 			editor.dirty = true;
 		}
-	} else if(editor.mode === 'pattern'){
+	} else if(editor.mode === Editor.Modes.PATTERN){
 		if(buttons_click(patternEndButtons, mx, my)){
 			mfset(patternSelector.current, {0: 0, 1:1, 2:2, 3:4}[patternEndButtons.current]);
 			editor.dirty = true;
@@ -1072,10 +1072,10 @@ editor.draw = window._draw = function _draw(){
 	topButtons.current = Editor.modes.indexOf(editor.mode);
 
 	switch(editor.mode){
-	case 'code':
+	case Editor.Modes.CODE:
 		code_draw(code);
 		break;
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		viewport_draw(viewport);
 		sprites_draw(sprites);
 		palette_draw(palette);
@@ -1085,7 +1085,7 @@ editor.draw = window._draw = function _draw(){
 		print(currentText, spriteSheetPageSelector.x()-currentText.length*4-1, spriteSheetPageSelector.y()+1, 0);
 		flags_draw(flags);
 		break;
-	case 'map':
+	case Editor.Modes.MAP:
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX-1, mapPanY-1, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		if(mapShowGrid){
@@ -1101,7 +1101,7 @@ editor.draw = window._draw = function _draw(){
 		if(mapCellX>=0 && mapCellY>=0)
 			print(mapCellX + ',' + mapCellY, 1, spriteSheetPageSelector.y()+1, 0);
 		break;
-	case 'sfx':
+	case Editor.Modes.SFX:
 		pitches_draw(pitches, 0);
 		pitches_draw(volumes, 1, 0);
 		buttons_draw(waveformButtons);
@@ -1109,7 +1109,7 @@ editor.draw = window._draw = function _draw(){
 		intsel_draw(speedSelector);
 		intsel_draw(sfxSelector);
 		break;
-	case 'game':
+	case Editor.Modes.GAME:
 		print("file:", 5,14);
 		buttons_draw(saveLoadButtons);
 
@@ -1139,7 +1139,7 @@ editor.draw = window._draw = function _draw(){
 
 		break;
 
-	case 'track':
+	case Editor.Modes.TRACK:
 		track_draw(track);
 		intsel_draw(trackGroupSelector);
 		trackSpeedSelector.current = gsget(trackGroupSelector.current);
@@ -1152,7 +1152,7 @@ editor.draw = window._draw = function _draw(){
 		buttons_draw(trackVolumeButtons);
 		break;
 
-	case 'pattern':
+	case Editor.Modes.PATTERN:
 		print("pattern",1,9);
 		pattern_draw(pattern);
 		intsel_draw(patternSelector);
@@ -1174,7 +1174,7 @@ editor.draw = window._draw = function _draw(){
 		intsel_draw(trackSelector3);
 		break;
 
-	case 'help':
+	case Editor.Modes.HELP:
 		print([
 			"Cartridge.js is an open source",
 			"retro game engine for the web.",
@@ -1538,7 +1538,7 @@ window._error = function(info){
 	code_stop(code);
 
 	// Handle error
-	editor.mode = 'code';
+	editor.mode = Editor.Modes.CODE;
 	code.ccol = info.column - 1;
 	code.crow = info.line - 1;
 	code.errorMessage = 'L' + info.column + ' C' + info.line + ' ' + info.message;
@@ -1549,7 +1549,7 @@ window._error = function(info){
 function code_run(code){
 	// Run code in global scope
 	code.previousMode = editor.mode;
-	editor.mode = 'run';
+	editor.mode = Editor.Modes.RUN;
 	code.initialized = false;
 
 	delete window._update;
@@ -1939,7 +1939,7 @@ window.addEventListener("resize", resizeHandler);
 window.addEventListener("mozfullscreenchange", resizeHandler);
 
 window.addEventListener('keydown', function(evt){
-	if(editor.mode === 'run'){
+	if(editor.mode === Editor.Modes.RUN){
 		if(evt.keyCode === 27){
 			code_stop(code);
 			editor.dirty = true;
@@ -1953,7 +1953,7 @@ window.addEventListener('keydown', function(evt){
 	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
 		var delta = evt.keyCode === 37 ? -1 : 1;
 		editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
-		if(editor.mode === 'run')
+		if(editor.mode === Editor.Modes.RUN)
 			editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
 		editor.dirty = true;
 
@@ -1987,26 +1987,26 @@ window.addEventListener('keydown', function(evt){
 		}
 	}
 
-	if(editor.mode === 'code'){
+	if(editor.mode === Editor.Modes.CODE){
 		code_keydown(code, evt);
-	} else if(editor.mode === 'track'){
+	} else if(editor.mode === Editor.Modes.TRACK){
 		track_keydown(track, evt);
 	} else if(!evt.altKey && !evt.metaKey && !evt.ctrlKey){
 		switch(evt.keyCode){
-			case 86: if(editor.mode === 'sprite') flipSprite(sprites.current, false); break; // V
-			case 70: if(editor.mode === 'sprite') flipSprite(sprites.current, true); break; // F
-			case 82: if(editor.mode === 'sprite') rotateSprite(sprites.current); break; // R
-			case 46: if(editor.mode === 'sprite') clearSprite(sprites.current); break; // delete
-			case 81: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current-1,ssget()*ssget()); break; // Q
-			case 87: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current+1,ssget()*ssget()); break; // W
-			case 32: if(editor.mode === 'sfx') sfx(sfxSelector.current); break;
+			case 86: if(editor.mode === Editor.Modes.SPRITE) flipSprite(sprites.current, false); break; // V
+			case 70: if(editor.mode === Editor.Modes.SPRITE) flipSprite(sprites.current, true); break; // F
+			case 82: if(editor.mode === Editor.Modes.SPRITE) rotateSprite(sprites.current); break; // R
+			case 46: if(editor.mode === Editor.Modes.SPRITE) clearSprite(sprites.current); break; // delete
+			case 81: if(editor.mode === Editor.Modes.SPRITE || editor.mode === Editor.Modes.MAP) sprites.current=utils.mod(sprites.current-1,ssget()*ssget()); break; // Q
+			case 87: if(editor.mode === Editor.Modes.SPRITE || editor.mode === Editor.Modes.MAP) sprites.current=utils.mod(sprites.current+1,ssget()*ssget()); break; // W
+			case 32: if(editor.mode === Editor.Modes.SFX) sfx(sfxSelector.current); break;
 		}
 	}
 	editor.dirty = true;
 });
 
 document.addEventListener('keydown', function(e){
-	if(editor.mode === 'run') return;
+	if(editor.mode === Editor.Modes.RUN) return;
 
 	// ctrl + s
 	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
@@ -2021,19 +2021,19 @@ document.addEventListener('keydown', function(e){
 	}
 
 	// backspace
-	if (editor.mode === 'code' && e.keyCode === 8) {
+	if (editor.mode === Editor.Modes.CODE && e.keyCode === 8) {
 		e.preventDefault();
 	}
 
 }, false);
 
 window.addEventListener('keypress', function(evt){
-	if(editor.mode === 'run') return;
-	if(editor.mode === 'code'){
+	if(editor.mode === Editor.Modes.RUN) return;
+	if(editor.mode === Editor.Modes.CODE){
 		code_keypress(code, evt);
-	} else if(editor.mode === 'track'){
+	} else if(editor.mode === Editor.Modes.TRACK){
 		track_keypress(track, evt);
-	} else if(editor.mode === 'pattern'){
+	} else if(editor.mode === Editor.Modes.PATTERN){
 		pattern_keypress(track, evt);
 	}
 });
@@ -2057,7 +2057,7 @@ function openfile(){
 
 window.addEventListener('paste', handlepaste, false);
 function handlepaste (e) {
-	if(editor.mode === 'run') return;
+	if(editor.mode === Editor.Modes.RUN) return;
 	if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
 		var types = e.clipboardData.types;
 		var handled = false;
@@ -2088,7 +2088,7 @@ function handlepaste (e) {
 }
 
 function handlePasteImage(file){
-	if(editor.mode !== 'sprite' || sprites.current === 0){
+	if(editor.mode !== Editor.Modes.SPRITE || sprites.current === 0){
 		return;
 	}
 
@@ -2144,14 +2144,14 @@ function handlePasteImage(file){
 
 function handlePasteString(str){
 	switch(editor.mode){
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		var m = str.match(/sprite:([\d]+)/);
 		if(m){
 			copySprite(parseInt(m[1]), sprites.current);
 			editor.dirty = true;
 		}
 		break;
-	case 'code':
+	case Editor.Modes.CODE:
 		code_paste(code, str);
 		break;
 	default:
@@ -2162,13 +2162,13 @@ function handlePasteString(str){
 
 document.addEventListener('copy', function(e){
 	switch(editor.mode){
-	case 'run':
+	case Editor.Modes.RUN:
 		return;
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		e.clipboardData.setData('text/plain', 'sprite:'+sprites.current);
 		e.preventDefault();
 		break;
-	case 'code':
+	case Editor.Modes.CODE:
 		e.clipboardData.setData('text/plain', codeget()); // until selection is supported
 		e.preventDefault();
 		break;

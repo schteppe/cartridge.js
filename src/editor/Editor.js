@@ -70,6 +70,17 @@ Editor.prototype = {
 	mset: function(x,y,sprite){ this.doAction(new actionClasses.MsetAction(this,x,y,sprite));	},
 };
 
-Editor.modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
+Editor.Modes = {
+	GAME: 'game',
+	SPRITE: 'sprite',
+	MAP: 'map',
+	SFX: 'sfx',
+	CODE: 'code',
+	TRACK: 'track',
+	PATTERN: 'pattern',
+	HELP: 'help',
+	RUN: 'run'
+};
+Editor.modes = Object.values(Editor.Modes);
 
 module.exports = Editor;
