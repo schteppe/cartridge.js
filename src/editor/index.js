@@ -914,12 +914,12 @@ editor.click = window._click = function _click(){
 			code.syntaxTreeDirty = true;
 			slotButtons.current = -1;
 		} else if(buttons_click(nameButton,mx,my)){
-			var newTitle = prompt('Name?');
+			var newTitle = prompt('Name?', title());
 			if(newTitle){
 				title(newTitle);
 				nameButton.options[0] = title();
-				nameButton.current = -1;
 			}
+			nameButton.current = -1;
 		}
 
 		if(buttons_click(saveLoadButtons,mx,my)){
