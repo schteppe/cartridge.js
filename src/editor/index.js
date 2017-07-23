@@ -839,9 +839,7 @@ editor.click = window._click = function _click(){
 		} else if(toolButtons.click(mx,my)){
 
 		}
-	}
-
-	if(mode === Editor.Modes.SPRITE || mode === Editor.Modes.MAP){
+	} else if(mode === Editor.Modes.SPRITE || mode === Editor.Modes.MAP){
 		// Sprite select
 		var spritesHeight = sprites.h();
 		if(my >= sprites.y()){
@@ -995,10 +993,18 @@ editor.click = window._click = function _click(){
 	}
 };
 
+window.onbeforeunload = function(e) {
+	editorSave('autosave');
+	editor.saveEditorSettings('cartridgeEditor');
+};
+
 var editorLoad = window._init = function _init(){
+
+	editor.loadEditorSettings('cartridgeEditor');
 
 	setInterval(function(){
 		editorSave('autosave');
+		editor.saveEditorSettings('cartridgeEditor');
 	}, 10000);
 
 	if(!editorLoad2('autosave')){
@@ -1188,14 +1194,13 @@ editor.draw = window._draw = function _draw(){
 		break;
 	}
 
-	drawtop();
-	mouse_draw(mousex(), mousey());
-};
-
-function drawtop(){
+	// Draw top
 	rectfill(0, 0, width(), 6, 0);
 	buttons_draw(topButtons);
-}
+
+	// Draw mouse
+	mouse_draw(mousex(), mousey());
+};
 
 function buttons_draw(settings){
 	var padding = settings.padding !== undefined ? settings.padding : 4;

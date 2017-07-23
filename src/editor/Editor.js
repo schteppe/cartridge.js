@@ -1,7 +1,6 @@
 var actionClasses = require('./Action');
 
 function Editor(){
-	this.mode = Editor.modes[0];
 	this.loading = false;
 	this.dirty = true;
 	this.lastmx = 0;
@@ -18,6 +17,16 @@ function Editor(){
 	this.actions = [];
 	this.currentAction = -1;
 	this.maxActions = 100;
+
+	this.settings = {};
+
+	var mode = Editor.modes[0];
+	Object.defineProperties(this, {
+		mode: {
+			get: function(){ return mode; },
+			set: function(value){ mode = value; },
+		}
+	});
 }
 
 // Helpers
@@ -68,6 +77,10 @@ Editor.prototype = {
 			this.currentAction++;
 			this.actions[this.currentAction].redo();
 		}
+	},
+	resetHistory: function(){
+		this.actions.length = 0;
+		this.currentAction = -1;
 	},
 	pset: function(x,y,color){ this.doAction(new actionClasses.PsetAction(this,x,y,color)); },
 	sset: function(x,y,color){ this.doAction(new actionClasses.SsetAction(this,x,y,color));	},
@@ -126,6 +139,23 @@ Editor.prototype = {
 				var y1 = ssy(to)*cellheight() + j;
 				sset(x1, y1, sget(x,y));
 			}
+		}
+	},
+	saveEditorSettings: function(){
+		var settings = {
+			mode: this.mode
+		};
+		try {
+			localStorage.setItem('cartridgeEditor', JSON.stringify(settings));
+		} catch(err){}
+	},
+	loadEditorSettings: function(){
+		var settings = {};
+		try {
+			settings = JSON.parse(localStorage.getItem('cartridgeEditor'));
+		} catch(err){}
+		if(Editor.modes.indexOf(settings.mode) !== -1){
+			this.mode = settings.mode;
 		}
 	}
 };
