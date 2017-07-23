@@ -16,7 +16,34 @@ var sprites = {
 	x: function(){ return 0; },
 	y: function(){ return flr(3 * height() / 4); },
 	w: function(){ return width(); },
-	h: function(){ return ceil(height() / 4); }
+	h: function(){ return ceil(height() / 4); },
+	draw: function(){
+		var offsetX = this.x();
+		var offsetY = this.y();
+
+		var cw = cellwidth();
+		var ch = cellheight();
+
+		rectfill(offsetX, offsetY, offsetX + this.w() - 1, offsetY + this.h() - 1, 0);
+		clip(offsetX, offsetY, this.w(), this.h());
+		spr(0, offsetX-this.panx, offsetY-this.pany, ssget(), ssget());
+
+		// Rectangle around the current editing sprite
+		var x = offsetX + (ssx(this.current)) * cw - this.panx;
+		var y = offsetY + (ssy(this.current)) * ch - this.pany;
+		rect(
+			x-1, y-1,
+			x+cw, y+ch,
+			6
+		);
+
+		// Reset clip
+		clip();
+	},
+	clamp_pan: function(){
+		this.panx = clamp(this.panx, 0, Math.max(0,ssget()*cellwidth()-this.w()));
+		this.pany = clamp(this.pany, 0, Math.max(0,ssget()*cellheight()-this.h()));
+	}
 };
 
 var viewport = {
@@ -743,7 +770,7 @@ function mousemovehandler(forceMouseDown){
 			sprites.pany -= dy;
 
 			// clamp panning
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 
 			editor.dirty = true;
 		}
@@ -779,7 +806,7 @@ function mousemovehandler(forceMouseDown){
 			sprites.pany -= dy;
 
 			// clamp panning
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 
 			editor.dirty = true;
 		}
@@ -839,7 +866,8 @@ editor.click = window._click = function _click(){
 		} else if(toolButtons.click(mx,my)){
 
 		}
-	} else if(mode === Editor.Modes.SPRITE || mode === Editor.Modes.MAP){
+	}
+	if(mode === Editor.Modes.SPRITE || mode === Editor.Modes.MAP){
 		// Sprite select
 		var spritesHeight = sprites.h();
 		if(my >= sprites.y()){
@@ -865,7 +893,7 @@ editor.click = window._click = function _click(){
 			}
 			sprites.panx = viewX*cellwidth();
 			sprites.pany = viewY*cellheight();
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 
 			editor.dirty = true;
 		}
@@ -943,7 +971,7 @@ editor.click = window._click = function _click(){
 		}
 		if(buttons_click(spriteSheetSizeButtons,mx,my)){
 			ssset(spriteSheetSizeButtons.current === 0 ? 16 : 32);
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 			editor.dirty = true;
 		}
 		if(buttons_click(spriteSizeButtons,mx,my)){
@@ -951,7 +979,7 @@ editor.click = window._click = function _click(){
 			cellwidth(newSize);
 			cellheight(newSize);
 			editor.clearSprite(0); // TODO: ???
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 			editor.dirty = true;
 		}
 	} else if(editor.mode === Editor.Modes.TRACK){
@@ -1077,7 +1105,7 @@ editor.draw = window._draw = function _draw(){
 		break;
 	case Editor.Modes.SPRITE:
 		viewport_draw(viewport);
-		sprites_draw(sprites);
+		sprites.draw();
 		palette.draw();
 		toolButtons.draw();
 		intsel_draw(spriteSheetPageSelector);
@@ -1096,7 +1124,7 @@ editor.draw = window._draw = function _draw(){
 				rect(x, 0, 0, height(), 3);
 			}
 		}
-		sprites_draw(sprites);
+		sprites.draw();
 		intsel_draw(spriteSheetPageSelector);
 		if(mapCellX>=0 && mapCellY>=0)
 			print(mapCellX + ',' + mapCellY, 1, spriteSheetPageSelector.y()+1, 0);
@@ -1242,35 +1270,6 @@ function mouse_draw(x,y){
 	rectfill(x-4, y, x+4, y);
 	rectfill(x, y-4, x, y+4);
 	rectfill(x, y, x, y, 4);
-}
-
-function sprites_draw(sprites){
-	var offsetX = sprites.x();
-	var offsetY = sprites.y();
-
-	var cw = cellwidth();
-	var ch = cellheight();
-
-	rectfill(offsetX, offsetY, offsetX + sprites.w() - 1, offsetY + sprites.h() - 1, 0);
-	clip(offsetX, offsetY, sprites.w(), sprites.h());
-	spr(0, offsetX-sprites.panx, offsetY-sprites.pany, ssget(), ssget());
-
-	// Rectangle around the current editing sprite
-	var x = offsetX + (ssx(sprites.current)) * cw - sprites.panx;
-	var y = offsetY + (ssy(sprites.current)) * ch - sprites.pany;
-	rect(
-		x-1, y-1,
-		x+cw, y+ch,
-		6
-	);
-
-	// Reset clip
-	clip();
-}
-
-function sprites_clamp_pan(sprites){
-	sprites.panx = clamp(sprites.panx, 0, Math.max(0,ssget()*cellwidth()-sprites.w()));
-	sprites.pany = clamp(sprites.pany, 0, Math.max(0,ssget()*cellheight()-sprites.h()));
 }
 
 
