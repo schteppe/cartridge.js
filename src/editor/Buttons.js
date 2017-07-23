@@ -7,7 +7,7 @@ function Buttons(options){
 	options = options || {};
 	Rectangle.call(this);
 
-	this.options = options.options || [];
+	if(options.options) this.options = options.options;
 
 	if(options.x) this.x = options.x;
 	if(options.y) this.y = options.y;

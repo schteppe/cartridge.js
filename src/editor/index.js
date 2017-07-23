@@ -524,13 +524,14 @@ var effectButtons = {
 	padding: 2
 };
 
-var octaveButtons = {
+var octaveButtons = new Buttons({
 	x: function(){ return width() - 24; },
 	y: function(){ return 16; },
 	num: 4,
 	current: 0,
-	padding: 0
-};
+	padding: 0,
+	onclick: function(){ editor.dirty = true; }
+});
 
 var trackVolumeButtons = {
 	x: function(){ return width() - 48; },
@@ -992,8 +993,8 @@ editor.click = window._click = function _click(){
 			editor.dirty = true;
 		} else if(buttons_click(effectButtons,mx,my)){
 			editor.dirty = true;
-		} else if(buttons_click(octaveButtons,mx,my)){
-			editor.dirty = true;
+		} else if(octaveButtons.click(mx,my)){
+
 		} else if(buttons_click(trackVolumeButtons,mx,my)){
 			editor.dirty = true;
 		} else if(track_click(track,mx,my)){
@@ -1175,7 +1176,7 @@ editor.draw = window._draw = function _draw(){
 		buttons_draw(waveformButtons);
 		buttons_draw(effectButtons);
 		print("octave", width() - 60, 17);
-		buttons_draw(octaveButtons);
+		octaveButtons.draw();
 		print("vol", width() - 60, 25);
 		buttons_draw(trackVolumeButtons);
 		break;
