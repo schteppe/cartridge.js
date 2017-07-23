@@ -504,17 +504,63 @@ var palette = new Palette({
 	onclick: function(){ editor.dirty = true; }
 });
 
-var flags = {
-	x: function(){ return palette.x(); },
-	y: function(){ return palette.y() + palette.sy() * palette.n() + 1; },
+function Flags(options){
+	options = options || {};
+	Rectangle.call(this);
+
+	if(options.x) this.x = options.x;
+	if(options.y) this.y = options.y;
+	if(options.sx) this.sx = options.sx;
+	if(options.sy) this.sy = options.sy;
+	if(options.onclick) this.onclick = options.onclick;
+}
+Flags.prototype = Object.create(Rectangle.prototype);
+Object.assign(Flags.prototype, {
+	x: function(){ return 0; },
+	y: function(){ return 0; },
 	current: function(newFlags){
 		if(newFlags === undefined){
 			return fget(sprites.current);
 		} else {
 			fset(sprites.current, newFlags);
 		}
-	}
-};
+	},
+	draw: function(){
+		var x = this.x();
+		var y = this.y();
+		var size = 3;
+		for(var i=0; i<8; i++){
+			var rx = x + i * (size+3);
+			var ry = y;
+			var qx = x+(1+size) + i * (3+size);
+			var qy = y+1+size;
+			if((this.current() & (1 << i)) !== 0)
+				rectfill(rx, ry, qx, qy, 0);
+			else
+				rect(rx, ry, qx, qy, 0);
+		}
+	},
+	click: function(x, y){
+		if(utils.inrect(x,y,this.x(),this.y(),6*8,5)){
+			var flagIndex = flr((x-this.x()) / 6);
+			var oldFlags = this.current();
+			var clickedFlag = (1 << flagIndex);
+			var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
+			this.current(newFlags);
+			this.onclick();
+			return true;
+		} else {
+			return false;
+		}
+	},
+	onclick: function(){}
+});
+
+var flags = new Flags({
+	x: function(){ return palette.x(); },
+	y: function(){ return palette.y() + palette.sy() * palette.n() + 1; },
+	onclick: function(){ editor.dirty = true; }
+});
 
 var patternEndButtons = {
 	x: function(){ return 56; },
@@ -904,8 +950,8 @@ editor.click = window._click = function _click(){
 	if(mode === Editor.Modes.SPRITE){
 		if(palette.click(mx,my)){
 
-		} else if(flags_click(flags,mx,my)){
-			editor.dirty = true;
+		} else if(flags.click(mx,my)){
+
 		} else if(buttons_click(toolButtons,mx,my)){
 			// tool switcher
 			editor.dirty = true;
@@ -1148,7 +1194,7 @@ editor.draw = window._draw = function _draw(){
 		intsel_draw(spriteSheetPageSelector);
 		var currentText = "sprite "+sprites.current + "/(" + ssx(sprites.current) + "," + ssy(sprites.current) + ")";
 		print(currentText, spriteSheetPageSelector.x()-currentText.length*4-1, spriteSheetPageSelector.y()+1, 0);
-		flags_draw(flags);
+		flags.draw();
 		break;
 	case Editor.Modes.MAP:
 		map(0, 0, mapPanX, mapPanY, 128, 32);
@@ -1302,35 +1348,6 @@ function buttons_click(buttons,x,y){
 		}
 	}
 	return false;
-}
-
-function flags_draw(flags){
-	var x = flags.x();
-	var y = flags.y();
-	var size = 3;
-	for(var i=0; i<8; i++){
-		var rx = x + i * (size+3);
-		var ry = y;
-		var qx = x+(1+size) + i * (3+size);
-		var qy = y+1+size;
-		if((flags.current() & (1 << i)) !== 0)
-			rectfill(rx, ry, qx, qy, 0);
-		else
-			rect(rx, ry, qx, qy, 0);
-	}
-}
-
-function flags_click(flags, x, y){
-	if(utils.inrect(x,y,flags.x(),flags.y(),6*8,5)){
-		var flagIndex = flr((x-flags.x()) / 6);
-		var oldFlags = flags.current();
-		var clickedFlag = (1 << flagIndex);
-		var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
-		flags.current(newFlags);
-		return true;
-	} else {
-		return false;
-	}
 }
 
 function mouse_draw(x,y){
