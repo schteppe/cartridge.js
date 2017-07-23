@@ -952,7 +952,7 @@ editor.click = window._click = function _click(){
 			var newSize = spriteSizeButtons.options[spriteSizeButtons.current];
 			cellwidth(newSize);
 			cellheight(newSize);
-			clearSprite(0);
+			editor.clearSprite(0); // TODO: ???
 			sprites_clamp_pan(sprites);
 			editor.dirty = true;
 		}
@@ -1733,73 +1733,13 @@ function strInsertAt(str, index, character) {
 	return str.substr(0, index) + character + str.substr(index+character.length-1);
 }
 
-function rotateSprite(spriteNumber){
-	var pixels = [];
-	var i,j;
-	for(i=0; i<cellwidth(); i++){
-		for(j=0; j<cellheight(); j++){
-			var x = ssx(spriteNumber)*cellwidth() + i;
-			var y = ssy(spriteNumber)*cellheight() + j;
-			var newX = ssx(spriteNumber)*cellwidth() + cellwidth() - 1 - j;
-			var newY = ssy(spriteNumber)*cellheight() + i;
-			pixels.push(newX, newY, sget(x,y));
-		}
-	}
-	for(i=0; i<pixels.length; i+=3){
-		sset(pixels[i+0],pixels[i+1],pixels[i+2]);
-	}
-}
-
-function clearSprite(spriteNumber){
-	var i,j;
-	for(i=0; i<cellwidth(); i++){
-		for(j=0; j<cellheight(); j++){
-			var x = ssx(spriteNumber)*cellwidth() + i;
-			var y = ssy(spriteNumber)*cellheight() + j;
-			sset(x, y, 0);
-		}
-	}
-}
-
-function flipSprite(spriteNumber, flipX){
-	var pixels = [];
-	var i,j,w=cellwidth(),h=cellheight();
-	for(i=0; i<w; i++){
-		for(j=0; j<h; j++){
-			var x = ssx(spriteNumber)*w + i;
-			var y = ssy(spriteNumber)*h + j;
-			var newX = flipX ? ssx(spriteNumber)*w + w - 1 - i : x;
-			var newY = flipX ? y : ssy(spriteNumber)*h + h - 1 - j;
-			pixels.push(newX, newY, sget(x,y));
-		}
-	}
-	for(i=0; i<pixels.length; i+=3){
-		sset(pixels[i+0],pixels[i+1],pixels[i+2]);
-	}
-}
-
-function copySprite(from,to){
-	if(to === 0) return;
-
-	var i,j;
-	for(i=0; i<cellwidth(); i++){
-		for(j=0; j<cellheight(); j++){
-			var x = ssx(from)*cellwidth() + i;
-			var y = ssy(from)*cellheight() + j;
-			var x1 = ssx(to)*cellwidth() + i;
-			var y1 = ssy(to)*cellheight() + j;
-			sset(x1, y1, sget(x,y));
-		}
-	}
-}
-
 // TODO: should this logic be in the engine?
 function reset(){
 
 	// sprites
 	var numSprites = ssget() * ssget();
 	for(var i=0; i<numSprites; i++){
-		clearSprite(i);
+		editor.clearSprite(i); // TODO: ???
 		fset(i,0);
 	}
 
@@ -1912,10 +1852,10 @@ window.addEventListener('keydown', function(evt){
 		track_keydown(track, evt);
 	} else if(!evt.altKey && !evt.metaKey && !evt.ctrlKey){
 		switch(evt.keyCode){
-			case 86: if(editor.mode === Editor.Modes.SPRITE) flipSprite(sprites.current, false); break; // V
-			case 70: if(editor.mode === Editor.Modes.SPRITE) flipSprite(sprites.current, true); break; // F
-			case 82: if(editor.mode === Editor.Modes.SPRITE) rotateSprite(sprites.current); break; // R
-			case 46: if(editor.mode === Editor.Modes.SPRITE) clearSprite(sprites.current); break; // delete
+			case 86: if(editor.mode === Editor.Modes.SPRITE) editor.flipSprite(sprites.current, false); break; // V
+			case 70: if(editor.mode === Editor.Modes.SPRITE) editor.flipSprite(sprites.current, true); break; // F
+			case 82: if(editor.mode === Editor.Modes.SPRITE) editor.rotateSprite(sprites.current); break; // R
+			case 46: if(editor.mode === Editor.Modes.SPRITE) editor.clearSprite(sprites.current); break; // delete
 			case 81: if(editor.mode === Editor.Modes.SPRITE || editor.mode === Editor.Modes.MAP) sprites.current=utils.mod(sprites.current-1,ssget()*ssget()); break; // Q
 			case 87: if(editor.mode === Editor.Modes.SPRITE || editor.mode === Editor.Modes.MAP) sprites.current=utils.mod(sprites.current+1,ssget()*ssget()); break; // W
 			case 32: if(editor.mode === Editor.Modes.SFX) sfx(sfxSelector.current); break;
@@ -2066,7 +2006,7 @@ function handlePasteString(str){
 	case Editor.Modes.SPRITE:
 		var m = str.match(/sprite:([\d]+)/);
 		if(m){
-			copySprite(parseInt(m[1]), sprites.current);
+			editor.copySprite(parseInt(m[1]), sprites.current);
 			editor.dirty = true;
 		}
 		break;
