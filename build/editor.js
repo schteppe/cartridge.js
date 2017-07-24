@@ -1,4 +1,42 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = Rectangle;
+
+function Rectangle(x,y,w,h){
+	this.set(x,y,w,h);
+}
+
+Rectangle.prototype = {
+	set: function(x,y,w,h){
+		x |= 0;
+		y |= 0;
+		w |= 0;
+		h |= 0;
+		this.x0 = x;
+		this.y0 = y;
+		this.w = w;
+		this.h = h;
+		this.x1 = x + w - 1;
+		this.y1 = y + h - 1;
+		this.area = w*h;
+	},
+	excludesRect: function(x0,y0,x1,y1){
+		return x1 < this.x0 || y1 < this.y0 || x0 > this.x1 || y0 > this.y1;
+	},
+	excludesPoint: function(x,y){
+		return x < this.x0 || y < this.y0 || x > this.x1 || y > this.y1;
+	},
+	expandToPoint: function(x,y){
+		var x0 = Math.min(this.x0, x);
+		var y0 = Math.min(this.y0, y);
+		this.set(
+			x0,
+			y0,
+			Math.max(this.x1, x) - x0 + 1,
+			Math.max(this.y1, y) - y0 + 1
+		);
+	}
+};
+},{}],2:[function(require,module,exports){
 function Action(editor,hasDiff){
 	this.editor = editor;
 	this.valid = hasDiff;
@@ -54,11 +92,72 @@ module.exports = {
 	SsetAction: SsetAction,
 	MsetAction: MsetAction
 };
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
+var Rectangle = require('../Rectangle');
+var utils = require('../utils');
+
+module.exports = Buttons;
+
+function Buttons(options){
+	options = options || {};
+	Rectangle.call(this);
+
+	if(options.options) this.options = options.options;
+
+	if(options.x) this.x = options.x;
+	if(options.y) this.y = options.y;
+	if(options.sx) this.sx = options.sx;
+	if(options.sy) this.sy = options.sy;
+	if(options.onclick) this.onclick = options.onclick;
+
+	this.padding = options.padding !== undefined ? options.padding : 0;
+	this.current = options.current !== undefined ? options.current : 0;
+	this.num = options.num !== undefined ? options.num : undefined;
+	this.bgColor = options.bgColor !== undefined ? options.bgColor : undefined;
+	this.textColor = options.textColor !== undefined ? options.textColor : undefined;
+}
+Buttons.prototype = Object.create(Rectangle.prototype);
+Object.assign(Buttons.prototype, {
+	draw: function(){
+		var padding = this.padding !== undefined ? this.padding : 4;
+		var num = this.num || this.options.length;
+		var bgColor = this.bgColor !== undefined ? this.bgColor : 0;
+		var textColor = this.textColor !== undefined ? this.textColor : 6;
+		for(var i=0; i<num; i++){
+			var x0 = this.x() + i * (6 + padding*2);
+			rectfill(
+				x0, this.y(),
+				this.x() + 5+padding*2 + i * (6+padding*2)-1, this.y() + 6,
+				this.current === i ? bgColor : textColor
+			);
+			var text = this.options !== undefined ? (this.options[i]+'').toUpperCase() : ((i+1) + '');
+			var x1 = this.x()+1+padding + i * (6 + padding*2);
+			print(
+				text,
+				this.options !== undefined ? (x0+1) : x1, this.y()+1,
+				this.current === i ? textColor : bgColor
+			);
+		}
+	},
+	click: function(x,y){
+		var num = this.num !== undefined ? this.num : this.options.length;
+		if(utils.inrect(x,y,this.x(),this.y(), num * (this.padding * 2 + 6),7)){
+			var button = flr((x-this.x()) / (this.padding * 2 + 6));
+			if(this.current === button){
+				return false;
+			} else {
+				this.current = button;
+				return true;
+			}
+		}
+		return false;
+	},
+	onclick: function(){}
+});
+},{"../Rectangle":1,"../utils":8}],4:[function(require,module,exports){
 var actionClasses = require('./Action');
 
 function Editor(){
-	this.mode = Editor.modes[0];
 	this.loading = false;
 	this.dirty = true;
 	this.lastmx = 0;
@@ -75,7 +174,21 @@ function Editor(){
 	this.actions = [];
 	this.currentAction = -1;
 	this.maxActions = 100;
+
+	this.settings = {};
+
+	var mode = Editor.modes[0];
+	Object.defineProperties(this, {
+		mode: {
+			get: function(){ return mode; },
+			set: function(value){ mode = value; },
+		}
+	});
 }
+
+// Helpers
+function ssx(n){ return n % ssget(); }
+function ssy(n){ return Math.floor(n / ssget()) % (ssget() * ssget()); }
 
 Editor.prototype = {
 	doAction: function(action){
@@ -122,17 +235,243 @@ Editor.prototype = {
 			this.actions[this.currentAction].redo();
 		}
 	},
+	resetHistory: function(){
+		this.actions.length = 0;
+		this.currentAction = -1;
+	},
 	pset: function(x,y,color){ this.doAction(new actionClasses.PsetAction(this,x,y,color)); },
 	sset: function(x,y,color){ this.doAction(new actionClasses.SsetAction(this,x,y,color));	},
 	mset: function(x,y,sprite){ this.doAction(new actionClasses.MsetAction(this,x,y,sprite));	},
+	rotateSprite: function(spriteNumber){
+		var pixels = [];
+		var i,j;
+		for(i=0; i<cellwidth(); i++){
+			for(j=0; j<cellheight(); j++){
+				var x = ssx(spriteNumber)*cellwidth() + i;
+				var y = ssy(spriteNumber)*cellheight() + j;
+				var newX = ssx(spriteNumber)*cellwidth() + cellwidth() - 1 - j;
+				var newY = ssy(spriteNumber)*cellheight() + i;
+				pixels.push(newX, newY, sget(x,y));
+			}
+		}
+		for(i=0; i<pixels.length; i+=3){
+			sset(pixels[i+0],pixels[i+1],pixels[i+2]);
+		}
+	},
+	clearSprite: function(spriteNumber){
+		var i,j;
+		for(i=0; i<cellwidth(); i++){
+			for(j=0; j<cellheight(); j++){
+				var x = ssx(spriteNumber)*cellwidth() + i;
+				var y = ssy(spriteNumber)*cellheight() + j;
+				sset(x, y, 0);
+			}
+		}
+	},
+	flipSprite: function(spriteNumber, flipX){
+		var pixels = [];
+		var i,j,w=cellwidth(),h=cellheight();
+		for(i=0; i<w; i++){
+			for(j=0; j<h; j++){
+				var x = ssx(spriteNumber)*w + i;
+				var y = ssy(spriteNumber)*h + j;
+				var newX = flipX ? ssx(spriteNumber)*w + w - 1 - i : x;
+				var newY = flipX ? y : ssy(spriteNumber)*h + h - 1 - j;
+				pixels.push(newX, newY, sget(x,y));
+			}
+		}
+		for(i=0; i<pixels.length; i+=3){
+			sset(pixels[i+0],pixels[i+1],pixels[i+2]);
+		}
+	},
+	copySprite: function(from,to){
+		if(to === 0) return;
+
+		var i,j;
+		for(i=0; i<cellwidth(); i++){
+			for(j=0; j<cellheight(); j++){
+				var x = ssx(from)*cellwidth() + i;
+				var y = ssy(from)*cellheight() + j;
+				var x1 = ssx(to)*cellwidth() + i;
+				var y1 = ssy(to)*cellheight() + j;
+				sset(x1, y1, sget(x,y));
+			}
+		}
+	},
+	saveEditorSettings: function(){
+		var settings = {
+			mode: this.mode
+		};
+		try {
+			localStorage.setItem('cartridgeEditor', JSON.stringify(settings));
+		} catch(err){}
+	},
+	loadEditorSettings: function(){
+		var settings = {};
+		try {
+			settings = JSON.parse(localStorage.getItem('cartridgeEditor'));
+		} catch(err){}
+		if(Editor.modes.indexOf(settings.mode) !== -1){
+			this.mode = settings.mode;
+		}
+	}
 };
 
-Editor.modes = ['game', 'sprite', 'map', 'sfx', 'code', 'track', 'pattern', 'help', 'run'];
+Editor.Modes = {
+	GAME: 'game',
+	SPRITE: 'sprite',
+	MAP: 'map',
+	SFX: 'sfx',
+	CODE: 'code',
+	TRACK: 'track',
+	PATTERN: 'pattern',
+	HELP: 'help',
+	RUN: 'run'
+};
+Editor.modes = Object.values(Editor.Modes);
 
 module.exports = Editor;
-},{"./Action":1}],3:[function(require,module,exports){
+},{"./Action":2}],5:[function(require,module,exports){
+var Rectangle = require('../Rectangle');
+var utils = require('../utils');
+
+module.exports = Flags;
+
+function Flags(options){
+	options = options || {};
+	Rectangle.call(this);
+
+	if(options.x) this.x = options.x;
+	if(options.y) this.y = options.y;
+	if(options.sx) this.sx = options.sx;
+	if(options.sy) this.sy = options.sy;
+	if(options.current) this.current = options.current;
+	if(options.onclick) this.onclick = options.onclick;
+}
+Flags.prototype = Object.create(Rectangle.prototype);
+Object.assign(Flags.prototype, {
+	x: function(){ return 0; },
+	y: function(){ return 0; },
+	current: function(){},
+	draw: function(){
+		var x = this.x();
+		var y = this.y();
+		var size = 3;
+		for(var i=0; i<8; i++){
+			var rx = x + i * (size+3);
+			var ry = y;
+			var qx = x+(1+size) + i * (3+size);
+			var qy = y+1+size;
+			if((this.current() & (1 << i)) !== 0)
+				rectfill(rx, ry, qx, qy, 0);
+			else
+				rect(rx, ry, qx, qy, 0);
+		}
+	},
+	click: function(x, y){
+		if(utils.inrect(x,y,this.x(),this.y(),6*8,5)){
+			var flagIndex = flr((x-this.x()) / 6);
+			var oldFlags = this.current();
+			var clickedFlag = (1 << flagIndex);
+			var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
+			this.current(newFlags);
+			this.onclick();
+			return true;
+		} else {
+			return false;
+		}
+	},
+	onclick: function(){}
+});
+
+},{"../Rectangle":1,"../utils":8}],6:[function(require,module,exports){
+var Rectangle = require('../Rectangle');
+var utils = require('../utils');
+
+module.exports = Palette;
+
+function Palette(options){
+	options = options || {};
+	Rectangle.call(this);
+
+	if(options.x){ this.x = options.x; }
+	if(options.y){ this.y = options.y; }
+	if(options.sx){ this.sx = options.sx; }
+	if(options.sy){ this.sy = options.sy; }
+	this.onclick = options.onclick || function(){};
+
+	this.current = options.current === undefined ? 1 : options.current;
+}
+Palette.prototype = Object.create(Rectangle.prototype);
+Object.assign(Palette.prototype, {
+	n: function(){
+		var n = 2;
+		var palsize = 0;
+		while(palget(palsize) !== undefined) palsize++;
+		while(n*n<palsize) n *= 2;
+		return n;
+	},
+	sx: function(){ return 4; },
+	sy: function(){ return 4; },
+	x: function(){ return 0; },
+	y: function(){ return 0; },
+	click: function(x,y){
+		var n = this.n();
+		if(utils.inrect(x,y,this.x(),this.y(),this.sx()*n,this.sy()*n)){
+			var px = flr((x-this.x()) / this.sx());
+			var py = flr((y-this.y()) / this.sy());
+			var newColor = px + n * py;
+			if(palget(newColor) !== undefined && this.current !== newColor){
+				this.current = newColor;
+				this.onclick();
+				return true;
+			}
+		}
+		return false;
+	},
+	draw: function(){
+		var x = this.x();
+		var y = this.y();
+		var sx = this.sx();
+		var sy = this.sy();
+		var current = this.current;
+		var n=0;
+		var size = this.n();
+		for(var j=0; j<size; j++){
+			for(var i=0; i<size; i++){
+				if(palget(n) === undefined){
+					break;
+				}
+				var rx = x+i*sx;
+				var ry = y+j*sy;
+				var rw = x+(i+1)*sx-1;
+				var rh = y+(j+1)*sy-1;
+				if(n=== 0){
+					// transparent
+					for(var x1=rx; x1<rx+rw; x1++){
+						for(var y1=ry; y1<ry+rh; y1++){
+							pset(x1,y1,(x1+y1)%2 ? 6 : 7);
+						}
+					}
+				} else {
+					rectfill(rx, ry, rw, rh, n);
+				}
+				if(current === n){
+					rect(rx, ry, rw, rh, 0);
+				}
+				n++;
+			}
+		}
+	}
+});
+
+},{"../Rectangle":1,"../utils":8}],7:[function(require,module,exports){
 var utils = require('../utils');
 var Editor = require('./Editor');
+var Palette = require('./Palette');
+var Flags = require('./Flags');
+var Buttons = require('./Buttons');
+var Rectangle = require('../Rectangle');
 
 var editor = new Editor({
 	mode: Editor.modes[0]
@@ -145,7 +484,34 @@ var sprites = {
 	x: function(){ return 0; },
 	y: function(){ return flr(3 * height() / 4); },
 	w: function(){ return width(); },
-	h: function(){ return ceil(height() / 4); }
+	h: function(){ return ceil(height() / 4); },
+	draw: function(){
+		var offsetX = this.x();
+		var offsetY = this.y();
+
+		var cw = cellwidth();
+		var ch = cellheight();
+
+		rectfill(offsetX, offsetY, offsetX + this.w() - 1, offsetY + this.h() - 1, 0);
+		clip(offsetX, offsetY, this.w(), this.h());
+		spr(0, offsetX-this.panx, offsetY-this.pany, ssget(), ssget());
+
+		// Rectangle around the current editing sprite
+		var x = offsetX + (ssx(this.current)) * cw - this.panx;
+		var y = offsetY + (ssy(this.current)) * ch - this.pany;
+		rect(
+			x-1, y-1,
+			x+cw, y+ch,
+			6
+		);
+
+		// Reset clip
+		clip();
+	},
+	clamp_pan: function(){
+		this.panx = clamp(this.panx, 0, Math.max(0,ssget()*cellwidth()-this.w()));
+		this.pany = clamp(this.pany, 0, Math.max(0,ssget()*cellheight()-this.h()));
+	}
 };
 
 var viewport = {
@@ -165,7 +531,7 @@ var track = {
 };
 
 function editorSave(destination){
-	if(editor.mode !== 'run'){
+	if(editor.mode !== Editor.Modes.RUN){
 		width(editor.gameWidth);
 		height(editor.gameHeight);
 		save(destination);
@@ -175,16 +541,20 @@ function editorSave(destination){
 	}
 }
 
-function editorLoad2(source){
-	var result = true;
-	if(editor.mode !== 'run'){
-		result = load(source);
-		editor.gameWidth = width();
-		editor.gameHeight = height();
-		width(editor.editorWidth);
-		height(editor.editorHeight);
+function editorLoad2(source, callback){
+	callback = callback || function(){};
+	if(source.indexOf('.json') !== -1){
+		utils.loadJsonFromUrl(source,function(err,json){
+			if(json){
+				load(json);
+				callback(true);
+			} else {
+				callback(false);
+			}
+		});
+	} else {
+		callback(load(source));
 	}
-	return result;
 }
 
 function track_click(track, mx, my){
@@ -553,36 +923,26 @@ var mapShowGrid = false;
 var mapCellX = 0;
 var mapCellY = 0;
 
-var palette = {
-	n: function(){
-		var n = 2;
-		var palsize = 0;
-		while(palget(palsize) !== undefined) palsize++;
-		while(n*n<palsize) n *= 2;
-		return n;
-	},
-	sx: function(){
-		return flr((width() * 0.4) / this.n());
-	},
-	sy: function(){
-		return flr((height() * 0.3) / this.n());
-	},
-	x: function(){ return width() - palette.sx() * this.n() - 1; },
+var palette = new Palette({
+	sx: function(){ return flr((width() * 0.4) / this.n()); },
+	sy: function(){ return flr((height() * 0.3) / this.n()); },
+	x: function(){ return width() - this.sx() * this.n() - 1; },
 	y: function(){ return 8; },
-	current: 1
-};
+	onclick: function(){ editor.dirty = true; }
+});
 
-var flags = {
+var flags = new Flags({
 	x: function(){ return palette.x(); },
 	y: function(){ return palette.y() + palette.sy() * palette.n() + 1; },
+	onclick: function(){ editor.dirty = true; },
 	current: function(newFlags){
 		if(newFlags === undefined){
 			return fget(sprites.current);
 		} else {
 			fset(sprites.current, newFlags);
 		}
-	}
-};
+	},
+});
 
 var patternEndButtons = {
 	x: function(){ return 56; },
@@ -636,13 +996,14 @@ var effectButtons = {
 	padding: 2
 };
 
-var octaveButtons = {
+var octaveButtons = new Buttons({
 	x: function(){ return width() - 24; },
 	y: function(){ return 16; },
 	num: 4,
 	current: 0,
-	padding: 0
-};
+	padding: 0,
+	onclick: function(){ editor.dirty = true; }
+});
 
 var trackVolumeButtons = {
 	x: function(){ return width() - 48; },
@@ -662,13 +1023,14 @@ var topButtons = {
 	padding: 4
 };
 
-var toolButtons = {
+var toolButtons = new Buttons({
 	x: function(){ return 1; },
 	y: function(){ return viewport.y + viewport.sy() * cellheight() + 1; },
 	options: ['draw','fill'],
 	current: 0,
-	padding: 6
-};
+	padding: 6,
+	onclick: function(){ editor.dirty = true; }
+});
 
 var speedSelector = {
 	x: function(){ return 1; },
@@ -839,7 +1201,7 @@ function mousemovehandler(forceMouseDown){
 	mapShowGrid = false;
 
 	switch(editor.mode){
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		if(mousebtn(1) || forceMouseDown){
 			// Draw on sprite
 			var x = flr((mousex()-viewport.x) / viewport.sx());
@@ -881,13 +1243,13 @@ function mousemovehandler(forceMouseDown){
 			sprites.pany -= dy;
 
 			// clamp panning
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 
 			editor.dirty = true;
 		}
 		break;
 
-	case 'map':
+	case Editor.Modes.MAP:
 		var dx = mousex() - editor.lastmx;
 		var dy = mousey() - editor.lastmy;
 		if(utils.inrect(mousex(), mousey(), 0, 8, width(), spriteSheetPageSelector.y()-9)){
@@ -917,13 +1279,13 @@ function mousemovehandler(forceMouseDown){
 			sprites.pany -= dy;
 
 			// clamp panning
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 
 			editor.dirty = true;
 		}
 		break;
 
-	case 'sfx':
+	case Editor.Modes.SFX:
 		if(mousebtn(1) || mousebtn(3) || forceMouseDown){
 			var n = flr(mousex() / width() * 32);
 			var pitch = flr((pitches.h() - mousey() + pitches.y()) / pitches.h() * 255);
@@ -956,7 +1318,7 @@ function mousemovehandler(forceMouseDown){
 
 function scrollhandler(delta){
 	switch(editor.mode){
-		case 'code':
+		case Editor.Modes.CODE:
 			code.crow -= delta;
 			code_clamp_crow(code);
 			code_clamp_ccol(code);
@@ -969,18 +1331,16 @@ editor.click = window._click = function _click(){
 	var mx = mousex();
 	var my = mousey();
 	mousemovehandler(true);
-	if(mode === 'sprite'){
-		if(palette_click(palette,mx,my)){
-			editor.dirty = true;
-		} else if(flags_click(flags,mx,my)){
-			editor.dirty = true;
-		} else if(buttons_click(toolButtons,mx,my)){
-			// tool switcher
-			editor.dirty = true;
+	if(mode === Editor.Modes.SPRITE){
+		if(palette.click(mx,my)){
+
+		} else if(flags.click(mx,my)){
+
+		} else if(toolButtons.click(mx,my)){
+
 		}
 	}
-
-	if(mode === 'sprite' || mode === 'map'){
+	if(mode === Editor.Modes.SPRITE || mode === Editor.Modes.MAP){
 		// Sprite select
 		var spritesHeight = sprites.h();
 		if(my >= sprites.y()){
@@ -1006,11 +1366,11 @@ editor.click = window._click = function _click(){
 			}
 			sprites.panx = viewX*cellwidth();
 			sprites.pany = viewY*cellheight();
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 
 			editor.dirty = true;
 		}
-	} else if(mode === 'sfx'){
+	} else if(mode === Editor.Modes.SFX){
 		if(buttons_click(waveformButtons,mx,my)){
 			editor.dirty = true;
 		}
@@ -1025,7 +1385,7 @@ editor.click = window._click = function _click(){
 
 	// top mode switcher
 	if(buttons_click(topButtons,mx,my)){
-		if(Editor.modes[topButtons.current] === 'run'){
+		if(Editor.modes[topButtons.current] === Editor.Modes.RUN){
 			code_run(code);
 			editor.dirty = true;
 		} else {
@@ -1034,25 +1394,27 @@ editor.click = window._click = function _click(){
 		editor.dirty = true;
 	}
 
-	if(editor.mode === 'code' && code_click(code,mx,my)){
+	if(editor.mode === Editor.Modes.CODE && code_click(code,mx,my)){
 		editor.dirty = true;
-	} else if(editor.mode === 'game'){
+	} else if(editor.mode === Editor.Modes.GAME){
 		if(buttons_click(slotButtons,mx,my)){
-			if(editorLoad2('slot' + slotButtons.current)){
-				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
-			} else {
-				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
-			}
-			editor.dirty = true;
-			code.syntaxTreeDirty = true;
-			slotButtons.current = -1;
+			editorLoad2('slot' + slotButtons.current, function(success){
+				if(success){
+					alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
+				} else {
+					alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
+				}
+				editor.dirty = true;
+				code.syntaxTreeDirty = true;
+				slotButtons.current = -1;
+			});
 		} else if(buttons_click(nameButton,mx,my)){
-			var newTitle = prompt('Name?');
+			var newTitle = prompt('Name?', title());
 			if(newTitle){
 				title(newTitle);
 				nameButton.options[0] = title();
-				nameButton.current = -1;
 			}
+			nameButton.current = -1;
 		}
 
 		if(buttons_click(saveLoadButtons,mx,my)){
@@ -1084,18 +1446,18 @@ editor.click = window._click = function _click(){
 		}
 		if(buttons_click(spriteSheetSizeButtons,mx,my)){
 			ssset(spriteSheetSizeButtons.current === 0 ? 16 : 32);
-			sprites_clamp_pan(sprites);
+			sprites.clamp_pan();
 			editor.dirty = true;
 		}
 		if(buttons_click(spriteSizeButtons,mx,my)){
 			var newSize = spriteSizeButtons.options[spriteSizeButtons.current];
 			cellwidth(newSize);
 			cellheight(newSize);
-			clearSprite(0);
-			sprites_clamp_pan(sprites);
+			editor.clearSprite(0); // TODO: ???
+			sprites.clamp_pan();
 			editor.dirty = true;
 		}
-	} else if(editor.mode === 'track'){
+	} else if(editor.mode === Editor.Modes.TRACK){
 		if(intsel_click(trackSpeedSelector, mx, my)){
 			gsset(trackGroupSelector.current, trackSpeedSelector.current);
 			editor.dirty = true;
@@ -1105,14 +1467,14 @@ editor.click = window._click = function _click(){
 			editor.dirty = true;
 		} else if(buttons_click(effectButtons,mx,my)){
 			editor.dirty = true;
-		} else if(buttons_click(octaveButtons,mx,my)){
-			editor.dirty = true;
+		} else if(octaveButtons.click(mx,my)){
+
 		} else if(buttons_click(trackVolumeButtons,mx,my)){
 			editor.dirty = true;
 		} else if(track_click(track,mx,my)){
 			editor.dirty = true;
 		}
-	} else if(editor.mode === 'pattern'){
+	} else if(editor.mode === Editor.Modes.PATTERN){
 		if(buttons_click(patternEndButtons, mx, my)){
 			mfset(patternSelector.current, {0: 0, 1:1, 2:2, 3:4}[patternEndButtons.current]);
 			editor.dirty = true;
@@ -1134,29 +1496,41 @@ editor.click = window._click = function _click(){
 	}
 };
 
+window.onbeforeunload = function(e) {
+	editorSave('autosave');
+	editor.saveEditorSettings('cartridgeEditor');
+};
+
 var editorLoad = window._init = function _init(){
+
+	editor.loadEditorSettings('cartridgeEditor');
+	if(editor.mode === Editor.Modes.RUN) editor.mode = Editor.modes[0];
 
 	setInterval(function(){
 		editorSave('autosave');
+		editor.saveEditorSettings('cartridgeEditor');
 	}, 10000);
 
-	if(!editorLoad2('autosave')){
-		// TODO: Load default JSON
-		code_set([
-			'var x=10,y=10;',
-			'function _draw(){',
-			'  cls();',
-			'  map(0,0,0,0,16,15);',
-			'  spr(1,x,y);',
-			'  if(btn(0)) x--;',
-			'  if(btn(1)) x++;',
-			'  if(btn(2)) y--;',
-			'  if(btn(3)) y++;',
-			'  if(btn(4) && !btnp(4)) sfx(0);',
-			'}'
-		].join('\n').toLowerCase());
-	}
-
+	editorLoad2('autosave', function(success){
+		if(!success){
+			// TODO: Load default JSON
+			code_set([
+				'var x=10,y=10;',
+				'function _draw(){',
+				'  cls();',
+				'  map(0,0,0,0,16,15);',
+				'  spr(1,x,y);',
+				'  if(btn(0)) x--;',
+				'  if(btn(1)) x++;',
+				'  if(btn(2)) y--;',
+				'  if(btn(3)) y++;',
+				'  if(btn(4) && !btnp(4)) sfx(0);',
+				'}'
+			].join('\n').toLowerCase());
+		}
+		editor.dirty = true;
+		code.syntaxTreeDirty = true;
+	});
 	editor.dirty = true;
 	code.syntaxTreeDirty = true;
 };
@@ -1205,20 +1579,20 @@ editor.draw = window._draw = function _draw(){
 	topButtons.current = Editor.modes.indexOf(editor.mode);
 
 	switch(editor.mode){
-	case 'code':
+	case Editor.Modes.CODE:
 		code_draw(code);
 		break;
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		viewport_draw(viewport);
-		sprites_draw(sprites);
-		palette_draw(palette);
-		buttons_draw(toolButtons);
+		sprites.draw();
+		palette.draw();
+		toolButtons.draw();
 		intsel_draw(spriteSheetPageSelector);
-		var currentText = "sprite "+sprites.current;
+		var currentText = "sprite "+sprites.current + "/(" + ssx(sprites.current) + "," + ssy(sprites.current) + ")";
 		print(currentText, spriteSheetPageSelector.x()-currentText.length*4-1, spriteSheetPageSelector.y()+1, 0);
-		flags_draw(flags);
+		flags.draw();
 		break;
-	case 'map':
+	case Editor.Modes.MAP:
 		map(0, 0, mapPanX, mapPanY, 128, 32);
 		rect(mapPanX-1, mapPanY-1, mapPanX+cellwidth()*128, mapPanY+cellheight()*32, 0);
 		if(mapShowGrid){
@@ -1229,12 +1603,12 @@ editor.draw = window._draw = function _draw(){
 				rect(x, 0, 0, height(), 3);
 			}
 		}
-		sprites_draw(sprites);
+		sprites.draw();
 		intsel_draw(spriteSheetPageSelector);
 		if(mapCellX>=0 && mapCellY>=0)
 			print(mapCellX + ',' + mapCellY, 1, spriteSheetPageSelector.y()+1, 0);
 		break;
-	case 'sfx':
+	case Editor.Modes.SFX:
 		pitches_draw(pitches, 0);
 		pitches_draw(volumes, 1, 0);
 		buttons_draw(waveformButtons);
@@ -1242,11 +1616,12 @@ editor.draw = window._draw = function _draw(){
 		intsel_draw(speedSelector);
 		intsel_draw(sfxSelector);
 		break;
-	case 'game':
+	case Editor.Modes.GAME:
 		print("file:", 5,14);
 		buttons_draw(saveLoadButtons);
 
 		print("title:", 5,22);
+		nameButton.options[0] = title();
 		buttons_draw(nameButton);
 
 		print("Load slot:", 5,30);
@@ -1271,7 +1646,7 @@ editor.draw = window._draw = function _draw(){
 
 		break;
 
-	case 'track':
+	case Editor.Modes.TRACK:
 		track_draw(track);
 		intsel_draw(trackGroupSelector);
 		trackSpeedSelector.current = gsget(trackGroupSelector.current);
@@ -1279,12 +1654,12 @@ editor.draw = window._draw = function _draw(){
 		buttons_draw(waveformButtons);
 		buttons_draw(effectButtons);
 		print("octave", width() - 60, 17);
-		buttons_draw(octaveButtons);
+		octaveButtons.draw();
 		print("vol", width() - 60, 25);
 		buttons_draw(trackVolumeButtons);
 		break;
 
-	case 'pattern':
+	case Editor.Modes.PATTERN:
 		print("pattern",1,9);
 		pattern_draw(pattern);
 		intsel_draw(patternSelector);
@@ -1306,7 +1681,7 @@ editor.draw = window._draw = function _draw(){
 		intsel_draw(trackSelector3);
 		break;
 
-	case 'help':
+	case Editor.Modes.HELP:
 		print([
 			"Cartridge.js is an open source",
 			"retro game engine for the web.",
@@ -1326,14 +1701,13 @@ editor.draw = window._draw = function _draw(){
 		break;
 	}
 
-	drawtop();
-	mouse_draw(mousex(), mousey());
-};
-
-function drawtop(){
+	// Draw top
 	rectfill(0, 0, width(), 6, 0);
 	buttons_draw(topButtons);
-}
+
+	// Draw mouse
+	mouse_draw(mousex(), mousey());
+};
 
 function buttons_draw(settings){
 	var padding = settings.padding !== undefined ? settings.padding : 4;
@@ -1371,118 +1745,12 @@ function buttons_click(buttons,x,y){
 	return false;
 }
 
-function flags_draw(flags){
-	var x = flags.x();
-	var y = flags.y();
-	var size = 3;
-	for(var i=0; i<8; i++){
-		var rx = x + i * (size+3);
-		var ry = y;
-		var qx = x+(1+size) + i * (3+size);
-		var qy = y+1+size;
-		if((flags.current() & (1 << i)) !== 0)
-			rectfill(rx, ry, qx, qy, 0);
-		else
-			rect(rx, ry, qx, qy, 0);
-	}
-}
-
-function flags_click(flags, x, y){
-	if(utils.inrect(x,y,flags.x(),flags.y(),6*8,5)){
-		var flagIndex = flr((x-flags.x()) / 6);
-		var oldFlags = flags.current();
-		var clickedFlag = (1 << flagIndex);
-		var newFlags = (oldFlags & clickedFlag) ? (oldFlags & (~clickedFlag)) : (oldFlags | clickedFlag);
-		flags.current(newFlags);
-		return true;
-	} else {
-		return false;
-	}
-}
-
 function mouse_draw(x,y){
 	rectfill(x-4, y, x+4, y);
 	rectfill(x, y-4, x, y+4);
 	rectfill(x, y, x, y, 4);
 }
 
-function sprites_draw(sprites){
-	var offsetX = sprites.x();
-	var offsetY = sprites.y();
-
-	var cw = cellwidth();
-	var ch = cellheight();
-
-	rectfill(offsetX, offsetY, offsetX + sprites.w() - 1, offsetY + sprites.h() - 1, 0);
-	clip(offsetX, offsetY, sprites.w(), sprites.h());
-	spr(0, offsetX-sprites.panx, offsetY-sprites.pany, ssget(), ssget());
-
-	// Rectangle around the current editing sprite
-	var x = offsetX + (ssx(sprites.current)) * cw - sprites.panx;
-	var y = offsetY + (ssy(sprites.current)) * ch - sprites.pany;
-	rect(
-		x-1, y-1,
-		x+cw, y+ch,
-		6
-	);
-
-	// Reset clip
-	clip();
-}
-
-function sprites_clamp_pan(sprites){
-	sprites.panx = clamp(sprites.panx, 0, Math.max(0,ssget()*cellwidth()-sprites.w()));
-	sprites.pany = clamp(sprites.pany, 0, Math.max(0,ssget()*cellheight()-sprites.h()));
-}
-
-function palette_draw(palette){
-	var x = palette.x();
-	var y = palette.y();
-	var sx = palette.sx();
-	var sy = palette.sy();
-	var current = palette.current;
-	var n=0;
-	var size = palette.n();
-	for(var j=0; j<size; j++){
-		for(var i=0; i<size; i++){
-			if(palget(n) === undefined){
-				break;
-			}
-			var rx = x+i*sx;
-			var ry = y+j*sy;
-			var rw = x+(i+1)*sx-1;
-			var rh = y+(j+1)*sy-1;
-			if(n=== 0){
-				// transparent
-				for(var x1=rx; x1<rx+rw; x1++){
-					for(var y1=ry; y1<ry+rh; y1++){
-						pset(x1,y1,(x1+y1)%2 ? 6 : 7);
-					}
-				}
-			} else {
-				rectfill(rx, ry, rw, rh, n);
-			}
-			if(current === n){
-				rect(rx, ry, rw, rh, 0);
-			}
-			n++;
-		}
-	}
-}
-
-function palette_click(palette,x,y){
-	var n = palette.n();
-	if(utils.inrect(x,y,palette.x(),palette.y(),palette.sx()*n,palette.sy()*n)){
-		var px = flr((x-palette.x()) / palette.sx());
-		var py = flr((y-palette.y()) / palette.sy());
-		var newColor = px + n * py;
-		if(palget(newColor) !== undefined && palette.current !== newColor){
-			palette.current = newColor;
-			return true;
-		}
-	}
-	return false;
-}
 
 function pitches_draw(pitches, source, col){
 	var x = pitches.x();
@@ -1666,22 +1934,24 @@ function code_draw(code){
 }
 
 window._error = function(info){
-	console.error(info);
-	code_stop(code);
+	if(editor.mode === Editor.Modes.RUN){
+		console.error(info);
+		code_stop(code);
 
-	// Handle error
-	editor.mode = 'code';
-	code.ccol = info.column - 1;
-	code.crow = info.line - 1;
-	code.errorMessage = 'L' + info.column + ' C' + info.line + ' ' + info.message;
-	code.errorTime = time();
-	editor.dirty = true;
+		// Handle error
+		editor.mode = Editor.Modes.CODE;
+		code.ccol = info.column - 1;
+		code.crow = info.line - 1;
+		code.errorMessage = 'L' + info.column + ' C' + info.line + ' ' + info.message;
+		code.errorTime = time();
+		editor.dirty = true;
+	}
 };
 
 function code_run(code){
 	// Run code in global scope
 	code.previousMode = editor.mode;
-	editor.mode = 'run';
+	editor.mode = Editor.Modes.RUN;
 	code.initialized = false;
 
 	delete window._update;
@@ -1946,73 +2216,13 @@ function strInsertAt(str, index, character) {
 	return str.substr(0, index) + character + str.substr(index+character.length-1);
 }
 
-function rotateSprite(spriteNumber){
-	var pixels = [];
-	var i,j;
-	for(i=0; i<cellwidth(); i++){
-		for(j=0; j<cellheight(); j++){
-			var x = ssx(spriteNumber)*cellwidth() + i;
-			var y = ssy(spriteNumber)*cellheight() + j;
-			var newX = ssx(spriteNumber)*cellwidth() + cellwidth() - 1 - j;
-			var newY = ssy(spriteNumber)*cellheight() + i;
-			pixels.push(newX, newY, sget(x,y));
-		}
-	}
-	for(i=0; i<pixels.length; i+=3){
-		sset(pixels[i+0],pixels[i+1],pixels[i+2]);
-	}
-}
-
-function clearSprite(spriteNumber){
-	var i,j;
-	for(i=0; i<cellwidth(); i++){
-		for(j=0; j<cellheight(); j++){
-			var x = ssx(spriteNumber)*cellwidth() + i;
-			var y = ssy(spriteNumber)*cellheight() + j;
-			sset(x, y, 0);
-		}
-	}
-}
-
-function flipSprite(spriteNumber, flipX){
-	var pixels = [];
-	var i,j,w=cellwidth(),h=cellheight();
-	for(i=0; i<w; i++){
-		for(j=0; j<h; j++){
-			var x = ssx(spriteNumber)*w + i;
-			var y = ssy(spriteNumber)*h + j;
-			var newX = flipX ? ssx(spriteNumber)*w + w - 1 - i : x;
-			var newY = flipX ? y : ssy(spriteNumber)*h + h - 1 - j;
-			pixels.push(newX, newY, sget(x,y));
-		}
-	}
-	for(i=0; i<pixels.length; i+=3){
-		sset(pixels[i+0],pixels[i+1],pixels[i+2]);
-	}
-}
-
-function copySprite(from,to){
-	if(to === 0) return;
-
-	var i,j;
-	for(i=0; i<cellwidth(); i++){
-		for(j=0; j<cellheight(); j++){
-			var x = ssx(from)*cellwidth() + i;
-			var y = ssy(from)*cellheight() + j;
-			var x1 = ssx(to)*cellwidth() + i;
-			var y1 = ssy(to)*cellheight() + j;
-			sset(x1, y1, sget(x,y));
-		}
-	}
-}
-
 // TODO: should this logic be in the engine?
 function reset(){
 
 	// sprites
 	var numSprites = ssget() * ssget();
 	for(var i=0; i<numSprites; i++){
-		clearSprite(i);
+		editor.clearSprite(i); // TODO: ???
 		fset(i,0);
 	}
 
@@ -2071,7 +2281,7 @@ window.addEventListener("resize", resizeHandler);
 window.addEventListener("mozfullscreenchange", resizeHandler);
 
 window.addEventListener('keydown', function(evt){
-	if(editor.mode === 'run'){
+	if(editor.mode === Editor.Modes.RUN){
 		if(evt.keyCode === 27){
 			code_stop(code);
 			editor.dirty = true;
@@ -2085,7 +2295,7 @@ window.addEventListener('keydown', function(evt){
 	if((evt.keyCode === 37 || evt.keyCode === 39) && evt.altKey){
 		var delta = evt.keyCode === 37 ? -1 : 1;
 		editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
-		if(editor.mode === 'run')
+		if(editor.mode === Editor.Modes.RUN)
 			editor.mode = Editor.modes[utils.mod(Editor.modes.indexOf(editor.mode)+delta, Editor.modes.length)];
 		editor.dirty = true;
 
@@ -2119,26 +2329,26 @@ window.addEventListener('keydown', function(evt){
 		}
 	}
 
-	if(editor.mode === 'code'){
+	if(editor.mode === Editor.Modes.CODE){
 		code_keydown(code, evt);
-	} else if(editor.mode === 'track'){
+	} else if(editor.mode === Editor.Modes.TRACK){
 		track_keydown(track, evt);
 	} else if(!evt.altKey && !evt.metaKey && !evt.ctrlKey){
 		switch(evt.keyCode){
-			case 86: if(editor.mode === 'sprite') flipSprite(sprites.current, false); break; // V
-			case 70: if(editor.mode === 'sprite') flipSprite(sprites.current, true); break; // F
-			case 82: if(editor.mode === 'sprite') rotateSprite(sprites.current); break; // R
-			case 46: if(editor.mode === 'sprite') clearSprite(sprites.current); break; // delete
-			case 81: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current-1,ssget()*ssget()); break; // Q
-			case 87: if(editor.mode === 'sprite' || editor.mode === 'map') sprites.current=utils.mod(sprites.current+1,ssget()*ssget()); break; // W
-			case 32: if(editor.mode === 'sfx') sfx(sfxSelector.current); break;
+			case 86: if(editor.mode === Editor.Modes.SPRITE) editor.flipSprite(sprites.current, false); break; // V
+			case 70: if(editor.mode === Editor.Modes.SPRITE) editor.flipSprite(sprites.current, true); break; // F
+			case 82: if(editor.mode === Editor.Modes.SPRITE) editor.rotateSprite(sprites.current); break; // R
+			case 46: if(editor.mode === Editor.Modes.SPRITE) editor.clearSprite(sprites.current); break; // delete
+			case 81: if(editor.mode === Editor.Modes.SPRITE || editor.mode === Editor.Modes.MAP) sprites.current=utils.mod(sprites.current-1,ssget()*ssget()); break; // Q
+			case 87: if(editor.mode === Editor.Modes.SPRITE || editor.mode === Editor.Modes.MAP) sprites.current=utils.mod(sprites.current+1,ssget()*ssget()); break; // W
+			case 32: if(editor.mode === Editor.Modes.SFX) sfx(sfxSelector.current); break;
 		}
 	}
 	editor.dirty = true;
 });
 
 document.addEventListener('keydown', function(e){
-	if(editor.mode === 'run') return;
+	if(editor.mode === Editor.Modes.RUN) return;
 
 	// ctrl + s
 	if (e.keyCode == 83 && (utils.isMac() ? e.metaKey : e.ctrlKey)){
@@ -2153,19 +2363,19 @@ document.addEventListener('keydown', function(e){
 	}
 
 	// backspace
-	if (editor.mode === 'code' && e.keyCode === 8) {
+	if (editor.mode === Editor.Modes.CODE && e.keyCode === 8) {
 		e.preventDefault();
 	}
 
 }, false);
 
 window.addEventListener('keypress', function(evt){
-	if(editor.mode === 'run') return;
-	if(editor.mode === 'code'){
+	if(editor.mode === Editor.Modes.RUN) return;
+	if(editor.mode === Editor.Modes.CODE){
 		code_keypress(code, evt);
-	} else if(editor.mode === 'track'){
+	} else if(editor.mode === Editor.Modes.TRACK){
 		track_keypress(track, evt);
-	} else if(editor.mode === 'pattern'){
+	} else if(editor.mode === Editor.Modes.PATTERN){
 		pattern_keypress(track, evt);
 	}
 });
@@ -2189,7 +2399,7 @@ function openfile(){
 
 window.addEventListener('paste', handlepaste, false);
 function handlepaste (e) {
-	if(editor.mode === 'run') return;
+	if(editor.mode === Editor.Modes.RUN) return;
 	if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
 		var types = e.clipboardData.types;
 		var handled = false;
@@ -2220,7 +2430,7 @@ function handlepaste (e) {
 }
 
 function handlePasteImage(file){
-	if(editor.mode !== 'sprite' || sprites.current === 0){
+	if(editor.mode !== Editor.Modes.SPRITE || sprites.current === 0){
 		return;
 	}
 
@@ -2276,14 +2486,14 @@ function handlePasteImage(file){
 
 function handlePasteString(str){
 	switch(editor.mode){
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		var m = str.match(/sprite:([\d]+)/);
 		if(m){
-			copySprite(parseInt(m[1]), sprites.current);
+			editor.copySprite(parseInt(m[1]), sprites.current);
 			editor.dirty = true;
 		}
 		break;
-	case 'code':
+	case Editor.Modes.CODE:
 		code_paste(code, str);
 		break;
 	default:
@@ -2294,13 +2504,13 @@ function handlePasteString(str){
 
 document.addEventListener('copy', function(e){
 	switch(editor.mode){
-	case 'run':
+	case Editor.Modes.RUN:
 		return;
-	case 'sprite':
+	case Editor.Modes.SPRITE:
 		e.clipboardData.setData('text/plain', 'sprite:'+sprites.current);
 		e.preventDefault();
 		break;
-	case 'code':
+	case Editor.Modes.CODE:
 		e.clipboardData.setData('text/plain', codeget()); // until selection is supported
 		e.preventDefault();
 		break;
@@ -2327,12 +2537,17 @@ if(query.file){
 }
 
 window._load = function(){
-	delete window._load; // only need to load once!
 	editor.loading = false;
-	editor.dirty = true;
 	code.syntaxTreeDirty = true;
-	if(query.run)
+	editor.gameWidth = width();
+	editor.gameHeight = height();
+	width(editor.editorWidth);
+	height(editor.editorHeight);
+	if(query.run){
+		query.run = false; // Only once!
 		code_run(code);
+	}
+	editor.dirty = true;
 };
 
 function spriteToDataURL(spriteX, spriteY, scale, mimetype){
@@ -2463,7 +2678,7 @@ function exportHtml(engineUrl, callback){
 	xhr.send();
 }
 
-},{"../utils":4,"./Editor":2}],4:[function(require,module,exports){
+},{"../Rectangle":1,"../utils":8,"./Buttons":3,"./Editor":4,"./Flags":5,"./Palette":6}],8:[function(require,module,exports){
 exports.disableImageSmoothing = function(ctx) {
 	if(ctx.imageSmoothingEnabled !== undefined){
 		ctx.imageSmoothingEnabled = false;
@@ -2799,4 +3014,4 @@ exports.downloadStringAsTextFile = function(str, filename){
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
 };
-},{}]},{},[3]);
+},{}]},{},[7]);
