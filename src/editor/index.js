@@ -73,16 +73,20 @@ function editorSave(destination){
 	}
 }
 
-function editorLoad2(source){
-	var result = true;
-	if(editor.mode !== Editor.Modes.RUN){
-		result = load(source);
-		editor.gameWidth = width();
-		editor.gameHeight = height();
-		width(editor.editorWidth);
-		height(editor.editorHeight);
+function editorLoad2(source, callback){
+	callback = callback || function(){};
+	if(source.indexOf('.json') !== -1){
+		utils.loadJsonFromUrl(source,function(err,json){
+			if(json){
+				load(json);
+				callback(true);
+			} else {
+				callback(false);
+			}
+		});
+	} else {
+		callback(load(source));
 	}
-	return result;
 }
 
 function track_click(track, mx, my){
@@ -926,14 +930,16 @@ editor.click = window._click = function _click(){
 		editor.dirty = true;
 	} else if(editor.mode === Editor.Modes.GAME){
 		if(buttons_click(slotButtons,mx,my)){
-			if(editorLoad2('slot' + slotButtons.current)){
-				alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
-			} else {
-				alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
-			}
-			editor.dirty = true;
-			code.syntaxTreeDirty = true;
-			slotButtons.current = -1;
+			editorLoad2('slot' + slotButtons.current, function(success){
+				if(success){
+					alert('Loaded game from slot ' + (slotButtons.current + 1) + '.');
+				} else {
+					alert('Could not load game from slot ' + (slotButtons.current + 1) + '.');
+				}
+				editor.dirty = true;
+				code.syntaxTreeDirty = true;
+				slotButtons.current = -1;
+			});
 		} else if(buttons_click(nameButton,mx,my)){
 			var newTitle = prompt('Name?', title());
 			if(newTitle){
@@ -1030,29 +1036,33 @@ window.onbeforeunload = function(e) {
 var editorLoad = window._init = function _init(){
 
 	editor.loadEditorSettings('cartridgeEditor');
+	if(editor.mode === Editor.Modes.RUN) editor.mode = Editor.modes[0];
 
 	setInterval(function(){
 		editorSave('autosave');
 		editor.saveEditorSettings('cartridgeEditor');
 	}, 10000);
 
-	if(!editorLoad2('autosave')){
-		// TODO: Load default JSON
-		code_set([
-			'var x=10,y=10;',
-			'function _draw(){',
-			'  cls();',
-			'  map(0,0,0,0,16,15);',
-			'  spr(1,x,y);',
-			'  if(btn(0)) x--;',
-			'  if(btn(1)) x++;',
-			'  if(btn(2)) y--;',
-			'  if(btn(3)) y++;',
-			'  if(btn(4) && !btnp(4)) sfx(0);',
-			'}'
-		].join('\n').toLowerCase());
-	}
-
+	editorLoad2('autosave', function(success){
+		if(!success){
+			// TODO: Load default JSON
+			code_set([
+				'var x=10,y=10;',
+				'function _draw(){',
+				'  cls();',
+				'  map(0,0,0,0,16,15);',
+				'  spr(1,x,y);',
+				'  if(btn(0)) x--;',
+				'  if(btn(1)) x++;',
+				'  if(btn(2)) y--;',
+				'  if(btn(3)) y++;',
+				'  if(btn(4) && !btnp(4)) sfx(0);',
+				'}'
+			].join('\n').toLowerCase());
+		}
+		editor.dirty = true;
+		code.syntaxTreeDirty = true;
+	});
 	editor.dirty = true;
 	code.syntaxTreeDirty = true;
 };
@@ -2059,12 +2069,17 @@ if(query.file){
 }
 
 window._load = function(){
-	delete window._load; // only need to load once!
 	editor.loading = false;
-	editor.dirty = true;
 	code.syntaxTreeDirty = true;
-	if(query.run)
+	editor.gameWidth = width();
+	editor.gameHeight = height();
+	width(editor.editorWidth);
+	height(editor.editorHeight);
+	if(query.run){
+		query.run = false; // Only once!
 		code_run(code);
+	}
+	editor.dirty = true;
 };
 
 function spriteToDataURL(spriteX, spriteY, scale, mimetype){
