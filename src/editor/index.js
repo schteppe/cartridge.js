@@ -9,6 +9,18 @@ var editor = new Editor({
 	mode: Editor.modes[0]
 });
 
+var query = utils.parseQueryVariables(window.location.search, {
+	pixel_perfect: 'i',
+	run: 'b',
+	responsive: 'b',
+	file: 's'
+});
+cartridge({
+	containerId: 'container',
+	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
+	responsive: query.responsive !== undefined ? query.responsive : utils.isMobile()
+});
+
 var sprites = {
 	current: 1, // Because zero is "empty sprite"
 	panx: 0,
@@ -2047,18 +2059,6 @@ document.addEventListener('copy', function(e){
 		e.preventDefault();
 		break;
 	}
-});
-
-var query = utils.parseQueryVariables(window.location.search, {
-	pixel_perfect: 'i',
-	run: 'b',
-	responsive: 'b',
-	file: 's'
-});
-cartridge({
-	containerId: 'container',
-	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
-	responsive: query.responsive !== undefined ? query.responsive : utils.isMobile()
 });
 
 run();

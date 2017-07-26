@@ -1,52 +1,19 @@
 var input = require('./input');
 var mouse = require('./mouse');
 var utils = require('./utils');
-var font = require('./font');
 var math = require('./math');
 var colors = require('./colors');
 var sfx = require('./sfx');
-var pixelops = require('./pixelops');
 var code = require('./code');
 var music = require('./music');
 var Rectangle = require('./Rectangle');
+var FastCanvasRenderer = require('./FastCanvasRenderer');
 
-var cellsizeX = 8; // pixels
-var cellsizeY = 8; // pixels
-var screensizeX = 128; // pixels
-var screensizeY = 128; // pixels
-var mapSizeX = 128; // cells
-var mapSizeY = 32; // cells
-var spriteSheetSizeX = 16; // sprites
-var spriteSheetSizeY = 16; // sprites
-var paletteSize = 16; // colors
-
-// Clip state
-var clipRect = new Rectangle(0,0,screensizeX,screensizeY);
-
-// DOM elements
 var container;
-var canvases = [];
-
-var mapData = utils.zeros(mapSizeX * mapSizeY);
-var mapDataDirty = utils.zeros(mapSizeX * mapSizeY); // dirtiness per cell
-var mapDirty = true; // is all of the map dirty?
-var mapCacheCanvas;
-var mapCacheContext;
-var spriteSheetCanvas;
-var spriteSheetContext;
-var spriteSheetDirtyRect = new Rectangle();
 var spriteFlags;
-var spriteSheetPixels;
-var ctx;
 var _time = 0;
 var _startTime = 0;
-var camX = 0;
-var camY = 0;
-var palette;
-var paletteHex;
 var defaultColor = 0;
-var transparentColors = utils.zeros(paletteSize).map(function(){ return false; });
-transparentColors[0] = true;
 var loaded = false; // Loaded state
 var _alpha = 0;
 var pixelPerfectMode = 0;
@@ -54,54 +21,30 @@ var autoFit = false;
 var responsive = false;
 var responsiveRect = new Rectangle(0,0,128,128);
 var gameTitle = 'game';
+var renderer;
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
 	responsive = options.responsive !== undefined ? options.responsive : false;
 	pixelPerfectMode = options.pixelPerfect !== undefined ? options.pixelPerfect : 0;
-	var numCanvases = options.layers !== undefined ? options.layers : 1;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
-	var html = '';
-	for(var i=0; i<numCanvases; i++){
-		html += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + screensizeX + '" height="' + screensizeY + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
-	}
-	container.innerHTML = html;
 
-	for(var i=0; i<numCanvases; i++){
-		var c = document.getElementById('cartridgeCanvas' + i);
-		c.oncontextmenu = function(){
-			return false;
-		};
-		canvases.push(c);
-		if(i !== 0){
-			c.style.pointerEvents = 'none';
-		}
-		c.style.position = 'absolute';
-		utils.disableImageSmoothing(c.getContext('2d'));
-	}
+	renderer = new FastCanvasRenderer(container, {
+		cellsizeX: 8, // pixels
+		cellsizeY: 8, // pixels
+		screensizeX: 128, // pixels
+		screensizeY: 128, // pixels
+		mapSizeX: 128, // cells
+		mapSizeY: 32, // cells
+		spriteSheetSizeX: 16, // sprites
+		spriteSheetSizeY: 16, // sprites
+		paletteSize: 16, // colors
+	});
 
-	setCellSize(cellsizeX, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
-	setPalette(options.palette || colors.defaultPalette());
+	input.init([renderer.domElement]);
+	mouse.init([renderer.domElement]);
 
-	// Add style tag
-	var style = document.createElement('style');
-	style.innerHTML = [
-		".cartridgeCanvas {",
-		"image-rendering: -moz-crisp-edges;",
-		"image-rendering: -webkit-crisp-edges;",
-		"image-rendering: pixelated;",
-		"}"
-	].join('\n');
-	document.getElementsByTagName('head')[0].appendChild(style);
-
-	// Set main canvas
-	canvas(0);
-
-	input.init(canvases);
-	mouse.init(canvases);
-	pixelops.init(canvases[0]); // todo: support multiple
-
-	utils.iosAudioFix(canvases[0], function(){
+	utils.iosAudioFix(renderer.domElement, function(){
 		// restart sound nodes here
 		sfx.iosFix();
 		music.iosFix();
@@ -159,8 +102,7 @@ exports.cartridge = function(options){
 			runUserFunction(_draw);
 		}
 
-		// Flush any remaining pixelops
-		pixelops.flush();
+		renderer.render();
 
 		currentTime = newTime;
 		input.update();
@@ -168,9 +110,6 @@ exports.cartridge = function(options){
 		requestAnimationFrame(render);
 	}
 	requestAnimationFrame(render);
-
-	// Init font
-	font.init(paletteHex);
 };
 
 exports.run = function(){
@@ -212,95 +151,12 @@ function setCellSize(
 	newSpriteSheetWidth = newSpriteSheetWidth | 0;
 	newSpriteSheetHeight = newSpriteSheetHeight | 0;
 
-	var newSpriteSheetPixels = utils.zeros(newSpriteSheetWidth * newSpriteSheetHeight * newCellWidth * newCellHeight);
-	if(spriteSheetPixels){
-		// Copy pixel data to new dimensions
-		var minWidth = Math.min(spriteSheetSizeX*cellsizeX, newSpriteSheetWidth*newCellWidth);
-		var minHeight = Math.min(spriteSheetSizeY*cellsizeY, newSpriteSheetHeight*newCellHeight);
-		for(var i=0; i<minWidth; i++){
-			for(var j=0; j<minHeight; j++){
-				newSpriteSheetPixels[i+j*newSpriteSheetWidth*newCellWidth] = spriteSheetPixels[i+j*spriteSheetSizeX*cellsizeX];
-			}
-		}
-	}
-	spriteSheetPixels = newSpriteSheetPixels;
-
-	// Map references sprites, which are now wrong. Need to fix!
-	for(var i=0; i<mapSizeX; i++){
-		for(var j=0; j<mapSizeY; j++){
-			var oldSpriteIndex = mget(i, j);
-			var oldX = ssx(oldSpriteIndex);
-			var oldY = ssy(oldSpriteIndex);
-			var newSpriteIndex = oldX + oldY * newSpriteSheetWidth;
-			if(newSpriteIndex >= newSpriteSheetWidth * newSpriteSheetHeight) continue;
-			mset(i, j, newSpriteIndex);
-		}
-	}
-
-	cellsizeX = newCellWidth;
-	cellsizeY = newCellHeight;
-
-	spriteSheetSizeX = newSpriteSheetWidth;
-	spriteSheetSizeY = newSpriteSheetHeight;
-
-	var maxSprites = spriteSheetSizeX * spriteSheetSizeY;
+	var maxSprites = renderer.spriteSheetSizeX * renderer.spriteSheetSizeY;
 	if(!spriteFlags) spriteFlags = utils.zeros(maxSprites);
 	while(spriteFlags.length < maxSprites) spriteFlags.push(0);
 	while(spriteFlags.length > maxSprites) spriteFlags.pop();
 
-	// (re)init spritesheet canvas
-	spriteSheetCanvas = utils.createCanvas(spriteSheetSizeX * cellsizeX, spriteSheetSizeY * cellsizeY);
-	spriteSheetContext = spriteSheetCanvas.getContext('2d');
-
-	// (re)init map cache
-	mapCacheCanvas = utils.createCanvas(mapSizeX * cellsizeX, mapSizeY * cellsizeY);
-	mapCacheContext = mapCacheCanvas.getContext('2d');
-
-	spriteSheetDirtyRect.set(0,0,spriteSheetCanvas.width,spriteSheetCanvas.height);
-	mapDirty = true;
-}
-
-// Redraw the whole spritesheet
-function flushSpriteSheet(){
-	if(!spriteSheetDirtyRect.area) return;
-
-	var w = spriteSheetSizeX*cellsizeX;
-	var h = spriteSheetSizeY*cellsizeY;
-	spriteSheetContext.clearRect(spriteSheetDirtyRect.x0, spriteSheetDirtyRect.y0, spriteSheetDirtyRect.w, spriteSheetDirtyRect.h);
-	var imageData = spriteSheetContext.createImageData(spriteSheetDirtyRect.w, spriteSheetDirtyRect.h);
-	for(var i=0; i<spriteSheetDirtyRect.w; i++){
-		for(var j=0; j<spriteSheetDirtyRect.h; j++){
-			var col = spriteSheetPixels[(j+spriteSheetDirtyRect.y0) * w + (i+spriteSheetDirtyRect.x0)];
-			var dec = palette[col];
-			var r = utils.decToR(dec);
-			var g = utils.decToG(dec);
-			var b = utils.decToB(dec);
-			var p = 4 * (j * spriteSheetDirtyRect.w + i);
-			imageData.data[p + 0] = utils.decToR(dec);
-			imageData.data[p + 1] = utils.decToG(dec);
-			imageData.data[p + 2] = utils.decToB(dec);
-			imageData.data[p + 3] = transparentColors[col] ? 0 : 255;
-		}
-	}
-	spriteSheetContext.putImageData(imageData, spriteSheetDirtyRect.x0, spriteSheetDirtyRect.y0);
-	spriteSheetDirtyRect.set();
-}
-
-function setPalette(p){
-	palette = p.slice(0);
-	paletteHex = palette.map(colors.int2hex);
-	mapDirty = true;
-	font.changePalette(paletteHex);
-
-	// Check spritesheet for invalid colors
-	for(var i=0; i<spriteSheetSizeX*cellsizeX; i++){
-		for(var j=0; j<spriteSheetSizeY*cellsizeY; j++){
-			if(sget(i,j) >= p.length){
-				sset(i,j,0); // Just set it to empty
-			}
-		}
-	}
-	spriteSheetDirtyRect.set(0,0,spriteSheetCanvas.width,spriteSheetCanvas.height);
+	renderer.setCellSize(newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight);
 }
 
 exports.palset = function(n, hexColor){
@@ -316,26 +172,12 @@ exports.palset = function(n, hexColor){
 		newPalette[n] = hexColor;
 	}
 
-	setPalette(newPalette);
+	renderer.setPalette(newPalette);
 };
 
 exports.palget = function(n){
-	return palette[n];
+	return renderer.palget(n);
 };
-
-function resizeCanvases(){
-	for(var i=0; i < canvases.length; i++){
-		canvases[i].width = screensizeX;
-		canvases[i].height = screensizeY;
-	}
-	if(autoFit){
-		fit(pixelPerfectMode, responsive);
-	}
-	pixelops.resize(canvases[0]);
-
-	// Reset clip state
-	clip();
-}
 
 exports.alpha = function(){ return _alpha; }; // for interpolation
 
@@ -343,59 +185,58 @@ exports.alpha = function(){ return _alpha; }; // for interpolation
 exports.width = function(newWidth){
 	if(newWidth !== undefined){
 		newWidth = newWidth | 0;
-		if(screensizeX === newWidth){
+		if(renderer.screensizeX === newWidth){
 			// unchanged
 			return;
 		}
-		screensizeX = newWidth;
-		resizeCanvases();
+		renderer.screensizeX = newWidth;
+		renderer.resizeCanvases();
 	}
-	return screensizeX;
+	return renderer.screensizeX;
 };
 
 // TODO: rename to hget/set() ?
 exports.height = function(newHeight){
 	if(newHeight !== undefined){
 		newHeight = newHeight | 0;
-		if(screensizeY === newHeight){
+		if(renderer.screensizeY === newHeight){
 			// unchanged
 			return;
 		}
-		screensizeY = newHeight;
+		renderer.screensizeY = newHeight;
 		resizeCanvases();
 	}
-	return screensizeY;
+	return renderer.screensizeY;
 };
 
 // TODO: rename to cwget/set() ?
 exports.cellwidth = function(newCellWidth){
 	if(newCellWidth !== undefined){
-		if(newCellWidth === cellsizeX){
+		if(newCellWidth === renderer.cellsizeX){
 			// unchanged
 			return;
 		}
-		setCellSize(newCellWidth, cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
+		setCellSize(newCellWidth, renderer.cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
-		return cellsizeX;
+		return renderer.cellsizeX;
 	}
 };
 
 // TODO: rename to chget/set() ?
 exports.cellheight = function(newCellHeight){
 	if(newCellHeight !== undefined){
-		if(newCellHeight === cellsizeY){
+		if(newCellHeight === renderer.cellsizeY){
 			// unchanged
 			return;
 		}
-		setCellSize(cellsizeX, newCellHeight, spriteSheetSizeX, spriteSheetSizeY);
+		setCellSize(renderer.cellsizeX, newCellHeight, spriteSheetSizeX, spriteSheetSizeY);
 	} else {
-		return cellsizeY;
+		return renderer.cellsizeY;
 	}
 };
 
 exports.cls = function(){
-	pixelops.beforeChange();
-	ctx.clearRect(-camX,-camY,screensizeX,screensizeY);
+	return renderer.cls();
 };
 
 exports.time = function(){
@@ -408,9 +249,9 @@ exports.color = function(col){
 
 exports.palt = function(col, t){
 	if(t !== undefined){
-		transparentColors[col] = t;
+		renderer.setColorTransparent(col, t);
 	} else {
-		return transparentColors[col];
+		return renderer.getColorTransparent(col);
 	}
 };
 
@@ -421,26 +262,7 @@ exports.rectfill = function rectfill(x0, y0, x1, y1, col){
 	x1 = x1 | 0;
 	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
-
-	// Full clip
-	if(clipRect.excludesRect(x0,y0,x1,y1)){
-		return;
-	}
-
-	// Reduce it to the clip area
-	x0 = Math.max(x0, clipRect.x0);
-	y0 = Math.max(y0, clipRect.y0);
-	x1 = Math.min(x1, clipRect.x1);
-	y1 = Math.min(y1, clipRect.y1);
-
-	var w = x1 - x0 + 1;
-	var h = y1 - y0 + 1;
-
-	if(w > 0 && h > 0){
-		pixelops.beforeChange();
-		ctx.fillStyle = paletteHex[col];
-		ctx.fillRect(x0, y0, w, h);
-	}
+	renderer.rectfill(x0, y0, x1, y1, col);
 };
 
 exports.rect = function rect(x0, y0, x1, y1, col){
@@ -451,113 +273,40 @@ exports.rect = function rect(x0, y0, x1, y1, col){
 	y1 = y1 | 0;
 	col = col !== undefined ? col : defaultColor;
 
-	// full clip
-	if(clipRect.excludesRect(x0,y0,x1,y1)){
-		return;
-	}
-
+	// TODO: optimize
 	for(var x=x0; x<=x1; x++){
-		exports.pset(x,y0,col);
-		exports.pset(x,y1,col);
+		renderer.pset(x,y0,col);
+		renderer.pset(x,y1,col);
 	}
 
 	for(var y=y0; y<=y1; y++){
-		exports.pset(x0,y,col);
-		exports.pset(x1,y,col);
+		renderer.pset(x0,y,col);
+		renderer.pset(x1,y,col);
 	}
 };
 
 exports.clip = function(x,y,w,h){
 	if(x === undefined){
 		x = y = 0;
-		w = screensizeX;
-		h = screensizeY;
+		w = renderer.screensizeX;
+		h = renderer.screensizeY;
 	}
 	x = x | 0;
 	y = y | 0;
 	w = w | 0;
 	h = h | 0;
 
-	clipRect.set(x,y,w,h);
-};
-
-exports.canvas = function canvas(n){
-	ctx = canvases[n].getContext('2d');
+	renderer.clip(x,y,w,h);
 };
 
 exports.camera = function camera(x, y){
 	x = x | 0;
 	y = y | 0;
-	if(camX === x && camY === y) return;
-
-	pixelops.beforeChange();
-	ctx.translate(x - camX, y - camY);
-	camX = x;
-	camY = y;
+	renderer.camera(x,y);
 };
 
-exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h, layer){
-	pixelops.beforeChange();
-	layer = layer === undefined ? 0 : layer;
-
-	cel_x = cel_x | 0;
-	cel_y = cel_y | 0;
-	sx = sx | 0;
-	sy = sy | 0;
-	cel_w = cel_w | 0;
-	cel_h = cel_h | 0;
-
-	var i,j;
-
-	var x0 = sx;
-	var x1 = sx + cel_w * cellwidth();
-	var y0 = sy;
-	var y1 = sy + cel_h * cellheight();
-	if(clipRect.excludesRect(x0,y0,x1,y1)){
-		return; // fully outside the clip area
-	}
-
-	if(layer === 0){
-		// Update invalidated map cache
-		if(mapDirty){
-			clearMapCacheCanvas();
-			for(i=0; i<mapSizeX; i++){
-				for(j=0; j<mapSizeY; j++){
-					updateMapCacheCanvas(i,j,false);
-				}
-			}
-			mapDirty = false;
-		}
-		for(i=0; i<mapSizeX; i++){
-			for(j=0; j<mapSizeY; j++){
-				if(mapDataDirty[j * mapSizeX + i]){
-					updateMapCacheCanvas(i,j,true);
-					mapDataDirty[j * mapSizeX + i] = 0;
-				}
-			}
-		}
-
-		var _sx = cel_x * cellsizeX; // Clip start
-		var _sy = cel_y * cellsizeY;
-		var _x = sx; // Draw position
-		var _y = sy;
-		var _swidth = cel_w * cellsizeX; // Clip end
-		var _sheight = cel_h * cellsizeY;
-		var _width = _swidth; // Width on target canvas
-		var _height = _sheight;
-		ctx.drawImage(mapCacheCanvas,_sx,_sy,_swidth,_sheight,_x,_y,_width,_height);
-	} else {
-		// Draw only matching sprites
-		for(i=0; i<cel_w; i++){
-			for(j=0; j<cel_h; j++){
-				var spriteNumber = mget(i, j);
-				var flags = fget(spriteNumber);
-				if((layer & flags) === layer){
-					spr(spriteNumber, sx + i * cellsizeX, sy + j * cellsizeY);
-				}
-			}
-		}
-	}
+exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h){
+	renderer.map(cel_x, cel_y, sx, sy, cel_w, cel_h);
 };
 
 // Returns the sprite X position in the spritesheet
@@ -578,9 +327,6 @@ exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
 
 // Render a sprite given its id
 exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
-	pixelops.beforeChange();
-	flushSpriteSheet();
-
 	w = w !== undefined ? w : 1;
 	h = h !== undefined ? h : 1;
 	flip_x = flip_x !== undefined ? flip_x : false;
@@ -591,42 +337,7 @@ exports.spr = function spr(n, x, y, w, h, flip_x, flip_y){
 	w = w | 0;
 	h = h | 0;
 
-	var sourceSizeX = cellsizeX * w;
-	var sourceSizeY = cellsizeY * h;
-	var destSizeX = sourceSizeX;
-	var destSizeY = sourceSizeY;
-	var destX = x;
-	var destY = y;
-
-	var sourceX = ssx(n) * cellsizeX;
-	var sourceY = ssy(n) * cellsizeY;
-
-	// Clip lower
-	if(destX < clipRect.x0){
-		sourceX = sourceX + clipRect.x0 - destX;
-		destX = clipRect.x0;
-	}
-	if(destY < clipRect.y0){
-		sourceY = sourceY + clipRect.y0 - destY;
-		destY = clipRect.y0;
-	}
-
-	// TODO: clip upper
-
-	ctx.save();
-	ctx.translate(
-		destX + (flip_x ? sourceSizeX : 0),
-		destY + (flip_y ? sourceSizeY : 0)
-	);
-	ctx.scale(flip_x ? -1 : 1, flip_y ? -1 : 1);
-	ctx.drawImage(
-		spriteSheetCanvas,
-		sourceX, sourceY,
-		sourceSizeX, sourceSizeY,
-		0, 0,
-		destSizeX, destSizeY
-	);
-	ctx.restore();
+	renderer.spr(n, x, y, w, h, flip_x, flip_y);
 };
 
 // Get sprite flags
@@ -663,50 +374,35 @@ exports.assert = function(condition, message){
 };
 
 // Get pixel color
-exports.pget = (function(){
-	var data = new Uint8Array(3);
-	return function(x, y){
-		x = x | 0;
-		y = y | 0;
-		pixelops.pget(x,y,data);
-		var col = utils.rgbToDec(data[0], data[1], data[2]);
-		var result = palette.indexOf(col);
-		return result === -1 ? 0 : result;
-	};
-})();
+exports.pget = function(x, y){
+	x = x | 0;
+	y = y | 0;
+	return renderer.pget(x, y);
+};
 
 // Set pixel color
 exports.pset = function(x, y, col){
 	x = x | 0;
 	y = y | 0;
 	col = col | 0;
-
-	if(clipRect.excludesPoint(x,y)) return;
-
-	// new style
-	var dec = palette[col];
-	var r = utils.decToR(dec);
-	var g = utils.decToG(dec);
-	var b = utils.decToB(dec);
-	pixelops.pset(x,y,r,g,b);
+	renderer.pset(x,y,col);
 };
 
 // Get spritesheet pixel color
 exports.sget = function(x, y){
 	x = x | 0;
 	y = y | 0;
-	var w = spriteSheetSizeX * cellsizeX;
-	return spriteSheetPixels[y * w + x];
+	return renderer.sget(x,y);
 };
 
 // Set spritesheet size
 exports.ssset = function(n){
-	setCellSize(cellsizeX, cellsizeY, n, n);
+	setCellSize(renderer.cellsizeX, renderer.cellsizeY, n, n);
 };
 
 // Get spritesheet size
 exports.ssget = function(){
-	return spriteSheetSizeX;
+	return renderer.spriteSheetSizeX;
 };
 
 // Set spritesheet pixel color
@@ -714,16 +410,7 @@ exports.sset = function(x, y, col){
 	x = x | 0;
 	y = y | 0;
 	col = col !== undefined ? col : defaultColor;
-
-	var w = spriteSheetSizeX * cellsizeX;
-	spriteSheetPixels[y * w + x] = col;
-	if(spriteSheetDirtyRect.area){
-		spriteSheetDirtyRect.expandToPoint(x,y);
-	} else {
-		spriteSheetDirtyRect.set(x,y,1,1);
-	}
-
-	mapDirty = true; // TODO: Only invalidate matching map positions
+	renderer.sset(x,y,col);
 };
 
 // Game title
@@ -749,21 +436,10 @@ exports.log = function(){
 };
 
 exports.print = function(text, x, y, col){
-	pixelops.beforeChange();
-	if(Array.isArray(text)){
-		for(var i=0; i<text.length; i++){
-			exports.print(text[i], x, y + 8*i, col);
-		}
-		return;
-	}
-	x = x !== undefined ? x : 0;
-	y = y !== undefined ? y : 0;
-	col = col !== undefined ? col : defaultColor;
-
 	x = x | 0;
 	y = y | 0;
-
-	font.draw(ctx, text.toString().toUpperCase(), x, y, col);
+	col = col !== undefined ? col : defaultColor;
+	renderer.print(text,x,y,col);
 };
 
 exports.fit = function fit(stretchMode, responsive){
@@ -785,27 +461,20 @@ exports.fit = function fit(stretchMode, responsive){
 
 	stretchMode = stretchMode !== undefined ? stretchMode : 0;
 	var pixelPerfect = (stretchMode === 0);
-	var i = canvases.length;
-	while(i--){
-		utils.scaleToFit(canvases[i], container, pixelPerfect);
-	}
+	utils.scaleToFit(renderer.domElement, container, pixelPerfect);
 };
 
 exports.mget = function mget(x, y){
 	x = x | 0;
 	y = y | 0;
-	return mapData[y * mapSizeX + x];
+	return renderer.mget(x,y);
 };
 
 exports.mset = function mset(x, y, i){
-	if(mget(x,y) === i) return;
-
 	i = i | 0;
 	x = x | 0;
 	y = y | 0;
-
-	mapData[y * mapSizeX + x] = i;
-	mapDataDirty[y * mapSizeX + x] = 1;
+	renderer.mset(x,y,i);
 };
 
 exports.save = function(key){
@@ -867,7 +536,7 @@ function toJSON(){
 		map: [],
 		sprites: [],
 		flags: [],
-		palette: palette.slice(0),
+		palette: renderer.palette.slice(0),
 		sfx: [],
 		code: code.codeget(), // added in v2
 		trackInfo: [], // added in v6
@@ -987,17 +656,16 @@ function loadJSON(data){
 		fset(i, data.flags[i] || 0);
 	}
 
-	setPalette(data.palette);
-	for(i=0; i<spriteSheetSizeX*cellwidth(); i++){
-		for(j=0; j<spriteSheetSizeY*cellheight(); j++){
-			sset(i,j,data.sprites[j*spriteSheetSizeX*cellwidth()+i] || 0);
+	renderer.setPalette(data.palette);
+	for(i=0; i<renderer.spriteSheetSizeX*cellwidth(); i++){
+		for(j=0; j<renderer.spriteSheetSizeY*cellheight(); j++){
+			sset(i,j,data.sprites[j*renderer.spriteSheetSizeX*cellwidth()+i] || 0);
 		}
 	}
-	spriteSheetDirtyRect.set(0,0,spriteSheetSizeX*cellwidth(),spriteSheetSizeY*cellheight());
 
-	for(i=0; i<mapSizeX; i++){
-		for(j=0; j<mapSizeY; j++){
-			mset(i,j,data.map[j*mapSizeX+i] || 0);
+	for(i=0; i<renderer.mapSizeX; i++){
+		for(j=0; j<renderer.mapSizeY; j++){
+			mset(i,j,data.map[j*renderer.mapSizeX+i] || 0);
 		}
 	}
 
@@ -1081,43 +749,20 @@ function runUserFunction(func){
 	}
 }
 
-function clearMapCacheCanvas(){
-	mapCacheContext.clearRect(0, 0, cellsizeX*mapSizeX, cellsizeY*mapSizeY);
-}
-
-function updateMapCacheCanvas(x,y,doClear){
-	if(doClear){
-		mapCacheContext.clearRect(x * cellsizeX, y * cellsizeY, cellsizeX, cellsizeY);
-	}
-	var n = mget(x, y);
-	if(n === 0){
-		// Sprite 0 is empty
-		return;
-	}
-	flushSpriteSheet();
-	mapCacheContext.drawImage(
-		spriteSheetCanvas,
-		ssx(n) * cellsizeX, ssy(n) * cellsizeY,
-		cellsizeX, cellsizeY,
-		cellsizeX * x, cellsizeY * y,
-		cellsizeX, cellsizeY
-	);
-}
-
 exports.mousex = function(){
-	return Math.floor(mouse.mousexNormalized() * (screensizeX-1));
+	return Math.floor(mouse.mousexNormalized() * (renderer.screensizeX-1));
 };
 
 exports.mousey = function(){
-	return Math.floor(mouse.mouseyNormalized() * (screensizeY-1));
+	return Math.floor(mouse.mouseyNormalized() * (renderer.screensizeY-1));
 };
 
 exports.touchx = function(id){
-	return Math.floor(mouse.touchxNormalized(id) * (screensizeX-1));
+	return Math.floor(mouse.touchxNormalized(id) * (renderer.screensizeX-1));
 };
 
 exports.touchy = function(id){
-	return Math.floor(mouse.touchyNormalized(id) * (screensizeY-1));
+	return Math.floor(mouse.touchyNormalized(id) * (renderer.screensizeY-1));
 };
 
 exports.mobile = function(){
