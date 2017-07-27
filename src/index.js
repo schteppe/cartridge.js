@@ -39,6 +39,7 @@ exports.cartridge = function(options){
 		spriteSheetSizeX: 16, // sprites
 		spriteSheetSizeY: 16, // sprites
 		paletteSize: 16, // colors
+		palette: colors.defaultPalette()
 	});
 
 	input.init([renderer.domElement]);
@@ -59,6 +60,10 @@ exports.cartridge = function(options){
 		window.addEventListener('resize', resizeHandler);
 		window.addEventListener('mozfullscreenchange', resizeHandler);
 	}
+
+	// Init flags
+	var maxSprites = renderer.spriteSheetSizeX * renderer.spriteSheetSizeY;
+	spriteFlags = utils.zeros(maxSprites);
 
 	// Start render loop
 	var currentTime = 0;
@@ -494,24 +499,36 @@ exports.json = function(){
 };
 
 exports.load = function(key){
+	var done = function(){
+		if(typeof(_load) === 'function'){
+			runUserFunction(_load);
+		}
+	}
+
 	if(typeof(key) === 'object'){
-		loadJSON(key);
+		loadJSON(key, done);
 	} else {
 		key = key || 'save';
 		if(key.indexOf('.json') !== -1){
 			utils.loadJsonFromUrl(key,function(err,json){
 				if(json){
-					loadJSON(json);
+					loadJSON(json, done);
+				} else {
+					done();
 				}
 			});
 		} else {
+			var data;
 			try {
-				var data = JSON.parse(localStorage.getItem(key));
-				loadJSON(data);
-				return true;
+				data = JSON.parse(localStorage.getItem(key));
 			} catch(err) {
 				// localStorage is undefined (iOS private mode) or something else went wrong
 				return false;
+			}
+			if(data){
+				loadJSON(data, done);
+			} else {
+				done();
 			}
 		}
 	}
@@ -557,9 +574,9 @@ function toJSON(){
 	utils.removeTrailingZeros(data.sprites);
 
 	// Map data
-	for(i=0; i<mapSizeX; i++){
-		for(j=0; j<mapSizeY; j++){
-			data.map[j*mapSizeX+i] = mget(i,j);
+	for(i=0; i<renderer.mapSizeX; i++){
+		for(j=0; j<renderer.mapSizeY; j++){
+			data.map[j*renderer.mapSizeX+i] = mget(i,j);
 		}
 	}
 	utils.removeTrailingZeros(data.map);
@@ -628,7 +645,7 @@ function toJSON(){
 	return data;
 }
 
-function loadJSON(data){
+function loadJSON(data, callback){
 	var i,j;
 	code.codeset(data.code || '');
 
@@ -731,8 +748,8 @@ function loadJSON(data){
 		}
 	}
 
-	if(typeof(_load) === 'function'){
-		runUserFunction(_load);
+	if(callback){
+		callback();
 	}
 }
 

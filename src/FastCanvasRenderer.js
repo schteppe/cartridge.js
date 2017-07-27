@@ -38,7 +38,7 @@ function FastCanvasRenderer(container, options){
 	this.spriteSheetPixels;
 	this.camX = 0;
 	this.camY = 0;
-	this.palette = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+	this.palette = options.palette ? options.palette.slice(0) : [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 	this.paletteHex;
 	this.transparentColors = utils.zeros(this.paletteSize).map(function(){ return false; });
 	this.transparentColors[0] = true;
@@ -135,8 +135,8 @@ FastCanvasRenderer.prototype = {
 		for(var i=0; i<this.mapSizeX; i++){
 			for(var j=0; j<this.mapSizeY; j++){
 				var oldSpriteIndex = this.mget(i, j);
-				var oldX = ssx(oldSpriteIndex);
-				var oldY = ssy(oldSpriteIndex);
+				var oldX = ssx(oldSpriteIndex,this.spriteSheetSizeX,this.spriteSheetSizeY);
+				var oldY = ssy(oldSpriteIndex,this.spriteSheetSizeX,this.spriteSheetSizeY);
 				var newSpriteIndex = oldX + oldY * newSpriteSheetWidth;
 				if(newSpriteIndex >= newSpriteSheetWidth * newSpriteSheetHeight) continue;
 				this.mset(i, j, newSpriteIndex);
@@ -285,8 +285,8 @@ FastCanvasRenderer.prototype = {
 		var destX = x;
 		var destY = y;
 
-		var sourceX = ssx(n) * this.cellsizeX;
-		var sourceY = ssy(n) * this.cellsizeY;
+		var sourceX = ssx(n,this.spriteSheetSizeX,this.spriteSheetSizeY) * this.cellsizeX;
+		var sourceY = ssy(n,this.spriteSheetSizeX,this.spriteSheetSizeY) * this.cellsizeY;
 
 		// Clip lower
 		if(destX < this.clipRect.x0){

@@ -154,7 +154,7 @@ Editor.prototype = {
 		try {
 			settings = JSON.parse(localStorage.getItem('cartridgeEditor'));
 		} catch(err){}
-		if(Editor.modes.indexOf(settings.mode) !== -1){
+		if(settings && Editor.modes.indexOf(settings.mode) !== -1){
 			this.mode = settings.mode;
 		}
 	}

@@ -14,7 +14,7 @@ Renderer.prototype = {
 	clip: function(x,y,w,h){},
 	camera: function(x,y){},
 	print: function(text, x, y, col){},
-	mget: function(x, y){},
+	mget: function(x, y){ return 0; },
 	mset: function(x, y, i){},
 	cls: function(x, y, i){},
 	setColorTransparent: function(color, isTransparent){},
