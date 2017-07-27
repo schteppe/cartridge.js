@@ -87,7 +87,7 @@ function editorSave(destination){
 
 function editorLoad2(source, callback){
 	callback = callback || function(){};
-	if(source.indexOf('.json') !== -1){
+	if(typeof(source) === 'string' && source.indexOf('.json') !== -1){
 		utils.loadJsonFromUrl(source,function(err,json){
 			if(json){
 				load(json);
