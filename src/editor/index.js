@@ -2058,7 +2058,7 @@ var query = utils.parseQueryVariables(window.location.search, {
 cartridge({
 	containerId: 'container',
 	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
-	responsive: query.responsive !== undefined ? query.responsive : utils.isMobile()
+	responsive: query.responsive !== undefined ? query.responsive : false
 });
 
 run();
