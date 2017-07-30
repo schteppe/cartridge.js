@@ -23,7 +23,10 @@ function Renderer(options){
 }
 Renderer.prototype = {
 	render: function(){},
-	resize: function(){},
+	resize: function(w,h){
+		this.screensizeX = w;
+		this.screensizeY = h;
+	},
 	setPalette: function(p){
 		this.palette = p.slice(0);
 		// Check spritesheet for invalid colors
@@ -41,6 +44,8 @@ Renderer.prototype = {
 	rectfill: function(){},
 	pset: function(col,x,y){},
 	pget: function(x,y){},
+	sset: function(col,x,y){},
+	sget: function(x,y){ return 0; },
 	clip: function(x,y,w,h){
 		this.clipRect.set(x,y,w,h);
 	},
@@ -58,4 +63,13 @@ Renderer.prototype = {
 	getColorTransparent: function(color){
 		return this.transparentColors[color];
 	},
+	setCellSize: function(newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight){
+		this.cellsizeX = newCellWidth;
+		this.cellsizeY = newCellHeight;
+		this.spriteSheetSizeX = newSpriteSheetWidth;
+		this.spriteSheetSizeY = newSpriteSheetHeight;
+	},
+	map: function(){},
+	spr: function(){},
+	spr2: function(){},
 };

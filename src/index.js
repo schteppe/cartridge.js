@@ -8,6 +8,7 @@ var code = require('./code');
 var music = require('./music');
 var Rectangle = require('./Rectangle');
 var FastCanvasRenderer = require('./FastCanvasRenderer');
+var CanvasRenderer = require('./CanvasRenderer');
 
 var container;
 var spriteFlags;
@@ -208,8 +209,7 @@ exports.width = function(newWidth){
 			// unchanged
 			return;
 		}
-		renderer.screensizeX = newWidth;
-		renderer.resizeCanvases();
+		renderer.resize(newWidth, renderer.screensizeY);
 		resizeHandler();
 	}
 	return renderer.screensizeX;
@@ -223,8 +223,7 @@ exports.height = function(newHeight){
 			// unchanged
 			return;
 		}
-		renderer.screensizeY = newHeight;
-		renderer.resizeCanvases();
+		renderer.resize(renderer.screensizeX, newHeight);
 		resizeHandler();
 	}
 	return renderer.screensizeY;

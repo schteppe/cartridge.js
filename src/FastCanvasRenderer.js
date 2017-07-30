@@ -106,11 +106,7 @@ Object.assign(FastCanvasRenderer.prototype, {
 			}
 		}
 
-		this.cellsizeX = newCellWidth;
-		this.cellsizeY = newCellHeight;
-
-		this.spriteSheetSizeX = newSpriteSheetWidth;
-		this.spriteSheetSizeY = newSpriteSheetHeight;
+		Renderer.prototype.setCellSize.call(this, newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight);
 
 		// (re)init spritesheet canvas
 		this.spriteSheetCanvas = utils.createCanvas(this.spriteSheetSizeX * this.cellsizeX, this.spriteSheetSizeY * this.cellsizeY);
@@ -156,7 +152,8 @@ Object.assign(FastCanvasRenderer.prototype, {
 		fastFont.changePalette(this.paletteHex);
 		this.spriteSheetDirtyRect.set(0,0,this.spriteSheetCanvas.width,this.spriteSheetCanvas.height);
 	},
-	resizeCanvases: function(){
+	resize: function(x,y){
+		Renderer.prototype.resize.call(this,x,y);
 		this.domElement.width = this.screensizeX;
 		this.domElement.height = this.screensizeY;
 		pixelops.resize(this.domElement);
