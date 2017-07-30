@@ -12,20 +12,10 @@ module.exports = FastCanvasRenderer;
  */
 function FastCanvasRenderer(container, options){
 	options = options || {};
-
-	this.cellsizeX = options.cellsizeX !== undefined ? options.cellsizeX : 8; // pixels
-	this.cellsizeY = options.cellsizeY !== undefined ? options.cellsizeY : 8; // pixels
-	this.screensizeX = options.screensizeX !== undefined ? options.screensizeX : 128; // pixels
-	this.screensizeY = options.screensizeY !== undefined ? options.screensizeY : 128; // pixels
-	this.mapSizeX = options.mapSizeX !== undefined ? options.mapSizeX : 128; // cells
-	this.mapSizeY = options.mapSizeY !== undefined ? options.mapSizeY : 32; // cells
-	this.spriteSheetSizeX = options.spriteSheetSizeX !== undefined ? options.spriteSheetSizeX : 16; // sprites
-	this.spriteSheetSizeY = options.spriteSheetSizeY !== undefined ? options.spriteSheetSizeY : 16; // sprites
-	this.paletteSize = options.paletteSize !== undefined ? options.paletteSize : 16; // colors
+	Renderer.call(this, options);
 
 	// DOM elements
 	this.container = container;
-	this.canvases = [];
 
 	this.mapData = utils.zeros(this.mapSizeX * this.mapSizeY);
 	this.mapDataDirty = utils.zeros(this.mapSizeX * this.mapSizeY); // dirtiness per cell
@@ -36,38 +26,21 @@ function FastCanvasRenderer(container, options){
 	this.spriteSheetContext;
 	this.spriteSheetDirtyRect = new Rectangle();
 	this.spriteSheetPixels;
-	this.camX = 0;
-	this.camY = 0;
-	this.palette = options.palette ? options.palette.slice(0) : [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 	this.paletteHex;
-	this.transparentColors = utils.zeros(this.paletteSize).map(function(){ return false; });
-	this.transparentColors[0] = true;
 
-	var numCanvases = 1;
-	var html = '';
-	for(var i=0; i<numCanvases; i++){
-		html += '<canvas class="cartridgeCanvas" id="cartridgeCanvas'+i+'" width="' + this.screensizeX + '" height="' + this.screensizeY + '"' + (i === 0 ? ' moz-opaque' : '') + '></canvas>';
-	}
+	var html = '<canvas class="cartridgeCanvas" id="cartridgeCanvas0" width="' + this.screensizeX + '" height="' + this.screensizeY + '" moz-opaque></canvas>';
 	container.innerHTML = html;
+	var c = document.getElementById('cartridgeCanvas0');
+	c.oncontextmenu = function(){ return false; };
+	c.style.position = 'absolute';
+	utils.disableImageSmoothing(c.getContext('2d'));
 
-	for(var i=0; i<numCanvases; i++){
-		var c = document.getElementById('cartridgeCanvas' + i);
-		c.oncontextmenu = function(){
-			return false;
-		};
-		this.canvases.push(c);
-		if(i !== 0){
-			c.style.pointerEvents = 'none';
-		}
-		c.style.position = 'absolute';
-		utils.disableImageSmoothing(c.getContext('2d'));
-	}
-	this.domElement = this.canvases[0];
+	this.domElement = c;
 	this.ctx = this.domElement.getContext('2d');
 	this.setCellSize(this.cellsizeX, this.cellsizeY, this.spriteSheetSizeX, this.spriteSheetSizeY);
 	this.setPalette(this.palette);
 
-	pixelops.init(this.canvases[0]); // todo: support multiple
+	pixelops.init(c); // todo: support multiple
 
 	// Add style tag
 	var style = document.createElement('style');
@@ -82,10 +55,9 @@ function FastCanvasRenderer(container, options){
 
 	// Init font
 	font.init(this.paletteHex);
-	this.clipRect = new Rectangle();
-	this.clip(0,0,this.screensizeX,this.screensizeY);
 }
-FastCanvasRenderer.prototype = {
+FastCanvasRenderer.prototype = Object.create(Renderer.prototype);
+Object.assign(FastCanvasRenderer.prototype, {
 	clearMapCacheCanvas: function(){
 		this.mapCacheContext.clearRect(0, 0, this.cellsizeX*this.mapSizeX, this.cellsizeY*this.mapSizeY);
 	},
@@ -187,27 +159,16 @@ FastCanvasRenderer.prototype = {
 		this.spriteSheetDirtyRect.set();
 	},
 	setPalette: function(p){
-		this.palette = p.slice(0);
+		Renderer.prototype.setPalette.call(this, p);
 		this.paletteHex = this.palette.map(colors.int2hex);
 		this.mapDirty = true;
 		font.changePalette(this.paletteHex);
-
-		// Check spritesheet for invalid colors
-		for(var i=0; i<this.spriteSheetSizeX*this.cellsizeX; i++){
-			for(var j=0; j<this.spriteSheetSizeY*this.cellsizeY; j++){
-				if(this.sget(i,j) >= p.length){
-					this.sset(i,j,0); // Just set it to empty
-				}
-			}
-		}
 		this.spriteSheetDirtyRect.set(0,0,this.spriteSheetCanvas.width,this.spriteSheetCanvas.height);
 	},
 	resizeCanvases: function(){
-		for(var i=0; i < this.canvases.length; i++){
-			this.canvases[i].width = this.screensizeX;
-			this.canvases[i].height = this.screensizeY;
-		}
-		pixelops.resize(this.canvases[0]);
+		this.domElement.width = this.screensizeX;
+		this.domElement.height = this.screensizeY;
+		pixelops.resize(this.domElement);
 
 		// Reset clip state
 		this.clip(0,0,this.screensizeX,this.screensizeY);
@@ -365,9 +326,6 @@ FastCanvasRenderer.prototype = {
 		this.ctx.fillStyle = this.paletteHex[col];
 		this.ctx.fillRect(x0, y0, x1-x0+1, y1-y0+1);
 	},
-	clip: function(x,y,w,h){
-		this.clipRect.set(x,y,w,h);
-	},
 	camera: function(x,y){
 		pixelops.beforeChange();
 		this.ctx.translate(x - this.camX, y - this.camY);
@@ -403,7 +361,7 @@ FastCanvasRenderer.prototype = {
 		var w = this.spriteSheetSizeX * this.cellsizeX;
 		return this.spriteSheetPixels[y * w + x];
 	},
-};
+});
 
 function ssx(n,sizeX,sizeY){
 	return n % sizeX;
