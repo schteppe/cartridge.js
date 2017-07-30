@@ -26,8 +26,6 @@ function FastCanvasRenderer(options){
 	this.paletteHex = null;
 
 	var canvas = this.domElement = document.createElement('canvas');
-	canvas.setAttribute("class", "cartridgeCanvas");
-	canvas.setAttribute("id", "cartridgeCanvas0");
 	canvas.width = this.screensizeX;
 	canvas.height = this.screensizeY;
 	canvas.setAttribute("moz-opaque", "");
