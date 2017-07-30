@@ -277,7 +277,11 @@ function initChannels(){
 	}
 }
 
+var channelsStarted = false;
 function startChannels(time){
+	if(channelsStarted) return;
+
+	channelsStarted = true;
 	channels.forEach(function(channel){
 		for(var instrumentName in channel.oscillators){
 			var oscillator = channel.oscillators[instrumentName];

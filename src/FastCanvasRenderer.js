@@ -229,9 +229,9 @@ FastCanvasRenderer.prototype = {
 		var x1 = sx + cel_w * cellwidth();
 		var y0 = sy;
 		var y1 = sy + cel_h * cellheight();
-		if(this.clipRect.excludesRect(x0,y0,x1,y1)){
+		/*if(this.clipRect.excludesRect(x0,y0,x1,y1)){
 			return; // fully outside the clip area
-		}
+		}*/
 
 		// Update invalidated map cache
 		if(this.mapDirty){
@@ -287,7 +287,7 @@ FastCanvasRenderer.prototype = {
 
 		var sourceX = ssx(n,this.spriteSheetSizeX,this.spriteSheetSizeY) * this.cellsizeX;
 		var sourceY = ssy(n,this.spriteSheetSizeX,this.spriteSheetSizeY) * this.cellsizeY;
-
+/*
 		// Clip lower
 		if(destX < this.clipRect.x0){
 			sourceX = sourceX + this.clipRect.x0 - destX;
@@ -296,7 +296,7 @@ FastCanvasRenderer.prototype = {
 		if(destY < this.clipRect.y0){
 			sourceY = sourceY + this.clipRect.y0 - destY;
 			destY = this.clipRect.y0;
-		}
+		}*/
 
 		// TODO: clip upper
 
@@ -391,7 +391,7 @@ FastCanvasRenderer.prototype = {
 		y = y | 0;
 		col = col | 0;
 
-		if(this.clipRect.excludesPoint(x,y)) return;
+		//if(this.clipRect.excludesPoint(x,y)) return;
 
 		// new style
 		var dec = this.palette[col];

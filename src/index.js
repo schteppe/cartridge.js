@@ -23,6 +23,7 @@ var responsiveRect = new Rectangle(0,0,128,128);
 var gameTitle = 'game';
 var renderer;
 var soundFixed = false;
+var resizeHandler;
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
@@ -48,7 +49,7 @@ exports.cartridge = function(options){
 
 	if(autoFit){
 		// Resize (fit) the canvas when the container changes size
-		var resizeHandler = function(){
+		resizeHandler = function(){
 			fit(pixelPerfectMode, responsive);
 		};
 		resizeHandler();
@@ -111,7 +112,7 @@ exports.cartridge = function(options){
 	}
 	requestAnimationFrame(render);
 
-	utils.iosAudioFix(canvases[0], function(){
+	utils.iosAudioFix(renderer.domElement, function(){
 		// restart sound nodes here
 		sfx.iosFix();
 		music.iosFix();
@@ -207,6 +208,7 @@ exports.width = function(newWidth){
 		}
 		renderer.screensizeX = newWidth;
 		renderer.resizeCanvases();
+		resizeHandler();
 	}
 	return renderer.screensizeX;
 };
@@ -220,7 +222,8 @@ exports.height = function(newHeight){
 			return;
 		}
 		renderer.screensizeY = newHeight;
-		resizeCanvases();
+		renderer.resizeCanvases();
+		resizeHandler();
 	}
 	return renderer.screensizeY;
 };
@@ -232,7 +235,7 @@ exports.cellwidth = function(newCellWidth){
 			// unchanged
 			return;
 		}
-		setCellSize(newCellWidth, renderer.cellsizeY, spriteSheetSizeX, spriteSheetSizeY);
+		setCellSize(newCellWidth, renderer.cellsizeY, renderer.spriteSheetSizeX, renderer.spriteSheetSizeY);
 	} else {
 		return renderer.cellsizeX;
 	}
@@ -245,7 +248,7 @@ exports.cellheight = function(newCellHeight){
 			// unchanged
 			return;
 		}
-		setCellSize(renderer.cellsizeX, newCellHeight, spriteSheetSizeX, spriteSheetSizeY);
+		setCellSize(renderer.cellsizeX, newCellHeight, renderer.spriteSheetSizeX, renderer.spriteSheetSizeY);
 	} else {
 		return renderer.cellsizeY;
 	}
@@ -327,17 +330,17 @@ exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h){
 
 // Returns the sprite X position in the spritesheet
 function ssx(n){
-	return n % spriteSheetSizeX;
+	return n % renderer.spriteSheetSizeX;
 }
 
 // Returns the sprite Y position in the spritesheet
 function ssy(n){
-	return Math.floor(n / spriteSheetSizeX) % (spriteSheetSizeX * spriteSheetSizeY);
+	return Math.floor(n / renderer.spriteSheetSizeX) % (renderer.spriteSheetSizeX * renderer.spriteSheetSizeY);
 }
 
 // Render a sprite at position X,Y in the sprite sheet
 exports.spr2 = function(nx, ny, x, y, w, h, flip_x, flip_y){
-	var n = ny * spriteSheetSizeX + nx;
+	var n = ny * renderer.spriteSheetSizeX + nx;
 	return spr(n, x, y, w, h, flip_x, flip_y);
 };
 
@@ -514,7 +517,7 @@ exports.load = function(key){
 		if(typeof(_load) === 'function'){
 			runUserFunction(_load);
 		}
-	}
+	};
 
 	if(typeof(key) === 'object'){
 		loadJSON(key, done);
@@ -538,8 +541,10 @@ exports.load = function(key){
 			}
 			if(data){
 				loadJSON(data, done);
+				return true;
 			} else {
 				done();
+				return false;
 			}
 		}
 	}

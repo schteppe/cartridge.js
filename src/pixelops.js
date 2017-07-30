@@ -32,7 +32,7 @@ exports.beforeChange = function(){
 };
 
 exports.pset = function(x,y,r,g,b){
-	if(x >= width || y >= height) throw new Error("Pixel coordinate out of bounds.");
+	if(x >= width || y >= height) return false; // Pixel coordinate out of bounds
 	var p = (y * width + x) * 4;
 	var data = writeData.data;
 	data[p + 0] = r;
