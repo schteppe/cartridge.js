@@ -134,7 +134,7 @@ exports.createCanvas = function(w,h,pixelSmoothing){
 	}
 
 	return canvas;
-}
+};
 
 exports.createCanvasFromAscii = function(asciiArray, charToColorMap){
 	var width = asciiArray[0].length;

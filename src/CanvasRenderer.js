@@ -1,6 +1,7 @@
 module.exports = CanvasRenderer;
 
 var utils = require('./utils');
+var font = require('./font');
 var Renderer = require('./Renderer');
 
 /**
@@ -73,6 +74,7 @@ Object.assign(CanvasRenderer.prototype, {
 				this.pset(x,y,col); // TODO: optimize
 	},
 	pset: function(x,y,col){
+		if(x < 0 || y < 0 || x >= this.screensizeX || y >= this.screensizeY) return;
 		var aligned = (x % 2 === 0);
 		if(!aligned) x--;
 		var offset = x/2 + this.screensizeX/2 * y;
@@ -90,7 +92,48 @@ Object.assign(CanvasRenderer.prototype, {
 		var pixel = this.screenData[offset];
 		return aligned ? (0x0f & pixel) : ((0xf0 & pixel) >> 4);
 	},
-	print: function(text, x, y, col){},
+	print: function(text, x, y, col){
+		if(Array.isArray(text)){
+			for(var i=0; i<text.length; i++){
+				this.print(text[i], x, y + (font.fontY + 1) * i, col);
+			}
+			return;
+		}
+		text = text.toString().toUpperCase();
+		var position = 0;
+		for(var i=0; i<text.length; i++){
+			var index = font.chars.indexOf(text[i]);
+			if(index !== -1){
+				this.printAsciiChar(
+					font.asciiChars,
+					col,
+					index * font.fontX, 0,
+					font.fontX, font.fontY,
+					x + font.fontX * position, y
+				);
+			} else if((index = font.specialChars.indexOf(text[i])) !== -1){
+				this.printAsciiChar(
+					font.asciiSpecialChars,
+					col,
+					index * font.fontX * 2, 0,
+					2 * font.fontX, font.fontY,
+					x + font.fontX * position, y
+				);
+				position++;
+			}
+			position++;
+		}
+	},
+	printAsciiChar: function(asciiArray, color, sourceX, sourceY, width, height, destX, destY){
+		for(var i=0; i<height; i++){
+			for(var j=0; j<width; j++){
+				var c = asciiArray[i+sourceY][j+sourceX];
+				if(c === '#'){
+					this.pset(destX+j,destY+i,color);
+				}
+			}
+		}
+	},
 	mget: function(x, y){
 		return this.mapData[x + this.mapSizeX * y];
 	},
