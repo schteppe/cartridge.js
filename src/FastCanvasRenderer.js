@@ -186,7 +186,6 @@ FastCanvasRenderer.prototype = {
 		this.spriteSheetContext.putImageData(imageData, this.spriteSheetDirtyRect.x0, this.spriteSheetDirtyRect.y0);
 		this.spriteSheetDirtyRect.set();
 	},
-
 	setPalette: function(p){
 		this.palette = p.slice(0);
 		this.paletteHex = this.palette.map(colors.int2hex);

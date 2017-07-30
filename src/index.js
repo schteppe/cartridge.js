@@ -177,7 +177,7 @@ function setCellSize(
 }
 
 exports.palset = function(n, hexColor){
-	var newPalette = palette.slice(0);
+	var newPalette = renderer.palette.slice(0);
 
 	if(hexColor === undefined){
 		newPalette[n] = colors.defaultPalette()[n] || 0;
