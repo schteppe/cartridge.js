@@ -2886,19 +2886,19 @@ exports.removeTrailingZeros = function(arr){
 
 // iOS audio fix, to allow playing sounds from the first touch
 exports.iosAudioFix = function(element, callback){
-	var isUnlocked = false;
-	element.ontouchend = function(){
-		if(isUnlocked) return;
+	var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+	if(iOS){
+		var isUnlocked = false;
+		element.ontouchend = function(){
+			console.log('ontouchend')
+			if(isUnlocked) return;
 
+			isUnlocked = true;
+			if(callback) callback();
+		};
+	} else {
 		if(callback) callback();
-
-		// by checking the play state after some time, we know if we're really unlocked
-		setTimeout(function() {
-			if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
-				isUnlocked = true;
-			}
-		}, 0);
-	};
+	}
 };
 
 exports.values = function(obj){
