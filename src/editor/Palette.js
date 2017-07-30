@@ -61,8 +61,8 @@ Object.assign(Palette.prototype, {
 				var rh = y+(j+1)*sy-1;
 				if(n=== 0){
 					// transparent
-					for(var x1=rx; x1<rx+rw; x1++){
-						for(var y1=ry; y1<ry+rh; y1++){
+					for(var x1=rx; x1<=rw; x1++){
+						for(var y1=ry; y1<=rh; y1++){
 							pset(x1,y1,(x1+y1)%2 ? 6 : 7);
 						}
 					}
