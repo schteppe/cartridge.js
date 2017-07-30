@@ -18,7 +18,7 @@ var query = utils.parseQueryVariables(window.location.search, {
 cartridge({
 	containerId: 'container',
 	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
-	responsive: query.responsive !== undefined ? query.responsive : utils.isMobile()
+	responsive: query.responsive !== undefined ? query.responsive : false
 });
 
 var sprites = {
@@ -2060,18 +2060,6 @@ document.addEventListener('copy', function(e){
 		e.preventDefault();
 		break;
 	}
-});
-
-var query = utils.parseQueryVariables(window.location.search, {
-	pixel_perfect: 'i',
-	run: 'b',
-	responsive: 'b',
-	file: 's'
-});
-cartridge({
-	containerId: 'container',
-	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
-	responsive: query.responsive !== undefined ? query.responsive : false
 });
 
 window._load = function(){
