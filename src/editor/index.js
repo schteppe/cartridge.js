@@ -75,7 +75,8 @@ function editorSave(destination){
 
 function editorLoad2(source, callback){
 	callback = callback || function(){};
-	if(source.indexOf('.json') !== -1){
+
+	if(typeof(source) === 'string' && source.indexOf('.json') !== -1){
 		utils.loadJsonFromUrl(source,function(err,json){
 			if(json){
 				load(json);
@@ -85,7 +86,8 @@ function editorLoad2(source, callback){
 			}
 		});
 	} else {
-		callback(load(source));
+		var result = load(source);
+		callback(result);
 	}
 }
 
@@ -2061,13 +2063,6 @@ cartridge({
 	responsive: query.responsive !== undefined ? query.responsive : false
 });
 
-run();
-
-if(query.file){
-	editor.loading = true;
-	editorLoad2(query.file);
-}
-
 window._load = function(){
 	editor.loading = false;
 	code.syntaxTreeDirty = true;
@@ -2081,6 +2076,13 @@ window._load = function(){
 	}
 	editor.dirty = true;
 };
+
+run();
+
+if(query.file){
+	editor.loading = true;
+	editorLoad2(query.file);
+}
 
 function spriteToDataURL(spriteX, spriteY, scale, mimetype, totalWidth, totalHeight){
 	totalWidth = totalWidth === undefined ? cellwidth()*scale : totalWidth;
