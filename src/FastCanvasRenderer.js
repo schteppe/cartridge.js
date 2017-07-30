@@ -32,6 +32,11 @@ function FastCanvasRenderer(options){
 	canvas.height = this.screensizeY;
 	canvas.setAttribute("moz-opaque", "");
 	canvas.oncontextmenu = function(){ return false; };
+	canvas.setAttribute("style",
+		"image-rendering: -moz-crisp-edges;" +
+		"image-rendering: -webkit-crisp-edges;" +
+		"image-rendering: pixelated;"
+	);
 	canvas.style.position = 'absolute';
 
 	var ctx = this.ctx = canvas.getContext('2d');
@@ -41,17 +46,6 @@ function FastCanvasRenderer(options){
 	this.setPalette(this.palette);
 
 	pixelops.init(canvas); // todo: support multiple
-
-	// Add style tag
-	var style = document.createElement('style');
-	style.innerHTML = [
-		".cartridgeCanvas {",
-		"image-rendering: -moz-crisp-edges;",
-		"image-rendering: -webkit-crisp-edges;",
-		"image-rendering: pixelated;",
-		"}"
-	].join('\n');
-	document.getElementsByTagName('head')[0].appendChild(style);
 
 	// Init font
 	font.init(this.paletteHex);
