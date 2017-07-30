@@ -44,6 +44,7 @@ exports.cartridge = function(options){
 		palette: colors.defaultPalette()
 	});
 	container.appendChild(renderer.domElement);
+	renderer.domElement.style.position = 'absolute';
 
 	input.init([renderer.domElement]);
 	mouse.init([renderer.domElement]);

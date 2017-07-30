@@ -1,9 +1,9 @@
 var pixelops = require('./pixelops');
 var utils = require('./utils');
-var font = require('./font');
 var Rectangle = require('./Rectangle');
 var Renderer = require('./Renderer');
 var colors = require('./colors');
+var font = require('./font');
 
 module.exports = FastCanvasRenderer;
 
@@ -35,7 +35,6 @@ function FastCanvasRenderer(options){
 		"image-rendering: -webkit-crisp-edges;" +
 		"image-rendering: pixelated;"
 	);
-	canvas.style.position = 'absolute';
 
 	var ctx = this.ctx = canvas.getContext('2d');
 	utils.disableImageSmoothing(ctx);
@@ -46,7 +45,7 @@ function FastCanvasRenderer(options){
 	pixelops.init(canvas); // todo: support multiple
 
 	// Init font
-	font.init(this.paletteHex);
+	fastFont.init(this.paletteHex);
 }
 FastCanvasRenderer.prototype = Object.create(Renderer.prototype);
 Object.assign(FastCanvasRenderer.prototype, {
@@ -154,7 +153,7 @@ Object.assign(FastCanvasRenderer.prototype, {
 		Renderer.prototype.setPalette.call(this, p);
 		this.paletteHex = this.palette.map(colors.int2hex);
 		this.mapDirty = true;
-		font.changePalette(this.paletteHex);
+		fastFont.changePalette(this.paletteHex);
 		this.spriteSheetDirtyRect.set(0,0,this.spriteSheetCanvas.width,this.spriteSheetCanvas.height);
 	},
 	resizeCanvases: function(){
@@ -288,7 +287,7 @@ Object.assign(FastCanvasRenderer.prototype, {
 			}
 			return;
 		}
-		font.draw(this.ctx, text.toString().toUpperCase(), x, y, col);
+		fastFont.draw(this.ctx, text.toString().toUpperCase(), x, y, col);
 	},
 	mget: function(x, y){
 		return this.mapData[y * this.mapSizeX + x];
@@ -353,3 +352,76 @@ function ssx(n,sizeX,sizeY){
 function ssy(n,sizeX,sizeY){
 	return Math.floor(n / sizeX) % (sizeX * sizeY);
 }
+
+// TODO: make code nicer
+var fastFont = (function(){
+	var fastFont = {};
+
+	var coloredFontCanvases = [];
+	var coloredSpecialCharsCanvases = [];
+	var fontX = font.fontX;
+	var fontY = font.fontY;
+	var paletteHex = [];
+	var dirty = true; // Should redraw!
+
+	fastFont.init = function(palHex){
+		fastFont.changePalette(palHex);
+	};
+
+	fastFont.changePalette = function(palHex){
+		paletteHex = palHex.slice();
+		dirty = true;
+	};
+
+	function redrawCanvases(){
+		var backgroundColor = [0,0,0,0];
+		for(var i=0; i<paletteHex.length; i++){
+			var rgba = utils.hexToRgb(paletteHex[i]);
+			rgba[3] = 255;
+
+			var colorMap = {
+				'#': rgba,
+				' ': backgroundColor
+			};
+
+			// Normal font
+			coloredFontCanvases[i] = utils.createCanvasFromAscii(font.asciiChars, colorMap);
+
+			// Special chars
+			coloredSpecialCharsCanvases[i] = utils.createCanvasFromAscii(font.asciiSpecialChars, colorMap);
+		}
+	}
+
+	fastFont.draw = function(ctx, text, x, y, col){
+		if(dirty){
+			redrawCanvases();
+			dirty = false;
+		}
+
+		var position = 0;
+		for(var i=0; i<text.length; i++){
+			var index = font.chars.indexOf(text[i]);
+			if(index !== -1){
+				ctx.drawImage(
+					coloredFontCanvases[col],
+					index * fontX, 0,
+					fontX, fontY,
+					x + fontX * position, y,
+					fontX, fontY
+				);
+			} else if((index = font.specialChars.indexOf(text[i])) !== -1){
+				ctx.drawImage(
+					coloredSpecialCharsCanvases[col],
+					index * font.specialX, 0,
+					font.specialX, fontY,
+					x + fontX * position, y,
+					font.specialX, fontY
+				);
+				position++;
+			}
+			position++;
+		}
+	};
+
+	return fastFont;
+})();
