@@ -10,37 +10,37 @@ module.exports = FastCanvasRenderer;
 /**
  * Canvas renderer but with optimizations that makes it a little faster but more complex.
  */
-function FastCanvasRenderer(container, options){
+function FastCanvasRenderer(options){
 	options = options || {};
 	Renderer.call(this, options);
-
-	// DOM elements
-	this.container = container;
 
 	this.mapData = utils.zeros(this.mapSizeX * this.mapSizeY);
 	this.mapDataDirty = utils.zeros(this.mapSizeX * this.mapSizeY); // dirtiness per cell
 	this.mapDirty = true; // is all of the map dirty?
-	this.mapCacheCanvas;
-	this.mapCacheContext;
-	this.spriteSheetCanvas;
-	this.spriteSheetContext;
+	this.mapCacheCanvas = null;
+	this.mapCacheContext = null;
+	this.spriteSheetCanvas = null;
+	this.spriteSheetContext = null;
 	this.spriteSheetDirtyRect = new Rectangle();
-	this.spriteSheetPixels;
-	this.paletteHex;
+	this.spriteSheetPixels = null;
+	this.paletteHex = null;
 
-	var html = '<canvas class="cartridgeCanvas" id="cartridgeCanvas0" width="' + this.screensizeX + '" height="' + this.screensizeY + '" moz-opaque></canvas>';
-	container.innerHTML = html;
-	var c = document.getElementById('cartridgeCanvas0');
-	c.oncontextmenu = function(){ return false; };
-	c.style.position = 'absolute';
-	utils.disableImageSmoothing(c.getContext('2d'));
+	var canvas = this.domElement = document.createElement('canvas');
+	canvas.setAttribute("class", "cartridgeCanvas");
+	canvas.setAttribute("id", "cartridgeCanvas0");
+	canvas.width = this.screensizeX;
+	canvas.height = this.screensizeY;
+	canvas.setAttribute("moz-opaque", "");
+	canvas.oncontextmenu = function(){ return false; };
+	canvas.style.position = 'absolute';
 
-	this.domElement = c;
-	this.ctx = this.domElement.getContext('2d');
+	var ctx = this.ctx = canvas.getContext('2d');
+	utils.disableImageSmoothing(ctx);
+
 	this.setCellSize(this.cellsizeX, this.cellsizeY, this.spriteSheetSizeX, this.spriteSheetSizeY);
 	this.setPalette(this.palette);
 
-	pixelops.init(c); // todo: support multiple
+	pixelops.init(canvas); // todo: support multiple
 
 	// Add style tag
 	var style = document.createElement('style');
