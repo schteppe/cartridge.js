@@ -35,18 +35,27 @@ Renderer.prototype = {
 			}
 		}
 	},
-	palget: function(n){},
+	palget: function(n){
+		return this.palette[n];
+	},
 	rectfill: function(){},
 	pset: function(col,x,y){},
 	pget: function(x,y){},
 	clip: function(x,y,w,h){
 		this.clipRect.set(x,y,w,h);
 	},
-	camera: function(x,y){},
+	camera: function(x,y){
+		this.camX = x;
+		this.camY = y;
+	},
 	print: function(text, x, y, col){},
 	mget: function(x, y){ return 0; },
 	mset: function(x, y, i){},
 	cls: function(x, y, i){},
-	setColorTransparent: function(color, isTransparent){},
-	getColorTransparent: function(color){},
+	setColorTransparent: function(color, isTransparent){
+		this.transparentColors[color] = t;
+	},
+	getColorTransparent: function(color){
+		return this.transparentColors[color];
+	},
 };

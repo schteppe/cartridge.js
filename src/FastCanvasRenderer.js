@@ -308,18 +308,9 @@ Object.assign(FastCanvasRenderer.prototype, {
 	render: function(){
 		pixelops.flush();
 	},
-	palget: function(n){
-		return this.palette[n];
-	},
 	cls: function(){
 		pixelops.beforeChange();
 		this.ctx.clearRect(-this.camX,-this.camY,this.screensizeX,this.screensizeY);
-	},
-	setColorTransparent: function(color, isTransparent){
-		this.transparentColors[color] = t;
-	},
-	getColorTransparent: function(color){
-		return this.transparentColors[color];
 	},
 	rectfill: function(x0, y0, x1, y1, col){
 		pixelops.beforeChange();
@@ -329,8 +320,7 @@ Object.assign(FastCanvasRenderer.prototype, {
 	camera: function(x,y){
 		pixelops.beforeChange();
 		this.ctx.translate(x - this.camX, y - this.camY);
-		this.camX = x;
-		this.camY = y;
+		Renderer.prototype.camera.call(this, x, y);
 	},
 	pget: (function(){
 		var data = new Uint8Array(3);
