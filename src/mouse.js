@@ -67,21 +67,18 @@ function addListeners(canvases){
 		},
 		touchstart: function(evt){
 			evt.preventDefault();
-			evt.stopPropagation();
 			for(var i=0; i<evt.changedTouches.length; i++){
 				_touches[evt.changedTouches[i].identifier] = evt.changedTouches[i];
 			}
 		},
 		touchmove: function(evt){
 			evt.preventDefault();
-			evt.stopPropagation();
 			for(var i=0; i<evt.changedTouches.length; i++){
 				_touches[evt.changedTouches[i].identifier] = evt.changedTouches[i];
 			}
 		},
 		touchend: function(evt){
 			evt.preventDefault();
-			evt.stopPropagation();
 			for(var i=0; i<evt.changedTouches.length; i++){
 				delete _touches[evt.changedTouches[i].identifier];
 			}
