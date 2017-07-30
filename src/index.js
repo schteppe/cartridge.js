@@ -54,6 +54,7 @@ var autoFit = false;
 var responsive = false;
 var responsiveRect = new Rectangle(0,0,128,128);
 var gameTitle = 'game';
+var soundFixed = false;
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
@@ -100,12 +101,6 @@ exports.cartridge = function(options){
 	input.init(canvases);
 	mouse.init(canvases);
 	pixelops.init(canvases[0]); // todo: support multiple
-
-	utils.iosAudioFix(canvases[0], function(){
-		// restart sound nodes here
-		sfx.iosFix();
-		music.iosFix();
-	});
 
 	if(autoFit){
 		// Resize (fit) the canvas when the container changes size
@@ -171,6 +166,17 @@ exports.cartridge = function(options){
 
 	// Init font
 	font.init(paletteHex);
+
+	utils.iosAudioFix(canvases[0], function(){
+		// restart sound nodes here
+		sfx.iosFix();
+		music.iosFix();
+		soundFixed = true;
+
+		if(loaded && typeof(_sound) === 'function'){
+			runUserFunction(_sound);
+		}
+	});
 };
 
 exports.run = function(){
@@ -192,6 +198,11 @@ function runInit(){
 	loaded = true;
 	if(typeof(_init) === 'function'){
 		runUserFunction(_init);
+	}
+	if(soundFixed){
+		if(loaded && typeof(_sound) === 'function'){
+			runUserFunction(_sound);
+		}
 	}
 }
 function runKill(){
