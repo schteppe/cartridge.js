@@ -141,75 +141,82 @@ exports.mfget = function(pattern){
 	return patterns[pattern * 5 + 0];
 };
 
-// Create audio stuff
-// TODO: share with sfx - create a class?
-var context = sfx.getContext();
-var masterGain = sfx.getMasterGain();
 var channels = [];
-var oscillatorTypes = sfx.getOscillatorTypes();
 var allTypes = sfx.getAllOscillatorTypes();
-var cTime = context.currentTime;
-for(var j=0; j<4; j++){ // one for each channel in the music
-	var channel = {
-		instruments: {},
-		gains: {},
-		volumeMultipliers: {}
-	};
-	channels.push(channel);
+var oscillatorTypes = sfx.getOscillatorTypes();
 
-	// add 4 basic instruments and gains to channel
-	for(var i=0; i<oscillatorTypes.length; i++){
-		var osc = context.createOscillator();
-		var type = oscillatorTypes[i];
-		osc.type = type;
+// Create audio stuff
+function initChannels(){
+	// TODO: share with sfx - create a class?
+	var context = sfx.getContext();
+	var masterGain = sfx.getMasterGain();
+	var cTime = context.currentTime;
+	for(var j=0; j<4; j++){ // one for each channel in the music
+		var channel = {
+			instruments: {},
+			gains: {},
+			volumeMultipliers: {}
+		};
+		channels.push(channel);
 
+		// add 4 basic instruments and gains to channel
+		for(var i=0; i<oscillatorTypes.length; i++){
+			var osc = context.createOscillator();
+			var type = oscillatorTypes[i];
+			osc.type = type;
+
+			var gain = context.createGain();
+			gain.gain.value = 0;
+			gain.connect(masterGain);
+
+			osc.connect(gain);
+			channel.instruments[type] = osc;
+			channel.gains[type] = gain;
+			channel.volumeMultipliers[type] = 1 / sfx.rms[type];
+		}
+
+		// Add square25 / pulse
 		var gain = context.createGain();
 		gain.gain.value = 0;
 		gain.connect(masterGain);
+		var square25 = sfx.createPulse(gain);
+		channel.instruments.square25 = square25;
+		channel.gains.square25 = gain;
+		channel.volumeMultipliers.square25 = 1 / sfx.rms.square25;
 
-		osc.connect(gain);
-		channel.instruments[type] = osc;
-		channel.gains[type] = gain;
-		channel.volumeMultipliers[type] = 1 / sfx.rms[type];
-		osc.start(cTime);
+		// Add white noise
+		gain = context.createGain();
+		gain.gain.value = 0;
+		gain.connect(masterGain);
+		var whiteNoise = sfx.createWhiteNoise(gain);
+		channel.instruments.white = whiteNoise;
+		channel.gains.white = gain;
+		channel.volumeMultipliers.white = 1 / sfx.rms.white;
 	}
+}
 
-	// Add square25 / pulse
-	var gain = context.createGain();
-	gain.gain.value = 0;
-	gain.connect(masterGain);
-	var square25 = sfx.createPulse(gain);
-	channel.instruments.square25 = square25;
-	channel.gains.square25 = gain;
-	channel.volumeMultipliers.square25 = 1 / sfx.rms.square25;
-	square25.start(cTime);
-
-	// Add white noise
-	gain = context.createGain();
-	gain.gain.value = 0;
-	gain.connect(masterGain);
-	var whiteNoise = sfx.createWhiteNoise(gain);
-	channel.instruments.white = whiteNoise;
-	channel.gains.white = gain;
-	channel.volumeMultipliers.white = 1 / sfx.rms.white;
-	whiteNoise.start(cTime);
+function startChannels(time){
+	channels.forEach(function(channel){
+		for(var instrumentName in channel.instruments){
+			var oscillator = channel.instruments[instrumentName];
+			oscillator.start(time);
+		}
+	});
 }
 
 exports.iosFix = function(){
-	channels.forEach(function(channel){
-		for(var instrumentName in channel.instruments){
-			try {
-				channel.instruments[instrumentName].start(context.currentTime);
-			} catch(err){
-				console.error(err);
-			}
-		}
-	});
+	initChannels();
+	var time = sfx.getContext().currentTime;
+	try {
+		startChannels(time);
+	} catch(err){
+		console.error(err);
+	}
 };
 
 // preview play a group
 exports.group = function(groupIndex, channelIndex){
-	scheduleGroup(groupIndex, channelIndex||0, context.currentTime);
+	scheduleGroup(groupIndex, channelIndex||0, sfx.getContext().currentTime);
 };
 
 function scheduleGroup(groupIndex, channelIndex, time){
@@ -282,7 +289,7 @@ exports.music = function(patternIndex, fade, channelmask){
 		return;
 	}
 
-	var startTime = context.currentTime;
+	var startTime = sfx.getContext().currentTime;
 
 	playState.pattern = patternIndex;
 	playState.nextPattern = getNextPattern(patternIndex);
@@ -306,7 +313,7 @@ function stop(fade){
 	playState.pattern = -1;
 	playState.nextPattern = -1;
 
-	var currentTime = context.currentTime;
+	var currentTime = sfx.getContext().currentTime;
 	for(var channelIndex=0; channelIndex<channels.length; channelIndex++){
 		var channel = channels[channelIndex];
 		for(var i=0; i<allTypes.length; i++){

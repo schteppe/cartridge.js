@@ -2,6 +2,8 @@ var utils = require('./utils');
 var DFT = require('dsp.js/dsp').DFT;
 var aWeight = require('a-weighting/a');
 
+var context, masterGain;
+
 var defaultSpeed = 16;
 var minFrequency = 0;
 var maxFrequency = 1000;
@@ -9,16 +11,20 @@ var maxEffects = 64;
 var channels = [];
 var effects = [];
 
-var context = new createAudioContext();
-var masterGain = context.createGain();
-masterGain.gain.value = 0.1;
-masterGain.connect(context.destination);
-
-exports.getContext = function(){
+var getContext = exports.getContext = function(){
+	if(!context){
+		context = new createAudioContext();
+		masterGain = context.createGain();
+		masterGain.gain.value = 0.1;
+		masterGain.connect(context.destination);
+	}
 	return context;
 };
 
 exports.getMasterGain = function(){
+	if(!masterGain){
+		getContext();
+	}
 	return masterGain;
 };
 
@@ -84,7 +90,7 @@ function play(channel, types, frequencies, volumes, speed, offset){
 	}
 	if(endPosition === 0) return;
 
-	var currentTime = context.currentTime;
+	var currentTime = getContext().currentTime;
 
 	var prevType = null;
 	for(j=offset; j<endPosition; j++){
@@ -149,7 +155,7 @@ exports.sfx = function(n, channelIndex, offset){
 		return false;
 	}
 
-	var contextTime = context.currentTime;
+	var contextTime = getContext().currentTime;
 	if(channelIndex === -1){
 		// Find good channel
 		for(var i=0; i<channels.length; i++){
@@ -159,7 +165,7 @@ exports.sfx = function(n, channelIndex, offset){
 				break;
 			}
 		}
-	} else if(channels[channelIndex].occupiedUntil >= contextTime){
+	} else if(!channels[channelIndex] || channels[channelIndex].occupiedUntil >= contextTime){
 		return false;
 	}
 
@@ -174,8 +180,9 @@ exports.sfx = function(n, channelIndex, offset){
 
 var whiteNoiseData = null;
 exports.createWhiteNoise = function(destination) {
-	var bufferSize = 2 * context.sampleRate,
-		noiseBuffer = context.createBuffer(1, bufferSize, context.sampleRate),
+	var ctx = getContext();
+	var bufferSize = 2 * ctx.sampleRate,
+		noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate),
 		output = noiseBuffer.getChannelData(0);
 
 	if(!whiteNoiseData){
@@ -187,7 +194,7 @@ exports.createWhiteNoise = function(destination) {
 
 	output.set(whiteNoiseData);
 
-	var whiteNoise = context.createBufferSource();
+	var whiteNoise = ctx.createBufferSource();
 	whiteNoise.buffer = noiseBuffer;
 	whiteNoise.loop = true;
 
@@ -199,6 +206,7 @@ exports.createWhiteNoise = function(destination) {
 var dft = null;
 var pulseWave = null;
 exports.createPulse = function(destination){
+	var ctx = getContext();
 	if(!dft){
 		var count = 128;
 		var vals2 = [];
@@ -212,73 +220,80 @@ exports.createPulse = function(destination){
 		dft.forward(vals2);
 
 		// DFT outputs Float64Array but only Float32Arrays are allowed in createPeriodicWave
-		pulseWave = context.createPeriodicWave(
+		pulseWave = ctx.createPeriodicWave(
 			new Float32Array(dft.real),
 			new Float32Array(dft.imag)
 		);
 	}
 
-	var osc = context.createOscillator();
+	var osc = ctx.createOscillator();
 	osc.setPeriodicWave(pulseWave);
 	osc.connect(destination);
 
 	return osc;
 };
 
+function initChannels(){
+	var ctx = getContext();
 
-for(var j=0; j<4; j++){
-	var channel = {
-		oscillators: {},
-		gains: {},
-		occupiedUntil: -1
-	};
-	channels.push(channel);
+	for(var j=0; j<4; j++){
+		var channel = {
+			oscillators: {},
+			gains: {},
+			occupiedUntil: -1
+		};
+		channels.push(channel);
 
-	// add 4 basic oscillators and gains to channel
-	for(var i=0; i<oscillatorTypes.length; i++){
-		var osc = context.createOscillator();
-		var type = oscillatorTypes[i];
-		osc.type = type;
+		// add 4 basic oscillators and gains to channel
+		for(var i=0; i<oscillatorTypes.length; i++){
+			var osc = ctx.createOscillator();
+			var type = oscillatorTypes[i];
+			osc.type = type;
 
-		var gain = context.createGain();
+			var gain = ctx.createGain();
+			gain.gain.value = 0.0001;
+			gain.connect(masterGain);
+
+			osc.connect(gain);
+			channel.oscillators[type] = osc;
+			channel.gains[type] = gain;
+		}
+
+		// Add square25 / pulse
+		var gain = ctx.createGain();
 		gain.gain.value = 0.0001;
 		gain.connect(masterGain);
+		var square25 = exports.createPulse(gain);
+		channel.oscillators.square25 = square25;
+		channel.gains.square25 = gain;
 
-		osc.connect(gain);
-		channel.oscillators[type] = osc;
-		channel.gains[type] = gain;
-		osc.start(context.currentTime);
+		// Add white noise
+		gain = ctx.createGain();
+		gain.gain.value = 0.0001;
+		gain.connect(masterGain);
+		var whiteNoise = exports.createWhiteNoise(gain);
+		channel.oscillators.white = whiteNoise;
+		channel.gains.white = gain;
 	}
+}
 
-	// Add square25 / pulse
-	var gain = context.createGain();
-	gain.gain.value = 0.0001;
-	gain.connect(masterGain);
-	var square25 = exports.createPulse(gain);
-	channel.oscillators.square25 = square25;
-	channel.gains.square25 = gain;
-	square25.start(context.currentTime);
-
-	// Add white noise
-	gain = context.createGain();
-	gain.gain.value = 0.0001;
-	gain.connect(masterGain);
-	var whiteNoise = exports.createWhiteNoise(gain);
-	channel.oscillators.white = whiteNoise;
-	channel.gains.white = gain;
-	whiteNoise.start(context.currentTime);
+function startChannels(time){
+	channels.forEach(function(channel){
+		for(var instrumentName in channel.oscillators){
+			var oscillator = channel.oscillators[instrumentName];
+			oscillator.start(time);
+		}
+	});
 }
 
 exports.iosFix = function(){
-	channels.forEach(function(channel){
-		try {
-			for(var instrumentName in channel.oscillators){
-				channel.oscillators[instrumentName].start(context.currentTime);
-			}
-		} catch(err){
-			console.error(err);
-		}
-	});
+	initChannels();
+	var time = getContext().currentTime;
+	try {
+		startChannels(time);
+	} catch(err){
+		console.error(err);
+	}
 };
 
 for(var i=0; i<maxEffects; i++){
@@ -289,7 +304,6 @@ for(var i=0; i<maxEffects; i++){
 		speed: defaultSpeed
 	});
 }
-
 
 exports.global = {
 	asset: exports.asset,

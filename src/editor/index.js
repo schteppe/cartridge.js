@@ -97,7 +97,8 @@ function editorLoad2(source, callback){
 			}
 		});
 	} else {
-		callback(load(source));
+		var result = load(source);
+		callback(result);
 	}
 }
 
@@ -2061,12 +2062,17 @@ document.addEventListener('copy', function(e){
 	}
 });
 
-run();
-
-if(query.file){
-	editor.loading = true;
-	editorLoad2(query.file);
-}
+var query = utils.parseQueryVariables(window.location.search, {
+	pixel_perfect: 'i',
+	run: 'b',
+	responsive: 'b',
+	file: 's'
+});
+cartridge({
+	containerId: 'container',
+	pixelPerfect: query.pixel_perfect !== undefined ? query.pixel_perfect : (utils.isMobile() ? 1 : 0),
+	responsive: query.responsive !== undefined ? query.responsive : false
+});
 
 window._load = function(){
 	editor.loading = false;
@@ -2082,14 +2088,23 @@ window._load = function(){
 	editor.dirty = true;
 };
 
-function spriteToDataURL(spriteX, spriteY, scale, mimetype){
+run();
+
+if(query.file){
+	editor.loading = true;
+	editorLoad2(query.file);
+}
+
+function spriteToDataURL(spriteX, spriteY, scale, mimetype, totalWidth, totalHeight){
+	totalWidth = totalWidth === undefined ? cellwidth()*scale : totalWidth;
+	totalHeight = totalHeight === undefined ? cellheight()*scale : totalHeight;
 	mimetype = mimetype || 'image/png';
 	scale = scale !== undefined ? scale : 1;
+
 	var canvas = document.createElement('canvas');
-	canvas.width = cellwidth()*scale;
-	canvas.height = cellheight()*scale;
+	canvas.width = totalWidth;
+	canvas.height = totalHeight;
 	var c = canvas.getContext('2d');
-	c.clearRect(0,0,cellwidth()*scale,cellheight()*scale); // needed?
 	var data = c.createImageData(cellwidth()*scale,cellheight()*scale);
 	for(var x=0; x<cellwidth(); x++){
 		for(var y=0; y<cellheight(); y++){
@@ -2110,6 +2125,8 @@ function spriteToDataURL(spriteX, spriteY, scale, mimetype){
 			}
 		}
 	}
+	/*c.fillStyle = 'red';
+	c.fillRect(0,0,totalWidth,totalHeight);*/
 	c.putImageData(data,0,0);
 	return canvas.toDataURL(mimetype);
 }
@@ -2124,7 +2141,9 @@ function exportHtml(engineUrl, callback){
 			if (xhr.status === 200) {
 
 				var scale = 4;
-				var iconUrl = spriteToDataURL(1,0,scale); // scale=4 enough?
+				var iconUrl = spriteToDataURL(1,0,scale,'image/png'); // scale=4 enough?
+				//var splashUrl = spriteToDataURL(1,0,scale,'image/png',320,480);
+				//var retinaSplashUrl = spriteToDataURL(1,0,scale,'image/png',640,960);
 				var manifest = 'data:application/manifest+json;base64,' + btoa(JSON.stringify({
 					display: "fullscreen",
 					orientation: "portrait"
@@ -2146,7 +2165,12 @@ function exportHtml(engineUrl, callback){
 					'	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
 					'	<link rel="icon" type="image/png" href="' + iconUrl + '" />',
 					'	<link rel="apple-touch-icon" href="' + iconUrl + '">',
+					// apple-touch-startup-image does not seem to work on any ios device :/
+					// Read more: https://gist.github.com/tfausak/2222823
+					/*'	<link rel="apple-touch-startup-image" href="' + splashUrl + '">',
+					'	<link rel="apple-touch-startup-image" sizes="640x960" href="' + retinaSplashUrl + '" />',*/
 					'	<link rel="manifest" href="' + manifest + '" />',
+					'	<meta name="apple-mobile-web-app-title" content="' + title() + '">',
 					'	<title>' + title() + '</title>',
 					'	<style>',
 					'	body, html {',
