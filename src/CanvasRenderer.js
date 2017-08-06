@@ -73,6 +73,8 @@ Object.assign(CanvasRenderer.prototype, {
 				this.pset(x,y,col); // TODO: optimize
 	},
 	pset: function(x,y,col){
+		x += this.camX;
+		y += this.camY;
 		if(this.clipRect.excludesPoint(x,y)) return;
 		bufferSet(x, y, col, this.screensizeX, this.screensizeY, this.screenData);
 	},
