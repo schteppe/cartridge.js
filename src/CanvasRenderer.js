@@ -56,7 +56,7 @@ Object.assign(CanvasRenderer.prototype, {
 		this.screenData = new Uint8Array(this.screensizeX * this.screensizeY / 2); // 4 bits per pixel (16 colors)
 	},
 	setPalette: function(p){
-		Renderer.prototype.setPalette(p);
+		Renderer.prototype.setPalette.call(this, p);
 
 		// Update color map
 		for(var i=0; i<16; i++){
@@ -139,7 +139,7 @@ Object.assign(CanvasRenderer.prototype, {
 			this.screenData[l] = 0;
 	},
 	setCellSize: function(newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight){
-		Renderer.prototype.setCellSize(newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight);
+		Renderer.prototype.setCellSize.call(this, newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight);
 		this.spriteSheetData = new Uint8Array(this.cellsizeX * this.spriteSheetSizeX * this.cellsizeY * this.spriteSheetSizeY / 2); // 4 bits per pixel (16 colors)
 	},
 	spr: function(n, x0, y0, w, h, flip_x, flip_y){
@@ -155,7 +155,9 @@ Object.assign(CanvasRenderer.prototype, {
 		for(var x=0; x < sourceSizeX; x++){
 			for(var y=0; y < sourceSizeY; y++){
 				var color = this.sget(sourceX + x, sourceY + y);
-				this.pset(destX + x, destY + y, color);
+				if(!this.getColorTransparent(color)){
+					this.pset(destX + x, destY + y, color);
+				}
 			}
 		}
 	}
