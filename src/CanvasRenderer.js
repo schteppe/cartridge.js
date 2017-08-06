@@ -12,7 +12,6 @@ function CanvasRenderer(options){
 	Renderer.call(this, options);
 
 	this.mapData = new Uint16Array(this.mapSizeX * this.mapSizeY); // max 65535 sprites referenced
-
 	this.color4ToColor32Map = new Uint32Array(16);
 
 	var canvas = this.domElement = document.createElement('canvas');
@@ -170,6 +169,28 @@ Object.assign(CanvasRenderer.prototype, {
 				if(!this.getColorTransparent(color)){
 					this.pset(destX + dirX * x, destY + dirY * y, color);
 				}
+			}
+		}
+	},
+	map: function(cel_x, cel_y, sx, sy, cel_w, cel_h){
+		var cw = this.cellsizeX;
+		var ch = this.cellsizeY;
+		var x0 = sx;
+		var x1 = sx + cel_w * cw;
+		var y0 = sy;
+		var y1 = sy + cel_h * ch;
+
+		if(this.clipRect.excludesRect(x0,y0,x1,y1)){
+			return; // fully outside the clip area
+		}
+
+		// TODO: only draw sprites overlapping the clipping area
+		for(var x=0; x<cel_w; x++){
+			for(var y=0; y<cel_h; y++){
+				var mx = cel_x + x;
+				var my = cel_y + y;
+				var spriteIndex = this.mget(mx, my);
+				this.spr(spriteIndex, sx + cw * mx, sy + ch * my, 1, 1, false, false);
 			}
 		}
 	}
