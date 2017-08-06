@@ -29,9 +29,6 @@ function CanvasRenderer(options){
 	var ctx = this.ctx = canvas.getContext('2d');
 	utils.disableImageSmoothing(ctx);
 
-	this.screenImageData = ctx.createImageData(this.screensizeX, this.screensizeY);
-	this.screenImageData32 = new Uint32Array(this.screenImageData.data.buffer);
-
 	this.resize(this.screensizeX, this.screensizeY);
 	this.setCellSize(this.cellsizeX, this.cellsizeY, this.spriteSheetSizeX, this.spriteSheetSizeY);
 	this.setPalette(this.palette);
@@ -53,6 +50,10 @@ Object.assign(CanvasRenderer.prototype, {
 	},
 	resize: function(w,h){
 		Renderer.prototype.resize.call(this, w, h);
+		this.domElement.width = this.screensizeX;
+		this.domElement.height = this.screensizeY;
+		this.screenImageData = this.ctx.createImageData(this.screensizeX, this.screensizeY);
+		this.screenImageData32 = new Uint32Array(this.screenImageData.data.buffer);
 		this.screenData = new Uint8Array(this.screensizeX * this.screensizeY / 2); // 4 bits per pixel (16 colors)
 	},
 	setPalette: function(p){

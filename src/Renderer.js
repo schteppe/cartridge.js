@@ -26,6 +26,9 @@ Renderer.prototype = {
 	resize: function(w,h){
 		this.screensizeX = w;
 		this.screensizeY = h;
+
+		// Reset clip state
+		this.clip(0,0,this.screensizeX,this.screensizeY);
 	},
 	setPalette: function(p){
 		this.palette = p.slice(0);

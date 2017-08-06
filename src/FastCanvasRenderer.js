@@ -157,9 +157,6 @@ Object.assign(FastCanvasRenderer.prototype, {
 		this.domElement.width = this.screensizeX;
 		this.domElement.height = this.screensizeY;
 		pixelops.resize(this.domElement);
-
-		// Reset clip state
-		this.clip(0,0,this.screensizeX,this.screensizeY);
 	},
 	map: function(cel_x, cel_y, sx, sy, cel_w, cel_h){
 		pixelops.beforeChange();
