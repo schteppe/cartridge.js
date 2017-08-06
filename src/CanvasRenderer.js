@@ -143,7 +143,7 @@ Object.assign(CanvasRenderer.prototype, {
 	cls: function(){
 		var l = this.screenData.length;
 		while(l--)
-			this.screenData[l] = 1;
+			this.screenData[l] = 0;
 	},
 	setColorTransparent: function(color, isTransparent){},
 	getColorTransparent: function(color){},

@@ -32,7 +32,7 @@ exports.cartridge = function(options){
 	pixelPerfectMode = options.pixelPerfect !== undefined ? options.pixelPerfect : 0;
 	container = options.containerId ? document.getElementById(options.containerId) : null;
 
-	renderer = new FastCanvasRenderer({
+	renderer = new CanvasRenderer({
 		cellsizeX: 8, // pixels
 		cellsizeY: 8, // pixels
 		screensizeX: 128, // pixels
