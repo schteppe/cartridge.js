@@ -151,12 +151,24 @@ Object.assign(CanvasRenderer.prototype, {
 		var sourceX = ssx(n,this.spriteSheetSizeX,this.spriteSheetSizeY) * this.cellsizeX;
 		var sourceY = ssy(n,this.spriteSheetSizeY,this.spriteSheetSizeY) * this.cellsizeY;
 
+		var dirX = 1;
+		var dirY = 1;
+		if(flip_x){
+			dirX = -1;
+			destX += this.cellsizeX;
+		}
+
+		if(flip_y){
+			dirY = -1;
+			destY += this.cellsizeY;
+		}
+
 		// Copy from spritesheet to screen
 		for(var x=0; x < sourceSizeX; x++){
 			for(var y=0; y < sourceSizeY; y++){
 				var color = this.sget(sourceX + x, sourceY + y);
 				if(!this.getColorTransparent(color)){
-					this.pset(destX + x, destY + y, color);
+					this.pset(destX + dirX * x, destY + dirY * y, color);
 				}
 			}
 		}
