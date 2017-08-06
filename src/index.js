@@ -326,6 +326,12 @@ exports.camera = function camera(x, y){
 };
 
 exports.map = function map(cel_x, cel_y, sx, sy, cel_w, cel_h){
+	cel_x |= 0;
+	cel_y |= 0;
+	sx |= 0;
+	sy |= 0;
+	cel_w = cel_w !== undefined ? cel_w|0 : 1;
+	cel_h = cel_h !== undefined ? cel_h|0 : 1;
 	renderer.map(cel_x, cel_y, sx, sy, cel_w, cel_h);
 };
 

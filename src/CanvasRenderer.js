@@ -73,6 +73,7 @@ Object.assign(CanvasRenderer.prototype, {
 				this.pset(x,y,col); // TODO: optimize
 	},
 	pset: function(x,y,col){
+		if(this.clipRect.excludesPoint(x,y)) return;
 		bufferSet(x, y, col, this.screensizeX, this.screensizeY, this.screenData);
 	},
 	pget: function(x,y){
@@ -175,14 +176,10 @@ Object.assign(CanvasRenderer.prototype, {
 	map: function(cel_x, cel_y, sx, sy, cel_w, cel_h){
 		var cw = this.cellsizeX;
 		var ch = this.cellsizeY;
-		var x0 = sx;
+		/*var x0 = sx;
 		var x1 = sx + cel_w * cw;
 		var y0 = sy;
-		var y1 = sy + cel_h * ch;
-
-		if(this.clipRect.excludesRect(x0,y0,x1,y1)){
-			return; // fully outside the clip area
-		}
+		var y1 = sy + cel_h * ch;*/
 
 		// TODO: only draw sprites overlapping the clipping area
 		for(var x=0; x<cel_w; x++){
@@ -190,7 +187,7 @@ Object.assign(CanvasRenderer.prototype, {
 				var mx = cel_x + x;
 				var my = cel_y + y;
 				var spriteIndex = this.mget(mx, my);
-				this.spr(spriteIndex, sx + cw * mx, sy + ch * my, 1, 1, false, false);
+				this.spr(spriteIndex, sx + cw * x, sy + ch * y, 1, 1, false, false);
 			}
 		}
 	}
