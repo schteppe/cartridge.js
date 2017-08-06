@@ -11,7 +11,6 @@ function CanvasRenderer(options){
 	options = options || {};
 	Renderer.call(this, options);
 
-	this.spriteSheetData = new Uint8Array(this.spriteSheetSizeX * this.spriteSheetSizeY / 2); // 4 bits per pixel (16 colors)
 	this.mapData = new Uint16Array(this.mapSizeX * this.mapSizeY); // max 65535 sprites referenced
 
 	this.color4ToColor32Map = new Uint32Array(16);
@@ -75,23 +74,16 @@ Object.assign(CanvasRenderer.prototype, {
 				this.pset(x,y,col); // TODO: optimize
 	},
 	pset: function(x,y,col){
-		if(x < 0 || y < 0 || x >= this.screensizeX || y >= this.screensizeY) return;
-		var aligned = (x % 2 === 0);
-		if(!aligned) x--;
-		var offset = x/2 + this.screensizeX/2 * y;
-		var pixel = this.screenData[offset];
-		if(aligned)
-			pixel = (pixel & 0xf0) | col;
-		else
-			pixel = (col << 4) | (pixel & 0x0f);
-		this.screenData[offset] = pixel;
+		bufferSet(x, y, col, this.screensizeX, this.screensizeY, this.screenData);
 	},
 	pget: function(x,y){
-		var aligned = (x % 2 === 0);
-		if(!aligned) x--;
-		var offset = x/2 + this.screensizeX/2 * y;
-		var pixel = this.screenData[offset];
-		return aligned ? (0x0f & pixel) : ((0xf0 & pixel) >> 4);
+		return bufferGet(x,y,this.screensizeX,this.screensizeY,this.screenData);
+	},
+	sset: function(x,y,col){
+		bufferSet(x, y, col, this.spriteSheetSizeX*this.cellsizeX, this.spriteSheetSizeY*this.cellsizeY, this.spriteSheetData);
+	},
+	sget: function(x,y){
+		return bufferGet(x,y,this.spriteSheetSizeX*this.cellsizeX, this.spriteSheetSizeY*this.cellsizeY, this.spriteSheetData);
 	},
 	print: function(text, x, y, col){
 		if(Array.isArray(text)){
@@ -146,9 +138,53 @@ Object.assign(CanvasRenderer.prototype, {
 		while(l--)
 			this.screenData[l] = 0;
 	},
-	setColorTransparent: function(color, isTransparent){},
-	getColorTransparent: function(color){},
 	setCellSize: function(newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight){
 		Renderer.prototype.setCellSize(newCellWidth, newCellHeight, newSpriteSheetWidth, newSpriteSheetHeight);
+		this.spriteSheetData = new Uint8Array(this.cellsizeX * this.spriteSheetSizeX * this.cellsizeY * this.spriteSheetSizeY / 2); // 4 bits per pixel (16 colors)
+	},
+	spr: function(n, x0, y0, w, h, flip_x, flip_y){
+		var sourceSizeX = this.cellsizeX * w;
+		var sourceSizeY = this.cellsizeY * h;
+		var destX = x0;
+		var destY = y0;
+
+		var sourceX = ssx(n,this.spriteSheetSizeX,this.spriteSheetSizeY) * this.cellsizeX;
+		var sourceY = ssy(n,this.spriteSheetSizeY,this.spriteSheetSizeY) * this.cellsizeY;
+
+		// Copy from spritesheet to screen
+		for(var x=0; x < sourceSizeX; x++){
+			for(var y=0; y < sourceSizeY; y++){
+				var color = this.sget(sourceX + x, sourceY + y);
+				this.pset(destX + x, destY + y, color);
+			}
+		}
 	}
 });
+
+function ssx(n,sizeX,sizeY){
+	return n % sizeX;
+}
+
+// Returns the sprite Y position in the spritesheet
+function ssy(n,sizeX,sizeY){
+	return Math.floor(n / sizeX) % (sizeX * sizeY);
+}
+
+function bufferSet(x,y,col,sizeX,sizeY,data){
+	if(x < 0 || y < 0 || x >= sizeX || y >= sizeY) return;
+	var aligned = (x % 2 === 0);
+	if(!aligned) x--;
+	var offset = x/2 + sizeX/2 * y;
+	var pixel = data[offset];
+	if(aligned) pixel = (pixel & 0xf0) | col;
+	else		pixel = (col << 4) | (pixel & 0x0f);
+	data[offset] = pixel;
+}
+
+function bufferGet(x,y,sizeX,sizeY,data){
+	var aligned = (x % 2 === 0);
+	if(!aligned) x--;
+	var offset = x/2 + sizeX/2 * y;
+	var pixel = data[offset];
+	return aligned ? (0x0f & pixel) : ((0xf0 & pixel) >> 4);
+}
