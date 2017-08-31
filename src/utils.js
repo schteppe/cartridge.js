@@ -76,6 +76,8 @@ exports.scaleToFit = function scaleToFit(element, containerElement, pixelPerfect
 		offsetY = Math.floor(offsetY * dpr) / dpr;
 	}
 
+	element.style.position = 'absolute';
+
 	// Safari doesn't have nearest neighbor rendering when using CSS3 scaling
 	if (isSafari()){
 		element.style.width = (element.width * scale) + "px";
