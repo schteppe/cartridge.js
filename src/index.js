@@ -24,7 +24,7 @@ var responsiveRect = new Rectangle(0,0,128,128);
 var gameTitle = 'game';
 var renderer;
 var soundFixed = false;
-var resizeHandler;
+var resizeHandler = function(){};
 
 exports.cartridge = function(options){
 	autoFit = options.autoFit !== undefined ? options.autoFit : true;
@@ -45,7 +45,6 @@ exports.cartridge = function(options){
 		palette: colors.defaultPalette()
 	});
 	container.appendChild(renderer.domElement);
-	renderer.domElement.style.position = 'absolute';
 
 	input.init([renderer.domElement]);
 	mouse.init([renderer.domElement]);
